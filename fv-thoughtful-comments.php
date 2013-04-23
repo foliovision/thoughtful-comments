@@ -50,13 +50,27 @@ class fv_tc extends fv_tc_Plugin {
     function __construct(){ 
         $this->url = trailingslashit( get_bloginfo('wpurl') ).PLUGINDIR.'/'. dirname( plugin_basename(__FILE__) );
         $this->readme_URL = 'http://plugins.trac.wordpress.org/browser/thoughtful-comments/trunk/readme.txt?format=txt';    
-    	  add_action( 'in_plugin_update_message-thoughtful-comments/fv-thoughtful-comments.php', array( &$this, 'plugin_update_message' ) );    
+          add_action( 'in_plugin_update_message-thoughtful-comments/fv-thoughtful-comments.php', array( &$this, 'plugin_update_message' ) );    
         add_action( 'activate_' .plugin_basename(__FILE__), array( $this, 'activate' ) );   
     }
 
 
     function activate() {
         if( !get_option('thoughtful_comments') ) update_option( 'thoughtful_comments', array( 'shorten_urls' => true, 'reply_link' => false ) );
+    }
+    
+    
+    function admin_init() {
+      /*
+      Simple text field  which is sanitized to fit into YYYY-MM-DD and only >= editors are able to edit it for themselves
+      */
+      x_add_metadata_field( 'fv_tc_moderated', 'user', array(
+      	'field_type' => 'text',
+      	'label' => 'Moderation queue',	
+      	'display_column' => true,
+      	'display_column_callback' => 'fv_tc_x_add_metadata_field'
+        )
+      );
     }
 
     
@@ -131,9 +145,9 @@ class fv_tc extends fv_tc_Plugin {
         /* Check the custom column name */
         if($args[1] == 'fv_tc_moderated') {
             /* output Allow user to comment without moderation/Moderate future comments by this user by using user ID in $args[2] */
-            return $this->get_t_moderated($args[2],false);
+            return $this->get_t_moderated($args[2],false).'<!--fvtc-->';
         }
-        return $content;
+        return $content.'<!--fvtc-->';
     }
     
     
@@ -418,7 +432,7 @@ class fv_tc extends fv_tc_Plugin {
                                     <td><fieldset><legend class="screen-reader-text"><span><?php _e('Link shortening', 'wp_mail_smtp'); ?></span></legend>                                  
                                     <input id="shorten_urls" type="checkbox" name="shorten_urls" value="1" 
                                         <?php if( $options['shorten_urls'] ) echo 'checked="checked"'; ?> />
-                                    <label for="shorten_urls"><span><?php _e('Shortens the plain URL link text in comments to “link to: domain.com”. Prevents display issues if the links have too long URL.', 'wp_mail_smtp'); ?></span></label><br />
+                                    <label for="shorten_urls"><span><?php _e('Shortens the plain URL link text in comments to  ČĽlink to: domain.com ČÝ. Prevents display issues if the links have too long URL.', 'wp_mail_smtp'); ?></span></label><br />
                                     </td>
                                 </tr>
                                 <tr valign="top">
@@ -715,13 +729,31 @@ class fv_tc extends fv_tc_Plugin {
 
 $fv_tc = new fv_tc;
 
+
+/*
+Special for 'Custom Metadata Manager' plugin
+*/
+function fv_tc_x_add_metadata_field( $field_slug, $field, $object_type, $object_id, $value ) {        echo '<!--fvtc-column-->';
+  global $fv_tc;
+  return $fv_tc->column_content( $field, $field_slug, $object_id );
+}
+
+
+
 /* Add extra backend moderation options */
 add_filter( 'comment_row_actions', array( $fv_tc, 'admin' ) );
 
-/* Add new column into Users management */
-add_filter( 'manage_users_columns', array( $fv_tc, 'column' ) );
-/* Put the content into the new column in Users management; there are 3 arguments passed to the filter */
-add_filter( 'manage_users_custom_column', array( $fv_tc, 'column_content' ), 10, 3 );
+if( function_exists( 'x_add_metadata_field' ) ) {
+  /*
+  Special for 'Custom Metadata Manager' plugin
+  */
+  add_filter( 'admin_init', array( $fv_tc, 'admin_init' ) );
+} else {
+  /* Add new column into Users management */
+  add_filter( 'manage_users_columns', array( $fv_tc, 'column' ) );
+  /* Put the content into the new column in Users management; there are 3 arguments passed to the filter */
+  add_filter( 'manage_users_custom_column', array( $fv_tc, 'column_content' ), 10, 3 );
+}
 
 /* Add frontend moderation options */
 add_filter( 'comment_text', array( $fv_tc, 'frontend' ) );
