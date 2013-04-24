@@ -48,7 +48,7 @@ class fv_tc extends fv_tc_Plugin {
      * Class contructor. Sets all basic variables.
      */         
     function __construct(){ 
-        $this->url = trailingslashit( get_bloginfo('wpurl') ).PLUGINDIR.'/'. dirname( plugin_basename(__FILE__) );
+        $this->url = trailingslashit( site_url() ).PLUGINDIR.'/'. dirname( plugin_basename(__FILE__) );
         $this->readme_URL = 'http://plugins.trac.wordpress.org/browser/thoughtful-comments/trunk/readme.txt?format=txt';    
           add_action( 'in_plugin_update_message-thoughtful-comments/fv-thoughtful-comments.php', array( &$this, 'plugin_update_message' ) );    
         add_action( 'activate_' .plugin_basename(__FILE__), array( $this, 'activate' ) );   
