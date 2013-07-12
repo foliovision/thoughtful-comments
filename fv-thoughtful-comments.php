@@ -183,17 +183,28 @@ class fv_tc extends fv_tc_Plugin {
      * Replace url of reply link only with #
      * functionality is done only by JavaScript     
      */ 
-    function comment_reply_links ($link = null) {
-        $options = get_option('thoughtful_comments');
-        if ($options['reply_link']) {        
-            $noscript = '<noscript>Reply link does not work in your browser because JavaScript is disabled.<br /></noscript>';
-            $link_script = preg_replace( '~href.*onclick~' , 'href="#" onclick' , $link );
-            return $noscript .  $link_script;               
-        }         
-        return $link;
+    function comment_reply_links ($strLink = null) {
+      $options = get_option('thoughtful_comments');
+      $strReplyKeyWord = 'comment-';
+      if( isset( $options['tc_replyKW'] ) && !empty( $options[ 'tc_replyKW' ] ) ) {
+         $strReplyKeyWord = $options['tc_replyKW'];
+      }
+
+      $strLink = preg_replace(
+         '~href="([^"]*)"~' ,
+         'href="$1' . urlencode( '#' . $strReplyKeyWord . get_comment_ID() ) . '"',
+         $strLink
+      );
+
+      if ($options['reply_link']) {        
+         $noscript = '<noscript>Reply link does not work in your browser because JavaScript is disabled.<br /></noscript>';
+         $link_script = preg_replace( '~href.*onclick~' , 'href="#" onclick' , $strLink );
+         return $noscript .  $link_script;
+      }
+      return $strLink;
     }
-        
-    
+
+
     /**
      * Clear the URI for use in onclick events.
      * 
@@ -394,7 +405,8 @@ class fv_tc extends fv_tc_Plugin {
             check_admin_referer('thoughtful_comments');
             $options = array(
                 'shorten_urls' => ( $_POST['shorten_urls'] ) ? true : false,            
-                'reply_link' => ( $_POST['reply_link'] ) ? true : false
+                'reply_link' => ( $_POST['reply_link'] ) ? true : false,
+                'tc_replyKW' => isset( $_POST['tc_replyKW'] ) ? $_POST['tc_replyKW'] : 'comment-'
             );
             if( update_option( 'thoughtful_comments', $options ) ) :
             ?>
@@ -432,7 +444,7 @@ class fv_tc extends fv_tc_Plugin {
                                     <td><fieldset><legend class="screen-reader-text"><span><?php _e('Link shortening', 'wp_mail_smtp'); ?></span></legend>                                  
                                     <input id="shorten_urls" type="checkbox" name="shorten_urls" value="1" 
                                         <?php if( $options['shorten_urls'] ) echo 'checked="checked"'; ?> />
-                                    <label for="shorten_urls"><span><?php _e('Shortens the plain URL link text in comments to  ČĽlink to: domain.com ČÝ. Prevents display issues if the links have too long URL.', 'wp_mail_smtp'); ?></span></label><br />
+                                    <label for="shorten_urls"><span><?php _e('Shortens the plain URL link text in comments to  "link to: domain.com". Prevents display issues if the links have too long URL.', 'wp_mail_smtp'); ?></span></label><br />
                                     </td>
                                 </tr>
                                 <tr valign="top">
@@ -442,7 +454,19 @@ class fv_tc extends fv_tc_Plugin {
                                         <?php if( $options['reply_link'] ) echo 'checked="checked"'; ?> />                                     
                                     <label for="reply_link"><span><?php _e('Check to make comment reply links use JavaScript only. Useful if your site has a lot of comments and web crawlers are browsing through all of their reply links.', 'wp_mail_smtp'); ?></span></label><br />
                                     </td>
-                                </tr>                               
+                                </tr>
+                                <?php
+                                $bCommentReg = get_option( 'comment_registration' );
+                                if( isset( $bCommentReg ) && 1 == $bCommentReg ) { ?>
+                                <tr valign="top">
+                                    <th scope="row"><?php _e('Reply link Keyword', 'wp_mail_smtp'); ?> </th> 
+                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Reply link', 'wp_mail_smtp'); ?></span></legend>                              
+                                    <input id="tc_replyKW" type="text" name="tc_replyKW" size="10"
+                                       value="<?php if( isset( $options['tc_replyKW'] ) ) echo $options['tc_replyKW']; else echo 'comment-'; ?>" />
+                                    <label for="tc_replyKW"><span><?php _e('<strong>Advanced!</strong> Only change this if your "Log in to Reply" link doesn\'t bring the commenter back to the comment they wanted to comment on after logging in.', 'wp_mail_smtp'); ?></span></label><br />
+                                    </td>
+                                </tr>
+                                <?php } ?>
                             </table>
                             <p>
                                 <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes') ?>" />
