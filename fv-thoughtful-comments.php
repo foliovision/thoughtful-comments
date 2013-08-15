@@ -488,7 +488,7 @@ class fv_tc extends fv_tc_Plugin {
     function scripts() {
         global  $user_ID, $post;
         $user_info = get_userdata( $user_ID );
-        if($user_ID && ( current_user_can('edit_post', $post->ID) || $user_info->wp_user_level > 5 ) ) {
+        if($user_ID && ( (isset($post) && current_user_can('edit_post', $post->ID)) || (isset($user_info) && $user_info->wp_user_level > 5) ) ) {
             wp_enqueue_script('fv_tc',$this->url. '/js/fv_tc.js',array('jquery'));
         }
     }
