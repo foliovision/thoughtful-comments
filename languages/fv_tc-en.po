@@ -1,0 +1,176 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: fv_thoughtful_comments\n"
+"POT-Creation-Date: 2013-12-16 15:03+0100\n"
+"PO-Revision-Date: 2013-12-16 15:03+0100\n"
+"Last-Translator: \n"
+"Language-Team: Foliovision <programming@foliovision.com>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.6.2\n"
+"X-Poedit-Basepath: .\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-KeywordsList: __;_e\n"
+"X-Poedit-SearchPath-0: ..\n"
+
+#: ../fv-thoughtful-comments.php:110
+msgid "Alread banned!"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:206
+msgid ""
+"Reply link does not work in your browser because JavaScript is disabled."
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:272
+msgid "already banned!"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:278
+msgid "Comments from this user level are automatically approved"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:278
+msgid "Power user"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:290
+msgid "Do you really want to delete this comment?"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:291
+msgid "Error deleting comment"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:292
+msgid "Do you really want to delete this comment and ban the IP?"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:293
+msgid "Do you really want to delete this comment and all the replies?"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:294
+msgid ""
+"Do you really want to delete this comment with all the replies and ban the "
+"IP?"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:295 ../fv-thoughtful-comments.php:387
+msgid "Moderate future comments by this user"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:296 ../fv-thoughtful-comments.php:389
+msgid "Unmoderated"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:297 ../fv-thoughtful-comments.php:382
+msgid "Allow user to comment without moderation"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:298 ../fv-thoughtful-comments.php:384
+msgid "Moderated"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:299
+msgid "Error"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:313
+msgid "Wait..."
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:313
+msgid "Approve"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:325
+msgid "Delete"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:337
+msgid "Delete & Ban IP"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:349
+msgid "Delete Thread"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:361
+msgid "Delete Thread & Ban IP"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:447
+msgid "Settings saved"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:469
+msgid "Comment Tweaks"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:474 ../fv-thoughtful-comments.php:475
+msgid "Link shortening"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:478
+msgid ""
+"Shortens the plain URL link text in comments to \"link to: domain.com\". "
+"Prevents display issues if the links have too long URL."
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:482 ../fv-thoughtful-comments.php:483
+#: ../fv-thoughtful-comments.php:494
+msgid "Reply link"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:486
+msgid ""
+"Check to make comment reply links use JavaScript only. Useful if your site "
+"has a lot of comments and web crawlers are browsing through all of their "
+"reply links."
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:493
+msgid "Reply link Keyword"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:497
+msgid ""
+"<strong>Advanced!</strong> Only change this if your \"Log in to Reply\" link "
+"doesn't bring the commenter back to the comment they wanted to comment on "
+"after logging in."
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:503
+msgid "Save Changes"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:705
+msgid "Reply to comment via email"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:705
+msgid "Your comment on"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:705
+msgid "Email reply"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:706
+msgid "Link to comment"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:706
+msgid "Comment link"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:707
+msgid "Approve it"
+msgstr ""
+
+#: ../fv-thoughtful-comments.php:732 ../fv-thoughtful-comments.php:752
+msgid "link to"
+msgstr ""
