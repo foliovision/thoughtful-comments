@@ -1,0 +1,203 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: fv_thoughtful_comments\n"
+"POT-Creation-Date: 2013-12-16 16:29+0100\n"
+"PO-Revision-Date: 2013-12-16 16:29+0100\n"
+"Last-Translator: \n"
+"Language-Team: Foliovision <programming@foliovision.com>\n"
+"Language: sk_SK\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.6.2\n"
+"X-Poedit-Basepath: .\n"
+"Plural-Forms: nplurals=4; plural=n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n"
+"%100==4 ? 2 : 3;\n"
+"X-Poedit-KeywordsList: __;_e;_n:1,2\n"
+"X-Poedit-SearchPath-0: ..\n"
+
+#: ../fv-thoughtful-comments.php:116
+msgid "Already banned!"
+msgstr "Už zabanovaný!"
+
+#: ../fv-thoughtful-comments.php:212
+msgid ""
+"Reply link does not work in your browser because JavaScript is disabled."
+msgstr ""
+"Odkaz na odpoveď nfunguje pretože vo vašom browseri je vypnutý JavaScript"
+
+#: ../fv-thoughtful-comments.php:278
+msgid "already banned!"
+msgstr "už zabanovaný!"
+
+#: ../fv-thoughtful-comments.php:284
+msgid "Comments from this user level are automatically approved"
+msgstr ""
+"Komentáre od užívateľov s týmto uživateľským levelom sú automaticky potvrdené"
+
+#: ../fv-thoughtful-comments.php:284
+msgid "Power user"
+msgstr "Power user"
+
+#: ../fv-thoughtful-comments.php:296
+msgid "Do you really want to delete this comment?"
+msgstr "Naozaj chcete vymazať komentár?"
+
+#: ../fv-thoughtful-comments.php:297
+msgid "Error deleting comment"
+msgstr "Chyba pri vymazávaní komentára"
+
+#: ../fv-thoughtful-comments.php:298
+msgid "Do you really want to delete this comment and ban the IP?"
+msgstr "Naozaj chcete vymazať tento komentár a zabanovať IP?"
+
+#: ../fv-thoughtful-comments.php:299
+msgid "Do you really want to delete this comment and all the replies?"
+msgstr "Naozaj chcete vymazať tento komentár a všetky jeho odpovede?"
+
+#: ../fv-thoughtful-comments.php:300
+msgid ""
+"Do you really want to delete this comment with all the replies and ban the "
+"IP?"
+msgstr ""
+"Naozaj chcete vymazať tento komentár spolu s odpoveďami a zabanovať IP?"
+
+#: ../fv-thoughtful-comments.php:301 ../fv-thoughtful-comments.php:393
+msgid "Moderate future comments by this user"
+msgstr "Moderovať budúce komentáre od tohoto uživateľa"
+
+#: ../fv-thoughtful-comments.php:302 ../fv-thoughtful-comments.php:395
+msgid "Unmoderated"
+msgstr "Nemoderované"
+
+#: ../fv-thoughtful-comments.php:303 ../fv-thoughtful-comments.php:388
+msgid "Allow user to comment without moderation"
+msgstr "Povoliť uživateľom komentovať bez moderácie"
+
+#: ../fv-thoughtful-comments.php:304 ../fv-thoughtful-comments.php:390
+msgid "Moderated"
+msgstr "Moderované"
+
+#: ../fv-thoughtful-comments.php:305
+msgid "Error"
+msgstr "Chyba"
+
+#: ../fv-thoughtful-comments.php:319
+msgid "Wait..."
+msgstr "Čakajte..."
+
+#: ../fv-thoughtful-comments.php:319
+msgid "Approve"
+msgstr "Potvrdiť"
+
+#: ../fv-thoughtful-comments.php:331
+msgid "Delete"
+msgstr "Vymazať"
+
+#: ../fv-thoughtful-comments.php:343
+msgid "Delete & Ban IP"
+msgstr "Vymazať a zabanovať IP"
+
+#: ../fv-thoughtful-comments.php:355
+msgid "Delete Thread"
+msgstr "Vymazať vlákno"
+
+#: ../fv-thoughtful-comments.php:367
+msgid "Delete Thread & Ban IP"
+msgstr "Vymazať vlákno a zabanovať IP"
+
+#: ../fv-thoughtful-comments.php:453
+msgid "Settings saved"
+msgstr "Nastavenia uložené"
+
+#: ../fv-thoughtful-comments.php:475
+msgid "Comment Tweaks"
+msgstr "Nastavenia komentárov"
+
+#: ../fv-thoughtful-comments.php:480 ../fv-thoughtful-comments.php:481
+msgid "Link shortening"
+msgstr "Skrátenie odkazov"
+
+#: ../fv-thoughtful-comments.php:484
+msgid ""
+"Shortens the plain URL link text in comments to \"link to: domain.com\". "
+"Prevents display issues if the links have too long URL."
+msgstr ""
+"Skrátenie URL odkazov v komentároch na \"odkaz na: domain.com\". Pomáha pred "
+"zobrazením dlhých URL odkazov."
+
+#: ../fv-thoughtful-comments.php:488 ../fv-thoughtful-comments.php:489
+#: ../fv-thoughtful-comments.php:500
+msgid "Reply link"
+msgstr "Odkaz na odpoveď"
+
+#: ../fv-thoughtful-comments.php:492
+msgid ""
+"Check to make comment reply links use JavaScript only. Useful if your site "
+"has a lot of comments and web crawlers are browsing through all of their "
+"reply links."
+msgstr ""
+"Overte či odkazy na odpovede ku komentárom používajú iba JavaScript. Pomáha "
+"ak máte na stránke množstvo komentárov a web creawlers sa pokúša prechádzať "
+"cez všetky odkazy"
+
+#: ../fv-thoughtful-comments.php:499
+msgid "Reply link Keyword"
+msgstr "Kľučové slova pre odpoveď"
+
+#: ../fv-thoughtful-comments.php:503
+msgid ""
+"<strong>Advanced!</strong> Only change this if your \"Log in to Reply\" link "
+"doesn't bring the commenter back to the comment they wanted to comment on "
+"after logging in."
+msgstr ""
+"<strong>Pokročilé!</strong> Zmeň iba tvoj odkaz \"Prihlásiť sa pre odpoveď\" "
+"nepresmeruje diskutujúceho späť na komentár ku ktorému chcel pridať odpoveď "
+"po prihlásení."
+
+#: ../fv-thoughtful-comments.php:509
+msgid "Save Changes"
+msgstr "Uložiť zmeny"
+
+#: ../fv-thoughtful-comments.php:562
+#, fuzzy, php-format
+msgid "This post has one unapproved comment."
+msgid_plural "This post has %d unapproved comments."
+msgstr[0] "Tento článok má nepotvrdený komentár."
+msgstr[1] "Tento článok má %d nepotvrdené komentáre."
+msgstr[2] "Tento článok má %d nepotvrdené komentáre."
+msgstr[3] "Tento článok má %d nepotvrdených komentárov."
+
+#: ../fv-thoughtful-comments.php:713
+msgid "Reply to comment via email"
+msgstr "Odpovedať na komentár pomocou emailu"
+
+#: ../fv-thoughtful-comments.php:713
+msgid "Your comment on"
+msgstr "Tvoj komentár v článku"
+
+#: ../fv-thoughtful-comments.php:713
+msgid "Email reply"
+msgstr "Odpoveď emailom"
+
+#: ../fv-thoughtful-comments.php:714
+msgid "Link to comment"
+msgstr "Odkaz na komentár"
+
+#: ../fv-thoughtful-comments.php:714
+msgid "Comment link"
+msgstr "Odkaz komentára"
+
+#: ../fv-thoughtful-comments.php:715 ../fv-thoughtful-comments.php:716
+msgid "Approve it:"
+msgstr "Potvrdiť"
+
+#: ../fv-thoughtful-comments.php:738 ../fv-thoughtful-comments.php:758
+msgid "link to"
+msgstr "odkaz na"
+
+#~ msgid "This post has %d unapproved comments."
+#~ msgstr "Tento článok má %d nepotvrdených komentárov. dkfasjdlksajuhu"
+
+#~ msgid "This post has"
+#~ msgstr "Tento článok má"
