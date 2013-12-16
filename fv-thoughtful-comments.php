@@ -43,6 +43,12 @@ class fv_tc extends fv_tc_Plugin {
      * @var string
      */              
     var $url;
+
+    /**
+     * Plugin version
+     * @var string
+     */
+    var $strVersion = '0.2.6';
     
     /**
      * Class contructor. Sets all basic variables.
@@ -57,6 +63,12 @@ class fv_tc extends fv_tc_Plugin {
 
     function activate() {
         if( !get_option('thoughtful_comments') ) update_option( 'thoughtful_comments', array( 'shorten_urls' => true, 'reply_link' => false ) );
+    }
+
+    function ap_action_init()
+    {
+        // Localization
+        load_plugin_textdomain('fv_tc', false, dirname(plugin_basename(__FILE__)) . "/languages");
     }
 
     
@@ -101,7 +113,7 @@ class fv_tc extends fv_tc_Plugin {
             if($banned===FALSE)
                 $actions['delete_ban'] = $this->get_t_delete_ban($comment);
             else
-                $actions['delete_ban'] = '<a href="#">Already banned!</a>';
+                $actions['delete_ban'] = '<a href="#">' . _e('Already banned!', 'fv_tc') . '</a>';
             if($child>0) {
               $actions['delete_thread'] = $this->get_t_delete_thread($comment);
               if($banned===FALSE)            
@@ -197,7 +209,7 @@ class fv_tc extends fv_tc_Plugin {
       );
 
       if ($options['reply_link']) {        
-         $noscript = '<noscript>Reply link does not work in your browser because JavaScript is disabled.<br /></noscript>';
+         $noscript = '<noscript>' . _e('Reply link does not work in your browser because JavaScript is disabled.', 'fv_tc') . '<br /></noscript>';
          $link_script = preg_replace( '~href.*onclick~' , 'href="#" onclick' , $strLink );
          return $noscript .  $link_script;
       }
@@ -262,13 +274,14 @@ class fv_tc extends fv_tc_Plugin {
 							if($child>0)
 									$out .= ' | '.$this->get_t_delete_thread_ban($comment);
 					} else {
-							$out .= 'IP '.$comment->comment_author_IP.' already banned! ';
+							$out .= 'IP '.$comment->comment_author_IP.' ';
+                            $out .= _e('already banned!', 'fv_tc' );
 					}
 					/*  Moderation status   */
 					if($comment->user_id !=0 && $user_info->user_level < 3) {
 							$out .= '<br />'.$this->get_t_moderated($comment->user_id);
 					} else if( $user_info->user_level >= 3 ) {
-							$out .= '<br /><abbr title="Comments from this user level are automatically approved">Power user</a>';
+							$out .= '<br /><abbr title="' . _e('Comments from this user level are automatically approved', 'fv_tc') . '">' . _e('Power user', 'fv_tc') . '</a>';
 					}
 					$out .= '</p>';
 					$out .= '<span id="fv-tc-comment-'.$comment->comment_ID.'"></span>';   
@@ -276,6 +289,22 @@ class fv_tc extends fv_tc_Plugin {
         	return $content . $out;	
 				}
 				return $content;
+    }
+
+    function get_js_translations() {
+        $aStrings = Array(
+            'comment_delete' => __('Do you really want to delete this comment?', 'fv_tc'),
+            'delete_error' => __('Error deleting comment', 'fv_tc'),
+            'comment_delete_ban_ip' => __('Do you really want to delete this comment and ban the IP?', 'fv_tc'),
+            'comment_delete_replies' => __('Do you really want to delete this comment and all the replies?', 'fv_tc'),
+            'comment_delete_replies_ban_ip' => __('Do you really want to delete this comment with all the replies and ban the IP?', 'fv_tc'),
+            'moderate_future' => __('Moderate future comments by this user','fv_tc'),
+            'unmoderate' => __('Unmoderated','fv_tc'),
+            'without_moderation' => __('Allow user to comment without moderation','fv_tc'),
+            'moderate' => __('Moderated','fv_tc'),
+            'mod_error' => __('Error','fv_tc'),
+        );
+        return $aStrings;
     }
 
     
@@ -287,7 +316,7 @@ class fv_tc extends fv_tc_Plugin {
      * @return string HTML of the anchor
      */   
     function get_t_approve($comment) {
-        return '<a href="#" onclick="fv_tc_approve('.$comment->comment_ID.',\''.$this->esc_url( wp_nonce_url($this->url.'/ajax.php','fv-tc-approve_' . $comment->comment_ID)).'\'); return false">Approve</a>';
+        return '<a href="#" onclick="fv_tc_approve('.$comment->comment_ID.',\''.$this->esc_url( wp_nonce_url($this->url.'/ajax.php','fv-tc-approve_' . $comment->comment_ID)).'\', \''. __('Wait...', 'fv_tc').'\'); return false">' . __('Approve', 'fv_tc') . '</a>';
     }
     
     
@@ -299,7 +328,7 @@ class fv_tc extends fv_tc_Plugin {
      * @return string HTML of the anchor
      */
     function get_t_delete($comment) {
-        return '<a href="#" onclick="fv_tc_delete('.$comment->comment_ID.',\''.$this->esc_url( wp_nonce_url($this->url.'/ajax.php','fv-tc-delete_' . $comment->comment_ID)).'\'); return false">Delete</a>';
+        return '<a href="#" onclick="fv_tc_delete('.$comment->comment_ID.',\''.$this->esc_url( wp_nonce_url($this->url.'/ajax.php','fv-tc-delete_' . $comment->comment_ID)) . '\'); return false">' . __('Delete', 'fv_tc') . '</a>';
     }
     
     
@@ -311,7 +340,7 @@ class fv_tc extends fv_tc_Plugin {
      * @return string HTML of the anchor
      */
     function get_t_delete_ban($comment) {
-        return '<a href="#" onclick="fv_tc_delete_ban('.$comment->comment_ID.',\''.$this->esc_url( wp_nonce_url($this->url.'/ajax.php','fv-tc-delete_' . $comment->comment_ID)).'\',\''.$comment->comment_author_IP.'\'); return false">Delete & Ban IP</a>';
+        return '<a href="#" onclick="fv_tc_delete_ban('.$comment->comment_ID.',\''.$this->esc_url( wp_nonce_url($this->url.'/ajax.php','fv-tc-delete_' . $comment->comment_ID)).'\',\''.$comment->comment_author_IP.'\'); return false">' . __('Delete & Ban IP', 'fv_tc') . '</a>';
     }
     
     
@@ -323,7 +352,7 @@ class fv_tc extends fv_tc_Plugin {
      * @return string HTML of the anchor
      */
     function get_t_delete_thread($comment) {
-        return '<a href="#" onclick="fv_tc_delete_thread('.$comment->comment_ID.',\''.$this->esc_url( wp_nonce_url($this->url.'/ajax.php','fv-tc-delete_' . $comment->comment_ID)).'\'); return false">Delete Thread</a>';
+        return '<a href="#" onclick="fv_tc_delete_thread('.$comment->comment_ID.',\''.$this->esc_url( wp_nonce_url($this->url.'/ajax.php','fv-tc-delete_' . $comment->comment_ID)).'\'); return false">' . __('Delete Thread', 'fv_tc') . '</a>';
     }
 
     
@@ -335,7 +364,7 @@ class fv_tc extends fv_tc_Plugin {
      * @return string HTML of the anchor
      */
     function get_t_delete_thread_ban($comment) {
-        return '<a href="#" onclick="fv_tc_delete_thread_ban('.$comment->comment_ID.',\''.$this->esc_url( wp_nonce_url($this->url.'/ajax.php','fv-tc-delete_' . $comment->comment_ID)).'\',\''.$comment->comment_author_IP.'\'); return false">Delete Thread & Ban IP</a>';
+        return '<a href="#" onclick="fv_tc_delete_thread_ban('.$comment->comment_ID.',\''.$this->esc_url( wp_nonce_url($this->url.'/ajax.php','fv-tc-delete_' . $comment->comment_ID)).'\',\''.$comment->comment_author_IP.'\'); return false">' . __('Delete Thread & Ban IP','fv_tc') . '</a>';
     }
     
     
@@ -356,14 +385,14 @@ class fv_tc extends fv_tc_Plugin {
         $out = '<a href="#" class="commenter-'.$user_ID.'-moderated" onclick="fv_tc_moderated('.$user_ID.',\''.$this->esc_url( wp_nonce_url($this->url.'/ajax.php','fv-tc-moderated_' . $user_ID)).'\','.$frontend2.'); return false">'; 
         if(!get_user_meta($user_ID,'fv_tc_moderated'))
             if($frontend)
-                $out .= 'Allow user to comment without moderation</a>';
+                $out .= _e('Allow user to comment without moderation','fv_tc') . '</a>';
             else
-                $out .= 'Moderated</a>';
+                $out .= _e('Moderated', 'fv_tc') . '</a>';
         else
             if($frontend)
-                $out .= 'Moderate future comments by this user</a>';
+                $out .= _e('Moderate future comments by this user', 'fv_tc') . '</a>';
             else
-                $out .= 'Unmoderated</a>';
+                $out .= _e('Unmoderated', 'fv_tc') . '</a>';
         return  $out;
     }    
 
@@ -421,7 +450,7 @@ class fv_tc extends fv_tc_Plugin {
             <div id="message" class="updated fade">
                 <p>
                     <strong>
-                        Settings saved
+                        <?php _e('Settings saved', 'fv_tc'); ?>
                     </strong>
                 </p>
             </div>
@@ -443,41 +472,41 @@ class fv_tc extends fv_tc_Plugin {
                 <div id="poststuff" class="ui-sortable">
                     <div class="postbox">
                         <h3>
-                            <?php _e('Comment Tweaks') ?>
+                            <?php _e('Comment Tweaks', 'fv_tc') ?>
                         </h3>
                         <div class="inside">
                             <table class="optiontable form-table">
                                 <tr valign="top">
-                                    <th scope="row"><?php _e('Link shortening', 'wp_mail_smtp'); ?> </th>  
-                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Link shortening', 'wp_mail_smtp'); ?></span></legend>                                  
+                                    <th scope="row"><?php _e('Link shortening', 'fv_tc'); ?> </th>  
+                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Link shortening', 'fv_tc'); ?></span></legend>                                  
                                     <input id="shorten_urls" type="checkbox" name="shorten_urls" value="1" 
                                         <?php if( $options['shorten_urls'] ) echo 'checked="checked"'; ?> />
-                                    <label for="shorten_urls"><span><?php _e('Shortens the plain URL link text in comments to “link to: domain.com”. Prevents display issues if the links have too long URL.', 'wp_mail_smtp'); ?></span></label><br />
+                                    <label for="shorten_urls"><span><?php _e('Shortens the plain URL link text in comments to "link to: domain.com". Prevents display issues if the links have too long URL.', 'fv_tc'); ?></span></label><br />
                                     </td>
                                 </tr>
                                 <tr valign="top">
-                                    <th scope="row"><?php _e('Reply link', 'wp_mail_smtp'); ?> </th> 
-                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Reply link', 'wp_mail_smtp'); ?></span></legend>                              
+                                    <th scope="row"><?php _e('Reply link', 'fv_tc'); ?> </th> 
+                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Reply link', 'fv_tc'); ?></span></legend>                              
                                     <input id="reply_link" type="checkbox" name="reply_link" value="1" 
                                         <?php if( $options['reply_link'] ) echo 'checked="checked"'; ?> />                                     
-                                    <label for="reply_link"><span><?php _e('Check to make comment reply links use JavaScript only. Useful if your site has a lot of comments and web crawlers are browsing through all of their reply links.', 'wp_mail_smtp'); ?></span></label><br />
+                                    <label for="reply_link"><span><?php _e('Check to make comment reply links use JavaScript only. Useful if your site has a lot of comments and web crawlers are browsing through all of their reply links.', 'fv_tc'); ?></span></label><br />
                                     </td>
                                 </tr>                               
                                 <?php
                                 $bCommentReg = get_option( 'comment_registration' );
                                 if( isset( $bCommentReg ) && 1 == $bCommentReg ) { ?>
                                 <tr valign="top">
-                                    <th scope="row"><?php _e('Reply link Keyword', 'wp_mail_smtp'); ?> </th> 
-                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Reply link', 'wp_mail_smtp'); ?></span></legend>                              
+                                    <th scope="row"><?php _e('Reply link Keyword', 'fv_tc'); ?> </th> 
+                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Reply link', 'fv_tc'); ?></span></legend>                              
                                     <input id="tc_replyKW" type="text" name="tc_replyKW" size="10"
                                        value="<?php if( isset( $options['tc_replyKW'] ) ) echo $options['tc_replyKW']; else echo 'comment-'; ?>" />
-                                    <label for="tc_replyKW"><span><?php _e('<strong>Advanced!</strong> Only change this if your "Log in to Reply" link doesn\'t bring the commenter back to the comment they wanted to comment on after logging in.', 'wp_mail_smtp'); ?></span></label><br />
+                                    <label for="tc_replyKW"><span><?php _e('<strong>Advanced!</strong> Only change this if your "Log in to Reply" link doesn\'t bring the commenter back to the comment they wanted to comment on after logging in.', 'fv_tc'); ?></span></label><br />
                                     </td>
                                 </tr>
                                 <?php } ?>
                             </table>
                             <p>
-                                <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes') ?>" />
+                                <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
                             </p>
                         </div>
                     </div>
@@ -497,7 +526,9 @@ class fv_tc extends fv_tc_Plugin {
         global  $user_ID, $post;
         $user_info = get_userdata( $user_ID );
         if($user_ID && ( (isset($post) && current_user_can('edit_post', $post->ID)) || (isset($user_info) && $user_info->wp_user_level > 5) ) ) {
-            wp_enqueue_script('fv_tc',$this->url. '/js/fv_tc.js',array('jquery'));
+            wp_enqueue_script('fv_tc',$this->url. '/js/fv_tc.js',array('jquery'), $this->strVersion);
+            wp_localize_script('fv_tc', 'translations', $this->get_js_translations());
+
         }
     }
     
@@ -527,7 +558,8 @@ class fv_tc extends fv_tc_Plugin {
             $count = count($comments);
             if($count!= 0) {
                 //return '<span class="tc_highlight"><abbr title="This post has '.$count.' unapproved comments">'.str_ireplace(' comm','/'.$count.'</abbr></span> comm',$content).'';
-                $content = preg_replace( '~(\d+)~', '<span class="tc_highlight"><abbr title="This post has '.$count.' unapproved comments">$1</abbr></span>', $content );
+                
+                $content = preg_replace( '~(\d+)~', '<span class="tc_highlight"><abbr title="' . printf( _n( 'This post has one unapproved comment.', 'This post has %d unapproved comments.', $count, 'fv_tc' ), $count ) . '">$1</abbr></span>', $content );
                 return $content;
                 }
         }
@@ -670,7 +702,7 @@ class fv_tc extends fv_tc_Plugin {
         $comment_id = $comment_id[1];        
         if( intval( $comment_id ) > 0 ) {          
           /// all links until now are non-html, so we add it now
-      		$notify_message = preg_replace( '~([^"\'])(http://\S*)([^"\'])~', '$1<a href="$2">$2</a>$3', $notify_message );      		      
+            $notify_message = preg_replace( '~([^"\'])(http://\S*)([^"\'])~', '$1<a href="$2">$2</a>$3', $notify_message );                   
           $comment = $wpdb->get_row($wpdb->prepare("SELECT * FROM $wpdb->comments WHERE comment_ID=%d LIMIT 1", $comment_id));
           $post = $wpdb->get_row($wpdb->prepare("SELECT * FROM $wpdb->posts WHERE ID=%d LIMIT 1", $comment->comment_post_ID));
           $rows = explode( "\n", $comment->comment_content );
@@ -678,16 +710,16 @@ class fv_tc extends fv_tc_Plugin {
             $rows[$key] = '> '.$value;  
           }
           $content = "\r\n\r\n".implode( "\n", $rows );
-      		$replyto = 'Reply to comment via email: <a href="mailto:'.rawurlencode('"'.$comment->comment_author.'" ').'<'.$comment->comment_author_email.'>'.'?subject='.rawurlencode( 'Your comment on "'.$post->post_title.'"' ).'&body='.rawurlencode( $content ).'&bcc='.$options['reply_bcc'].'">Email reply</a>'."\r\n";
-      		$linkto .= 'Link to comment: <a href="'.get_permalink($comment->comment_post_ID) . '#comment-'.$comment_id.'">Comment link</a>'."\r\n";
-      		$notify_message = str_replace( 'Approve it:', $replyto."Approve it:", $notify_message );
-      		$notify_message = str_replace( 'Approve it:', $linkto."Approve it:", $notify_message );
-      		$notify_message = wpautop( $notify_message );
+          $sApproveTranslated = substr(__('Approve it: %s'), 0, strlen(__('Approve it: %s')) - 3);
+            $replyto = __('Reply to comment via email', 'fv_tc') . ': <a href="mailto:'.rawurlencode('"'.$comment->comment_author.'" ').'<'.$comment->comment_author_email.'>'.'?subject='.rawurlencode( __('Your comment on', 'fv_tc') . ' "'.$post->post_title.'"' ).'&body='.rawurlencode( $content ).'&bcc='.$options['reply_bcc'].'">' . __('Email reply', 'fv_tc') . '</a>'."\r\n";
+            $linkto .= __('Link to comment', 'fv_tc') . ': <a href="'.get_permalink($comment->comment_post_ID) . '#comment-'.$comment_id.'">' . __('Comment link', 'fv_tc') . '</a>'."\r\n";
+            $notify_message = str_replace(  $sApproveTranslated, $replyto.$sApproveTranslated, $notify_message );
+            $notify_message = str_replace( $sApproveTranslated, $linkto.$sApproveTranslated, $notify_message );
+            $notify_message = wpautop( $notify_message );
         }
-    		//echo $notify_message; die();
-    		return $notify_message;
+            //echo $notify_message; die();
+            return $notify_message;
     } 
-    
     /**
      * Callback for plain link replacement in links
      * 
@@ -704,7 +736,7 @@ class fv_tc extends fv_tc_Plugin {
       $match_domain = str_replace( '://www.', '://', $match_domain );
       preg_match( '!//(.+?)/!', $match_domain, $domain );
       //var_dump( $domain );
-      $link = $link[1].'<a href="'.esc_url($link[2]).'">link to '.$domain[1].'</a><br />'.$link[3];
+      $link = $link[1].'<a href="'.esc_url($link[2]).'">' . _e('link to', 'fv_tc') . ' '.$domain[1].'</a><br />'.$link[3];
       return $link;
     } 
     
@@ -724,7 +756,7 @@ class fv_tc extends fv_tc_Plugin {
         preg_match( '!//(.+?)/!', $text[1], $domain );
         if( $domain[1] ) {
           $domain[1] = preg_replace( '~^www\.~', '', $domain[1] );
-          $link[0] = str_replace( $text[1].'</a>', 'link to '.$domain[1].'</a>', $link[0] );
+          $link[0] = str_replace( $text[1].'</a>', _e('link to', 'fv_tc') . ' '.$domain[1].'</a>', $link[0] );
         }
       }
       return $link[0];
@@ -969,5 +1001,7 @@ add_action('wp_set_comment_status', array( $fv_tc, 'stc_comment_status_changed')
 add_action( 'admin_menu', array($fv_tc, 'admin_menu') ); 
 
 add_filter('comment_reply_link', array($fv_tc, 'comment_reply_links'));
+
+add_action('init', array($fv_tc, 'ap_action_init'));
 
 ?>
