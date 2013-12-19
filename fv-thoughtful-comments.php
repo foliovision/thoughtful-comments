@@ -317,7 +317,8 @@ class fv_tc extends fv_tc_Plugin {
      * @return string HTML of the anchor
      */   
     function get_t_approve($comment) {
-        return '<a href="#" onclick="fv_tc_approve('.$comment->comment_ID.',\''.$this->esc_url( wp_nonce_url($this->url.'/ajax.php','fv-tc-approve_' . $comment->comment_ID)).'\', \''. __('Wait...', 'fv_tc').'\'); return false">' . __('Approve', 'fv_tc') . '</a>';
+        return '<a href="#" onclick="fv_tc_approve('.$comment->comment_ID.'); return false">' . __('Approve', 'fv_tc') . '</a>';
+        //return '<a href="#" onclick="fv_tc_approve('.$comment->comment_ID.',\''.$this->esc_url( wp_nonce_url($this->url.'/ajax.php','fv-tc-approve_' . $comment->comment_ID)).'\', \''. __('Wait...', 'fv_tc').'\'); return false">' . __('Approve', 'fv_tc') . '</a>';
     }
     
     
@@ -329,7 +330,7 @@ class fv_tc extends fv_tc_Plugin {
      * @return string HTML of the anchor
      */
     function get_t_delete($comment) {
-        return '<a href="#" onclick="fv_tc_delete('.$comment->comment_ID.',\''.$this->esc_url( wp_nonce_url($this->url.'/ajax.php','fv-tc-delete_' . $comment->comment_ID)).'\'); return false">' . __('Delete', 'fv_tc') . '</a>';
+        return '<a href="#" onclick="fv_tc_delete('.$comment->comment_ID.'); return false">' . __('Delete', 'fv_tc') . '</a>';
     }
     
     
@@ -353,7 +354,7 @@ class fv_tc extends fv_tc_Plugin {
      * @return string HTML of the anchor
      */
     function get_t_delete_thread($comment) {
-        return '<a href="#" onclick="fv_tc_delete_thread('.$comment->comment_ID.',\''.$this->esc_url( wp_nonce_url($this->url.'/ajax.php','fv-tc-delete_' . $comment->comment_ID)).'\'); return false">' . __('Delete Thread', 'fv_tc') . '</a>';
+        return '<a href="#" onclick="fv_tc_delete_thread('.$comment->comment_ID.'); return false">' . __('Delete Thread', 'fv_tc') . '</a>';
     }
 
     
@@ -365,7 +366,7 @@ class fv_tc extends fv_tc_Plugin {
      * @return string HTML of the anchor
      */
     function get_t_delete_thread_ban($comment) {
-        return '<a href="#" onclick="fv_tc_delete_thread_ban('.$comment->comment_ID.',\''.$this->esc_url( wp_nonce_url($this->url.'/ajax.php','fv-tc-approve_' . $comment->comment_ID)).'\',\''.$comment->comment_author_IP.'\'); return false">' . __('Delete Thread & Ban IP','fv_tc') . '</a>';
+        return '<a href="#" onclick="fv_tc_delete_thread_ban('.$comment->comment_ID.'); return false">' . __('Delete Thread & Ban IP','fv_tc') . '</a>';
     }
     
     
@@ -383,7 +384,7 @@ class fv_tc extends fv_tc_Plugin {
         else
             $frontend2 = 'false';
             
-        $out = '<a href="#" class="commenter-'.$user_ID.'-moderated" onclick="fv_tc_moderated('.$user_ID.',\''.$this->esc_url( wp_nonce_url($this->url.'/ajax.php','fv-tc-moderated_' . $comment->comment_ID)).'\'); return false">'; 
+        $out = '<a href="#" class="commenter-'.$user_ID.'-moderated" onclick="fv_tc_moderated('.$user_ID.'); return false">'; 
         if(!get_user_meta($user_ID,'fv_tc_moderated'))
             if($frontend)
                 $out .= _e('Allow user to comment without moderation','fv_tc') . '</a>';
@@ -529,7 +530,7 @@ class fv_tc extends fv_tc_Plugin {
         if($user_ID && ( (isset($post) && current_user_can('edit_post', $post->ID)) || (isset($user_info) && $user_info->wp_user_level > 5) ) ) {
             wp_enqueue_script('fv_tc',$this->url. '/js/fv_tc.js',array('jquery'), $this->strVersion);
             wp_localize_script('fv_tc', 'translations', $this->get_js_translations());
-
+            wp_localize_script('fv_tc', 'ajaxurl', admin_url('admin-ajax.php'));
         }
     }
     
@@ -923,10 +924,64 @@ class fv_tc extends fv_tc_Plugin {
 			}
 			return $comment_text;
 		}
+
+		function fv_tc_approve() {
+		    if(!wp_set_comment_status( $_REQUEST['id'], 'approve' ))
+		        die('db error');
+		}
+		
+
+		function fv_tc_delete() {
+		    //check_admin_referer('fv-tc-delete_' . $_GET['id']);
+		    if($_REQUEST['thread'] == 'yes') {
+		        fv_tc_delete_recursive($_REQUEST['id']);
+		    }
+		    else {
+		        if(!wp_delete_comment($_REQUEST['id']))
+		            die('db error');
+		    }       
+		    if(isset($_REQUEST['ban']) && stripos(trim(get_option('blacklist_keys')),$_REQUEST['ban'])===FALSE) {
+		        $blacklist_keys = trim(stripslashes(get_option('blacklist_keys')));      
+		        $blacklist_keys_update = $blacklist_keys."\n".$_REQUEST['ban'];
+		        update_option('blacklist_keys', $blacklist_keys_update);
+		    }
+		}
+
+		function fv_tc_moderated() {
+		    if(get_usermeta($_REQUEST['id'],'fv_tc_moderated')) {
+		       if(!delete_usermeta($_REQUEST['id'],'fv_tc_moderated'))
+		            die('meta error');
+		        echo 'user moderated';
+		    }
+		    else {
+		        if(!update_usermeta($_REQUEST['id'],'fv_tc_moderated','no'))
+		            die('meta error');
+		        echo 'user non-moderated';
+		    }
+		}
+
+		function fv_tc_delete_recursive($id) {
+		    global  $wpdb;  
+		    echo $id.' ';
+		    $comments = $wpdb->get_results("SELECT * FROM {$wpdb->comments} WHERE `comment_parent` ='{$id}'",ARRAY_A);
+		    if(strlen($wpdb->last_error)>0)
+		        die('db error');
+		    if(!wp_delete_comment($id))
+		        die('db error');             
+		    /*  If there are no more children */
+		    if(count($comments)==0)
+		        return;
+		    foreach($comments AS $comment) {
+		        fv_tc_delete_recursive($comment['comment_ID']);
+		    }
+		}
     
 }
 $fv_tc = new fv_tc;
 
+add_action( 'wp_ajax_fv_tc_approve', 'fv_tc_approve');
+add_action( 'wp_ajax_fv_tc_delete', 'fv_tc_delete' );
+add_action( 'wp_ajax_fv_tc_moderated', 'fv_tc_moderated' );
 
 /*
 Special for 'Custom Metadata Manager' plugin
