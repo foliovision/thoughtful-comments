@@ -49,6 +49,9 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 
 = 0.2.5 =
 * fix for unapproved commenter name in comment_author() template tag
+* fix for plugin admin JS failing on some sites (uses simple current_user_can moderate_comments check)
+* added support for translations
+* improved AJAX handling (uses admin-ajax)
 
 = 0.2.4. =
 * link directly to new comment in comment notifications
