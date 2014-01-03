@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Dev: some filters removed when above 200 comments & using custom wpautop in such cases - not anymore!
-Version: 0.2.5 rc 2
+Version: 0.2.5 rc 3
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -161,6 +161,21 @@ class fv_tc extends fv_tc_Plugin {
         }
         return $content;
     }
+    
+    
+    /**
+     * Remove the esc_html filter for admins so that the comment highlight is visible
+     * 
+     * @param string $contnet Comment author name
+     * 
+     * @return string Comment author name
+     */     
+    function comment_author_no_esc_html( $content ) {
+      if( current_user_can('manage_options') ) {
+        remove_filter( 'comment_author', 'esc_html' );
+      }
+      return $content;
+    }    
     
     
     /**
@@ -1038,6 +1053,9 @@ add_filter( 'comments_array', array( $fv_tc, 'users_cache' ) );
 /* Bring back children of deleted comments */
 add_action( 'transition_comment_status', array( $fv_tc, 'transition_comment_status' ), 1000, 3 );
 
+/* Admin's won't get the esc_html filter */
+add_filter( 'comment_author', array( $fv_tc, 'comment_author_no_esc_html' ), 0 );
+
 /*  Experimental stuff  */
 
 /* Override Wordpress Blacklisting */
@@ -1060,5 +1078,3 @@ add_action( 'admin_menu', array($fv_tc, 'admin_menu') );
 add_filter('comment_reply_link', array($fv_tc, 'comment_reply_links'));
 
 add_action('init', array($fv_tc, 'ap_action_init'));
-
-?>

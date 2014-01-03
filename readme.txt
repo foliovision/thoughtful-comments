@@ -47,6 +47,9 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 
 == Changelog ==
 
+= 0.2.5 =
+* fix for unapproved commenter name in comment_author() template tag
+
 = 0.2.4. =
 * link directly to new comment in comment notifications
 * added plugin options page with two options: Link shortening and Reply link
