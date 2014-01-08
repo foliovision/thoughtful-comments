@@ -293,9 +293,9 @@ class fv_tc extends fv_tc_Plugin {
                             $out .= _e('already banned!', 'fv_tc' );
 					}
 					/*  Moderation status   */
-					if($comment->user_id !=0 && $user_info->user_level < 3) {
+					if( $user_info && $user_info->user_level < 3) {
 							$out .= '<br />'.$this->get_t_moderated($comment->user_id);
-					} else if( $user_info->user_level >= 3 ) {
+					} else if( $user_info && $user_info->user_level >= 3 ) {
 							$out .= '<br /><abbr title="' . _e('Comments from this user level are automatically approved', 'fv_tc') . '">' . _e('Power user', 'fv_tc') . '</a>';
 					}
 					$out .= '</p>';
