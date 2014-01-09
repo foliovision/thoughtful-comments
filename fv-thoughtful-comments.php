@@ -992,9 +992,9 @@ class fv_tc extends fv_tc_Plugin {
 }
 $fv_tc = new fv_tc;
 
-add_action( 'wp_ajax_fv_tc_approve', 'fv_tc_approve');
-add_action( 'wp_ajax_fv_tc_delete', 'fv_tc_delete' );
-add_action( 'wp_ajax_fv_tc_moderated', 'fv_tc_moderated' );
+add_action( 'wp_ajax_fv_tc_approve', array( $fv_tc,'fv_tc_approve'));
+add_action( 'wp_ajax_fv_tc_delete', array( $fv_tc,'fv_tc_delete'));
+add_action( 'wp_ajax_fv_tc_moderated', array( $fv_tc,'fv_tc_moderated'));
 
 /*
 Special for 'Custom Metadata Manager' plugin
