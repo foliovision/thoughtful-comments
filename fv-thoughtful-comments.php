@@ -357,7 +357,7 @@ class fv_tc extends fv_tc_Plugin {
      * @return string HTML of the anchor
      */
     function get_t_delete_ban($comment) {
-        return '<a href="#" onclick="fv_tc_delete('.$comment->comment_ID.',\''.$this->esc_url( wp_nonce_url($this->url.'/ajax.php','fv-tc-delete_' . $comment->comment_ID)).'\',\''.$comment->comment_author_IP.'\'); return false">' . __('Delete & Ban IP', 'fv_tc') . '</a>';
+        return '<a href="#" onclick="fv_tc_delete_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Delete & Ban IP', 'fv_tc') . '</a>';
     }
     
     
@@ -381,7 +381,7 @@ class fv_tc extends fv_tc_Plugin {
      * @return string HTML of the anchor
      */
     function get_t_delete_thread_ban($comment) {
-        return '<a href="#" onclick="fv_tc_delete_thread_ban('.$comment->comment_ID.'); return false">' . __('Delete Thread & Ban IP','fv_tc') . '</a>';
+        return '<a href="#" onclick="fv_tc_delete_thread_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Delete Thread & Ban IP','fv_tc') . '</a>';
     }
     
     
@@ -947,15 +947,15 @@ class fv_tc extends fv_tc_Plugin {
 		function fv_tc_delete() {
 		    //check_admin_referer('fv-tc-delete_' . $_GET['id']);
 		    if($_REQUEST['thread'] == 'yes') {
-		        fv_tc_delete_recursive($_REQUEST['id']);
+		        $this->fv_tc_delete_recursive($_REQUEST['id']);
 		    }
 		    else {
 		        if(!wp_delete_comment($_REQUEST['id']))
 		            die('db error');
 		    }       
-		    if(isset($_REQUEST['ban']) && stripos(trim(get_option('blacklist_keys')),$_REQUEST['ban'])===FALSE) {
+		    if(isset($_REQUEST['ip']) && stripos(trim(get_option('blacklist_keys')),$_REQUEST['ip'])===FALSE) {
 		        $blacklist_keys = trim(stripslashes(get_option('blacklist_keys')));      
-		        $blacklist_keys_update = $blacklist_keys."\n".$_REQUEST['ban'];
+		        $blacklist_keys_update = $blacklist_keys."\n".$_REQUEST['ip'];
 		        update_option('blacklist_keys', $blacklist_keys_update);
 		    }
 		}
@@ -975,7 +975,7 @@ class fv_tc extends fv_tc_Plugin {
 
 		function fv_tc_delete_recursive($id) {
 		    global  $wpdb;  
-		    echo $id.' ';
+		    echo ' '.$id.' ';
 		    $comments = $wpdb->get_results("SELECT * FROM {$wpdb->comments} WHERE `comment_parent` ='{$id}'",ARRAY_A);
 		    if(strlen($wpdb->last_error)>0)
 		        die('db error');
@@ -985,16 +985,17 @@ class fv_tc extends fv_tc_Plugin {
 		    if(count($comments)==0)
 		        return;
 		    foreach($comments AS $comment) {
-		        fv_tc_delete_recursive($comment['comment_ID']);
+		        $this->fv_tc_delete_recursive($comment['comment_ID']);
 		    }
 		}
     
 }
 $fv_tc = new fv_tc;
 
-add_action( 'wp_ajax_fv_tc_approve', array( $fv_tc,'fv_tc_approve');
-add_action( 'wp_ajax_fv_tc_delete', array( $fv_tc,'fv_tc_delete');
-add_action( 'wp_ajax_fv_tc_moderated', array( $fv_tc,'fv_tc_moderated');
+add_action( 'wp_ajax_fv_tc_approve', array( $fv_tc,'fv_tc_approve'));
+add_action( 'wp_ajax_fv_tc_delete', array( $fv_tc,'fv_tc_delete'));
+add_action( 'wp_ajax_fv_tc_moderated', array( $fv_tc,'fv_tc_moderated'));
+
 
 /*
 Special for 'Custom Metadata Manager' plugin
