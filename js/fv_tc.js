@@ -40,7 +40,7 @@ function fv_tc_delete(id) {
 
 
 /*  delete comment and ban ip */
-function fv_tc_delete_ban_new(id,ip) {
+function fv_tc_delete_ban(id,ip) {
     if(confirm(translations.comment_delete_ban_ip)) {
         jQuery.ajax({
             type: 'POST',
@@ -92,7 +92,7 @@ function fv_tc_delete_thread(id) {
 
 
 /*  delete thread and ban */
-function fv_tc_delete_thread_ban(id) {
+function fv_tc_delete_thread_ban(id, ip) {
     if(confirm(translations.comment_delete_replies_ban_ip)) {
         jQuery.ajax({
             type: 'POST',
