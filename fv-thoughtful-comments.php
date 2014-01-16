@@ -542,8 +542,8 @@ class fv_tc extends fv_tc_Plugin {
     function scripts() {
         if( current_user_can('moderate_comments') ) {
             wp_enqueue_script('fv_tc',$this->url. '/js/fv_tc.js',array('jquery'), $this->strVersion);
-            wp_localize_script('fv_tc', 'translations', $this->get_js_translations());
-            wp_localize_script('fv_tc', 'ajaxurl', admin_url('admin-ajax.php'));
+            wp_localize_script('fv_tc', 'fv_tc_translations', $this->get_js_translations());
+            wp_localize_script('fv_tc', 'fv_tc_ajaxurl', admin_url('admin-ajax.php'));
         }
     }
     
@@ -574,7 +574,7 @@ class fv_tc extends fv_tc_Plugin {
             if($count!= 0) {
                 //return '<span class="tc_highlight"><abbr title="This post has '.$count.' unapproved comments">'.str_ireplace(' comm','/'.$count.'</abbr></span> comm',$content).'';
                 
-                $content = preg_replace( '~(\d+)~', '<span class="tc_highlight"><abbr title="' . printf( _n( 'This post has one unapproved comment.', 'This post has %d unapproved comments.', $count, 'fv_tc' ), $count ) . '">$1</abbr></span>', $content );
+                $content = preg_replace( '~(\d+)~', '<span class="tc_highlight"><abbr title="' . sprintf( _n( 'This post has one unapproved comment.', 'This post has %d unapproved comments.', $count, 'fv_tc' ), $count ) . '">$1</abbr></span>', $content );
                 return $content;
                 }
         }
@@ -946,10 +946,11 @@ class fv_tc extends fv_tc_Plugin {
 
 		function fv_tc_delete() {
 		    //check_admin_referer('fv-tc-delete_' . $_GET['id']);
-		    if($_REQUEST['thread'] == 'yes') {
-		        $this->fv_tc_delete_recursive($_REQUEST['id']);
-		    }
-		    else {
+            if (isset($_REQUEST['thread'])) {
+    		    if($_REQUEST['thread'] == 'yes') {
+    		        $this->fv_tc_delete_recursive($_REQUEST['id']);
+    		    } 
+            } else {
 		        if(!wp_delete_comment($_REQUEST['id']))
 		            die('db error');
 		    }       
