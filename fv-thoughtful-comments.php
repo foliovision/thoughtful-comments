@@ -113,7 +113,7 @@ class fv_tc extends fv_tc_Plugin {
             if($banned===FALSE)
                 $actions['delete_ban'] = $this->get_t_delete_ban($comment);
             else
-                $actions['delete_ban'] = '<a href="#">' . _e('Already banned!', 'fv_tc') . '</a>';
+                $actions['delete_ban'] = '<a href="#">' . __('Already banned!', 'fv_tc') . '</a>';
             if($child>0) {
               $actions['delete_thread'] = $this->get_t_delete_thread($comment);
               if($banned===FALSE)            
@@ -224,7 +224,7 @@ class fv_tc extends fv_tc_Plugin {
       );
 
       if ($options['reply_link']) {        
-         $noscript = '<noscript>' . _e('Reply link does not work in your browser because JavaScript is disabled.', 'fv_tc') . '<br /></noscript>';
+         $noscript = '<noscript>' . __('Reply link does not work in your browser because JavaScript is disabled.', 'fv_tc') . '<br /></noscript>';
          $link_script = preg_replace( '~href.*onclick~' , 'href="#" onclick' , $strLink );
          return $noscript .  $link_script;
       }
@@ -290,13 +290,13 @@ class fv_tc extends fv_tc_Plugin {
 									$out .= ' | '.$this->get_t_delete_thread_ban($comment);
 					} else {
 							$out .= 'IP '.$comment->comment_author_IP.' ';
-                            $out .= _e('already banned!', 'fv_tc' );
+                            $out .= __('already banned!', 'fv_tc' );
 					}
 					/*  Moderation status   */
 					if( $user_info && $user_info->user_level < 3) {
 							$out .= '<br />'.$this->get_t_moderated($comment->user_id);
 					} else if( $user_info && $user_info->user_level >= 3 ) {
-							$out .= '<br /><abbr title="' . _e('Comments from this user level are automatically approved', 'fv_tc') . '">' . _e('Power user', 'fv_tc') . '</a>';
+							$out .= '<br /><abbr title="' . __('Comments from this user level are automatically approved', 'fv_tc') . '">' . __('Power user', 'fv_tc') . '</a>';
 					}
 					$out .= '</p>';
 					$out .= '<span id="fv-tc-comment-'.$comment->comment_ID.'"></span>';   
@@ -402,14 +402,14 @@ class fv_tc extends fv_tc_Plugin {
         $out = '<a href="#" class="commenter-'.$user_ID.'-moderated" onclick="fv_tc_moderated('.$user_ID.'); return false">'; 
         if(!get_user_meta($user_ID,'fv_tc_moderated'))
             if($frontend)
-                $out .= _e('Allow user to comment without moderation','fv_tc') . '</a>';
+                $out .= __('Allow user to comment without moderation','fv_tc') . '</a>';
             else
-                $out .= _e('Moderated', 'fv_tc') . '</a>';
+                $out .= __('Moderated', 'fv_tc') . '</a>';
         else
             if($frontend)
-                $out .= _e('Moderate future comments by this user', 'fv_tc') . '</a>';
+                $out .= __('Moderate future comments by this user', 'fv_tc') . '</a>';
             else
-                $out .= _e('Unmoderated', 'fv_tc') . '</a>';
+                $out .= __('Unmoderated', 'fv_tc') . '</a>';
         return  $out;
     }    
 
@@ -751,7 +751,7 @@ class fv_tc extends fv_tc_Plugin {
       $match_domain = str_replace( '://www.', '://', $match_domain );
       preg_match( '!//(.+?)/!', $match_domain, $domain );
       //var_dump( $domain );
-      $link = $link[1].'<a href="'.esc_url($link[2]).'">' . _e('link to', 'fv_tc') . ' '.$domain[1].'</a><br />'.$link[3];
+      $link = $link[1].'<a href="'.esc_url($link[2]).'">' . __('link to', 'fv_tc') . ' '.$domain[1].'</a><br />'.$link[3];
       return $link;
     } 
     
@@ -771,7 +771,7 @@ class fv_tc extends fv_tc_Plugin {
         preg_match( '!//(.+?)/!', $text[1], $domain );
         if( $domain[1] ) {
           $domain[1] = preg_replace( '~^www\.~', '', $domain[1] );
-          $link[0] = str_replace( $text[1].'</a>', _e('link to', 'fv_tc') . ' '.$domain[1].'</a>', $link[0] );
+          $link[0] = str_replace( $text[1].'</a>', __('link to', 'fv_tc') . ' '.$domain[1].'</a>', $link[0] );
         }
       }
       return $link[0];
