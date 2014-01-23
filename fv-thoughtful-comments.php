@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Dev: some filters removed when above 200 comments & using custom wpautop in such cases - not anymore!
-Version: 0.2.5 rc 3
+Version: 0.2.5
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -48,7 +48,7 @@ class fv_tc extends fv_tc_Plugin {
      * Plugin version
      * @var string
      */
-    var $strVersion = '0.2.6';
+    var $strVersion = '0.2.5';
     
     /**
      * Class contructor. Sets all basic variables.
