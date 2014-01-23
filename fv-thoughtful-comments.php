@@ -2,7 +2,7 @@
 /*
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
-Description: Dev: some filters removed when above 200 comments & using custom wpautop in such cases - not anymore!
+Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin.
 Version: 0.2.5
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
