@@ -121,7 +121,7 @@ function fv_tc_delete_thread_ban(id, ip) {
 
 
 /*  manage user moderation  */
-function fv_tc_moderated(id) {
+function fv_tc_moderated(id, frontend) {
     jQuery.ajax({
             type: 'POST',
             url: fv_tc_ajaxurl,

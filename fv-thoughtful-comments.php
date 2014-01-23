@@ -399,7 +399,7 @@ class fv_tc extends fv_tc_Plugin {
         else
             $frontend2 = 'false';
             
-        $out = '<a href="#" class="commenter-'.$user_ID.'-moderated" onclick="fv_tc_moderated('.$user_ID.'); return false">'; 
+        $out = '<a href="#" class="commenter-'.$user_ID.'-moderated" onclick="fv_tc_moderated('.$user_ID.', '. $frontend2 .'); return false">'; 
         if(!get_user_meta($user_ID,'fv_tc_moderated'))
             if($frontend)
                 $out .= __('Allow user to comment without moderation','fv_tc') . '</a>';
@@ -962,13 +962,13 @@ class fv_tc extends fv_tc_Plugin {
 		}
 
 		function fv_tc_moderated() {
-		    if(get_usermeta($_REQUEST['id'],'fv_tc_moderated')) {
-		       if(!delete_usermeta($_REQUEST['id'],'fv_tc_moderated'))
+		    if(get_user_meta($_REQUEST['id'],'fv_tc_moderated')) {
+		       if(!delete_user_meta($_REQUEST['id'],'fv_tc_moderated'))
 		            die('meta error');
 		        echo 'user moderated';
 		    }
 		    else {
-		        if(!update_usermeta($_REQUEST['id'],'fv_tc_moderated','no'))
+		        if(!update_user_meta($_REQUEST['id'],'fv_tc_moderated','no'))
 		            die('meta error');
 		        echo 'user non-moderated';
 		    }
