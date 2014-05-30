@@ -3,7 +3,7 @@
 Contributors: FolioVision
 Tags: comments,moderation,frontend,unapproved
 Requires at least: 2.7
-Tested up to: 3.8
+Tested up to: 3.9.1
 Stable tag: trunk
 
 FV Thoughtful Comments adds advanced front end comment moderation and cool thread and user banning mechanisms to your Wordpress blog.
@@ -46,6 +46,9 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 3. Per-user moderation settings.
 
 == Changelog ==
+
+= 0.2.6 =
+* fix "Delete comment and Ban IP" button also report comment as spam if Akismet plugin is activated
 
 = 0.2.5 =
 * fix for unapproved commenter name in comment_author() template tag

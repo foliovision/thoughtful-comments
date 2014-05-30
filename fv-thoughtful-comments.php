@@ -2,8 +2,8 @@
 /*
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
-Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin.
-Version: 0.2.5
+Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
+Version: 0.2.6
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -30,7 +30,7 @@ The users cappable of moderate_comments are getting all of these features and ar
 /**
  * @package foliovision-tc
  * @author Foliovision <programming@foliovision.com>
- * version 0.2.5
+ * version 0.2.6
  */  
 
 include( 'fp-api.php' );
@@ -48,7 +48,7 @@ class fv_tc extends fv_tc_Plugin {
      * Plugin version
      * @var string
      */
-    var $strVersion = '0.2.5';
+    var $strVersion = '0.2.6';
     
     /**
      * Class contructor. Sets all basic variables.
@@ -945,20 +945,32 @@ class fv_tc extends fv_tc_Plugin {
 		
 
 		function fv_tc_delete() {
-		    //check_admin_referer('fv-tc-delete_' . $_GET['id']);
-            if (isset($_REQUEST['thread'])) {
-    		    if($_REQUEST['thread'] == 'yes') {
-    		        $this->fv_tc_delete_recursive($_REQUEST['id']);
-    		    } 
-            } else {
-		        if(!wp_delete_comment($_REQUEST['id']))
-		            die('db error');
-		    }       
+		    global $wpdb;
+
 		    if(isset($_REQUEST['ip']) && stripos(trim(get_option('blacklist_keys')),$_REQUEST['ip'])===FALSE) {
-		        $blacklist_keys = trim(stripslashes(get_option('blacklist_keys')));      
-		        $blacklist_keys_update = $blacklist_keys."\n".$_REQUEST['ip'];
-		        update_option('blacklist_keys', $blacklist_keys_update);
+			    
+			    $objComment = get_comment( $_REQUEST['id'] );
+			    $commentStatus = $objComment->comment_approved;
+			    $blacklist_keys = trim(stripslashes(get_option('blacklist_keys')));      
+			    $blacklist_keys_update = $blacklist_keys."\n".$_REQUEST['ip'];
+			    update_option('blacklist_keys', $blacklist_keys_update);
+
+			    $wpdb->update( 'wp_comments', array( 'comment_approved' => 'spam' ), array( 'comment_ID' => intval($_REQUEST['id']) ) );
+			    do_action('transition_comment_status','spam','unapproved', $objComment );
+			    $wpdb->update( 'wp_comments', array( 'comment_approved' => $commentStatus ), array( 'comment_ID' => intval($_REQUEST['id']) ) );
 		    }
+
+			//check_admin_referer('fv-tc-delete_' . $_GET['id']);
+		    if (isset($_REQUEST['thread'])) {
+			    if($_REQUEST['thread'] == 'yes') {
+				$this->fv_tc_delete_recursive($_REQUEST['id']);
+			    } 
+		    }
+		    else {
+			if(!wp_delete_comment($_REQUEST['id']))
+			    die('db error');
+		    }       
+
 		}
 
 		function fv_tc_moderated() {
