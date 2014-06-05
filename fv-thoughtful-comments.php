@@ -1003,7 +1003,7 @@ class fv_tc extends fv_tc_Plugin {
 		}
 
 		function get_comment_link( $link ) {
-				$link = str_replace( '/comment-page-1', '/', $link );	//	todo: make this an option, I guess!
+				$link = str_replace( '/comment-page-1', '', $link );	//	todo: make this an option, I guess!
 				return $link;
 		}
     
