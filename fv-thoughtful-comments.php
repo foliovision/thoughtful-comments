@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.2.6.1
+Version: 0.2.6.2
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -48,7 +48,7 @@ class fv_tc extends fv_tc_Plugin {
      * Plugin version
      * @var string
      */
-    var $strVersion = '0.2.6.1';
+    var $strVersion = '0.2.6.2';
     
     /**
      * Class contructor. Sets all basic variables.
@@ -1007,6 +1007,15 @@ class fv_tc extends fv_tc_Plugin {
 				return $link;
 		}
     
+		function get_comments_pagenum_link( $link ) {
+        if ( 'newest' == get_option('default_comments_page') ) {
+          //  todo: how do we get the maximum page number?
+        } else {
+          $link = str_replace( '/comment-page-1', '', $link );	//	todo: make this an option, I guess!
+        }
+				return $link;
+		}    
+    
 }
 $fv_tc = new fv_tc;
 
@@ -1097,3 +1106,5 @@ add_filter('comment_reply_link', array($fv_tc, 'comment_reply_links'));
 add_action('init', array($fv_tc, 'ap_action_init'));
 
 add_filter('get_comment_link', array($fv_tc, 'get_comment_link'));
+add_filter('get_comments_pagenum_link', array($fv_tc, 'get_comments_pagenum_link'));  //  todo: test!
+add_filter('paginate_links', array($fv_tc, 'get_comments_pagenum_link'));
