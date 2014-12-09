@@ -709,15 +709,6 @@ class fv_tc extends fv_tc_Plugin {
         return $message_headers;
     }
     
-    function fv_thoughftul_comments_plugin_action_links($links, $file) {
-      $plugin_file = basename(__FILE__);
-      if (basename($file) == $plugin_file) {
-        $settings_link =  '<a href="'.site_url('wp-admin/options-general.php?page=manage_fv_thoughtful_comments').'">'.__('Settings','fv_tc').'</a>';
-        array_unshift($links, $settings_link);
-      }
-  	return $links;
-    }
-    
     function comment_moderation_text( $notify_message ) {
         $options = get_option('thoughtful_comments');
         if( $options['enhance_notify'] == false && isset( $options['enhance_notify'] ) ) return $notify_message;        
@@ -1012,7 +1003,7 @@ class fv_tc extends fv_tc_Plugin {
 		}
 
 		function get_comment_link( $link ) {
-				$link = str_replace( '/comment-page-1', '', $link );	//	todo: make this an option, I guess!
+				$link = preg_replace( '~/comment-page-1[$/]~', '', $link );	//	todo: make this an option, I guess!
 				return $link;
 		}
     
@@ -1020,7 +1011,7 @@ class fv_tc extends fv_tc_Plugin {
         if ( 'newest' == get_option('default_comments_page') ) {
           //  todo: how do we get the maximum page number?
         } else {
-          $link = str_replace( '/comment-page-1', '', $link );	//	todo: make this an option, I guess!
+          $link = preg_replace( '~/comment-page-1[$/]~', '', $link );	//	todo: make this an option, I guess!
         }
 				return $link;
 		}    
@@ -1098,8 +1089,6 @@ add_filter( 'comment_author', array( $fv_tc, 'comment_author_no_esc_html' ), 0 )
 
 endif;
 
-/*Add link to Settings for FV Thoughtful Comments plugin*/
-add_filter('plugin_action_links',array( $fv_tc, 'fv_thoughftul_comments_plugin_action_links'), 10, 2);
 add_filter( 'comment_moderation_headers', array( $fv_tc, 'comment_moderation_headers' ) ); 
 
 add_filter( 'comment_moderation_text', array( $fv_tc, 'comment_moderation_text' ) );
