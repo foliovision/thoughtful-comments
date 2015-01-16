@@ -22,11 +22,11 @@ Thoughtful Comments is entirely stable and active on some of the most heavily co
 
 While Automattic has a horse in the ring (Intense Debate), we'd really like to see Thoughtful Comments included in core.
 
-Features:
+###Features:
 
-**Front-end comment moderation**
-**Unapproved comments shown in front-end**
-**Per-user moderation settings**
+* Front-end comment moderation
+* Unapproved comments shown in front-end
+* Per-user moderation settings
 
 All of these features apply to logged in editors and administrators only!
 
