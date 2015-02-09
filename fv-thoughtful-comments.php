@@ -308,11 +308,11 @@ class fv_tc extends fv_tc_Plugin {
 
     function get_js_translations() {
         $aStrings = Array(
-            'comment_delete' => __('Do you really want to delete this comment?', 'fv_tc'),
+            'comment_delete' => __('Do you really want to trash this comment?', 'fv_tc'),
             'delete_error' => __('Error deleting comment', 'fv_tc'),
-            'comment_delete_ban_ip' => __('Do you really want to delete this comment and ban the IP?', 'fv_tc'),
-            'comment_delete_replies' => __('Do you really want to delete this comment and all the replies?', 'fv_tc'),
-            'comment_delete_replies_ban_ip' => __('Do you really want to delete this comment with all the replies and ban the IP?', 'fv_tc'),
+            'comment_delete_ban_ip' => __('Do you really want to trash this comment and ban the IP?', 'fv_tc'),
+            'comment_delete_replies' => __('Do you really want to trash this comment and all the replies?', 'fv_tc'),
+            'comment_delete_replies_ban_ip' => __('Do you really want to trash this comment with all the replies and ban the IP?', 'fv_tc'),
             'moderate_future' => __('Moderate future comments by this user','fv_tc'),
             'unmoderate' => __('Unmoderated','fv_tc'),
             'without_moderation' => __('Allow user to comment without moderation','fv_tc'),
@@ -345,7 +345,7 @@ class fv_tc extends fv_tc_Plugin {
      * @return string HTML of the anchor
      */
     function get_t_delete($comment) {
-        return '<a href="#" onclick="fv_tc_delete('.$comment->comment_ID.'); return false">' . __('Delete', 'fv_tc') . '</a>';
+        return '<a href="#" onclick="fv_tc_delete('.$comment->comment_ID.'); return false">' . __('Trash', 'fv_tc') . '</a>';
     }
     
     
@@ -357,7 +357,7 @@ class fv_tc extends fv_tc_Plugin {
      * @return string HTML of the anchor
      */
     function get_t_delete_ban($comment) {
-        return '<a href="#" onclick="fv_tc_delete_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Delete & Ban IP', 'fv_tc') . '</a>';
+        return '<a href="#" onclick="fv_tc_delete_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Trash & Ban IP', 'fv_tc') . '</a>';
     }
     
     
@@ -369,7 +369,7 @@ class fv_tc extends fv_tc_Plugin {
      * @return string HTML of the anchor
      */
     function get_t_delete_thread($comment) {
-        return '<a href="#" onclick="fv_tc_delete_thread('.$comment->comment_ID.'); return false">' . __('Delete Thread', 'fv_tc') . '</a>';
+        return '<a href="#" onclick="fv_tc_delete_thread('.$comment->comment_ID.'); return false">' . __('Trash Thread', 'fv_tc') . '</a>';
     }
 
     
@@ -381,7 +381,7 @@ class fv_tc extends fv_tc_Plugin {
      * @return string HTML of the anchor
      */
     function get_t_delete_thread_ban($comment) {
-        return '<a href="#" onclick="fv_tc_delete_thread_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Delete Thread & Ban IP','fv_tc') . '</a>';
+        return '<a href="#" onclick="fv_tc_delete_thread_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Trash Thread & Ban IP','fv_tc') . '</a>';
     }
     
     
