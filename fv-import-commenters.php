@@ -57,7 +57,7 @@ class FVTC_Import_Commenters {
    * echo json encoded counts of added or linked commenters and result
    */
   function fv_refresh_comments_import_callback(){
-    $number = 2;
+    $number = 20;
     
     $aArgs = array( 'status' => 'approve', 'user_id' => 0, 'number' => $number );
     $comments = get_comments( $aArgs );
@@ -83,9 +83,9 @@ class FVTC_Import_Commenters {
    * return count of anonymous comments
    * */
   function fv_return_anonymous_comment_count(){
-    global $wpdb;
+    $aArgs = array( 'status' => 'approve', 'user_id' => 0, 'count' => true );
+    $count = get_comments( $aArgs );
     
-    $count = $wpdb->get_var("SELECT count(*) FROM {$wpdb->prefix}comments WHERE user_id = 0 AND comment_approved = 1");
     return $count;
   }
 
@@ -98,8 +98,8 @@ class FVTC_Import_Commenters {
       'user_id' => $iUserID
     );
     $aWhere = array(
-      'comment_author_email' => $objComment->comment_author_email,
-      'user_id' => 0
+      'comment_ID' => $objComment->comment_ID,
+      'comment_author_email' => $objComment->comment_author_email
     );
     $wpdb->update(
       $wpdb->comments,
@@ -165,6 +165,7 @@ class FVTC_Import_Commenters {
       'user_id' => $user_id
     );
     $aWhere = array(
+      'comment_ID' => $objComment->comment_ID,
       'comment_author_email' => $objComment->comment_author_email
     );
     $wpdb->update(
@@ -172,6 +173,8 @@ class FVTC_Import_Commenters {
       $aComment,
       $aWhere
     );
+    
+    $res = add_comment_meta( $objComment->comment_ID, 'fv_user_imported', 'automatically linked comment to user ' . $user_id , true );
     
     if( isset($this->options['commenter_importing_welcome_email']) && $this->options['commenter_importing_welcome_email'] ){
       $this->fv_send_mail_invite( $g_login, $strGeneratedPW, $objComment->comment_author_email, $sFirstName, $sLastName );
@@ -195,7 +198,7 @@ class FVTC_Import_Commenters {
     $content = str_replace( '%sitename%', get_bloginfo('name'), $content );
     $content = str_replace( '%login_page%', site_url('site/wp-login.php'), $content );
     
-    
+    //TESTING!!
     file_put_contents('./mails.txt', date('r'). "\n" . $sEmail . "\n". $subject ."\n". $content . "\n" . "------------------\n", FILE_APPEND);
     //wp_mail( $sEmail, $subject, $content );
   }

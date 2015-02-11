@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.2.7
+Version: 0.2.6.3
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -70,20 +70,20 @@ class fv_tc extends fv_tc_Plugin {
     function activate() {
         if( !get_option('thoughtful_comments') )
           update_option( 'thoughtful_comments', array( 'shorten_urls' => true, 'reply_link' => false ) );
-        if( !get_option('thoughtful_comments') ){
+        if( !get_option('thoughtful_comments_import_commenters') ){
           $thoughtful_comments_import_commenters = array(
-'commenter_importing' => 0
-'commenter_importing_welcome_email' => 0
-'commenter_importing_welcome_email_subject' => "%sitename%: Welcome %firstname%"
-'commenter_importing_welcome_email_content' => "<p>Hi %firstname%</p>
-<p>Thanks for your comment on %sitename%.</p>
+'commenter_importing' => 0,
+'commenter_importing_welcome_email' => 0,
+'commenter_importing_welcome_email_subject' => "%sitename%: Welcome %firstname%",
+'commenter_importing_welcome_email_content' => "Hi %firstname%,
+Thanks for your comment on %sitename%.
 
-<p>We created an account for you. You can log in on %login_page% with following credentials:<br/>
-LOGIN: %login%<br/>
-PASSWORD: %password%</p>
+We created an account for you. You can log in on %login_page% with following credentials:
+LOGIN: %login%
+PASSWORD: %password%
 
-<p>Thanks,</br>
-%sitename%</p>"
+Thanks,
+%sitename%"
                                                         );
           update_option( 'thoughtful_comments_import_commenters', $thoughtful_comments_import_commenters );
         }
@@ -593,7 +593,7 @@ PASSWORD: %password%</p>
                                 <tr valign="top">
                                     <th scope="row"><?php _e('Welcome email content', 'fv_tc'); ?> </th> 
                                     <td>
-                                      <textarea id="commenter_importing_welcome_email_content" name="commenter_importing_welcome_email_content" class="large-text code"><?php echo trim(stripslashes($options_ic['commenter_importing_welcome_email_content'])); ?></textarea>
+                                      <textarea rows="10" id="commenter_importing_welcome_email_content" name="commenter_importing_welcome_email_content" class="large-text code"><?php echo trim(stripslashes($options_ic['commenter_importing_welcome_email_content'])); ?></textarea>
                                       <br/>
                                       <small>Available tags: %login%, %password%, %firstname%, %lastname%, %sitename%, %login_page%</small>
                                     </td>
