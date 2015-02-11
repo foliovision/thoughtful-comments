@@ -48,6 +48,7 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 == Changelog ==
 
 = 0.2.7 =
+* added commenters importer functions
 * removing comment-page-1 from comment links as it's not needed http://www.blindfiveyearold.com/wordpress-duplicate-content
 
 = 0.2.6 =
