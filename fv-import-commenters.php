@@ -4,6 +4,7 @@ class FVTC_Import_Commenters {
 
   var $options;
   var $result;
+  var $batch = false;
 
   function __construct() {
     $this->options = get_option('thoughtful_comments_import_commenters');
@@ -57,6 +58,7 @@ class FVTC_Import_Commenters {
    * echo json encoded counts of added or linked commenters and result
    */
   function fv_refresh_comments_import_callback(){
+    $this->batch = true;
     $number = 20;
     
     $aArgs = array( 'status' => 'approve', 'user_id' => 0, 'number' => $number );
@@ -82,7 +84,7 @@ class FVTC_Import_Commenters {
   /* @int
    * return count of anonymous comments
    * */
-  function fv_return_anonymous_comment_count(){
+  function fv_get_anonymous_comment_count(){
     $aArgs = array( 'status' => 'approve', 'user_id' => 0, 'count' => true );
     $count = get_comments( $aArgs );
     
@@ -176,16 +178,23 @@ class FVTC_Import_Commenters {
     
     $res = add_comment_meta( $objComment->comment_ID, 'fv_user_imported', 'automatically linked comment to user ' . $user_id , true );
     
-    if( isset($this->options['commenter_importing_welcome_email']) && $this->options['commenter_importing_welcome_email'] ){
+    $send_welcome_email = ( isset($this->options['commenter_importing_welcome_email']) && $this->options['commenter_importing_welcome_email'] ) ? true : false;    
+    //checkin only for ajax batch importing: "Crawl all existing comments"
+    if( $send_welcome_email && $this->batch ){
+      $aArgs = array( 'status' => 'approve', 'author_email' => $objComment->comment_author_email, 'count' => true );
+      $iCommentsCount = get_comments( $aArgs );
+      //less comment than minimal count, don't send welcome email
+      if( isset($this->options['commenter_importing_welcome_email_count']) && intval($this->options['commenter_importing_welcome_email_count']) > $iCommentsCount ){
+        $send_welcome_email = false;
+      }
+    }
+    
+    if( $send_welcome_email ){
       $this->fv_send_mail_invite( $g_login, $strGeneratedPW, $objComment->comment_author_email, $sFirstName, $sLastName );
     }
   }
   
   private function fv_send_mail_invite( $sLogin, $sPassword , $sEmail, $sFirstName, $sLastName ){
-    $options = get_option('thoughtful_comments_import_commenters');
-    
-    
-    //$subject = get_option('fv_tttt');
     $subject = $this->options['commenter_importing_welcome_email_subject'];
     $subject = str_replace( '%sitename%', get_bloginfo('name'), $subject );
     $subject = str_replace( '%firstname%', $sFirstName, $subject );
@@ -199,7 +208,7 @@ class FVTC_Import_Commenters {
     $content = str_replace( '%login_page%', site_url('site/wp-login.php'), $content );
     
     //TESTING!!
-    file_put_contents('./mails.txt', date('r'). "\n" . $sEmail . "\n". $subject ."\n". $content . "\n" . "------------------\n", FILE_APPEND);
+    file_put_contents( dirname(__FILE__).'/mails.txt', date('r'). "\n" . $sEmail . "\n". $subject ."\n". $content . "\n" . "------------------\n", FILE_APPEND);
     //wp_mail( $sEmail, $subject, $content );
   }
 

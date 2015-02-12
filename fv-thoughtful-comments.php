@@ -74,6 +74,7 @@ class fv_tc extends fv_tc_Plugin {
           $thoughtful_comments_import_commenters = array(
 'commenter_importing' => 0,
 'commenter_importing_welcome_email' => 0,
+'commenter_importing_welcome_email_count' => 3,
 'commenter_importing_welcome_email_subject' => "%sitename%: Welcome %firstname%",
 'commenter_importing_welcome_email_content' => "Hi %firstname%,
 Thanks for your comment on %sitename%.
@@ -101,10 +102,10 @@ Thanks,
       Simple text field  which is sanitized to fit into YYYY-MM-DD and only >= editors are able to edit it for themselves
       */
       x_add_metadata_field( 'fv_tc_moderated', 'user', array(
-      	'field_type' => 'text',
-      	'label' => 'Moderation queue',	
-      	'display_column' => true,
-      	'display_column_callback' => 'fv_tc_x_add_metadata_field'
+        'field_type' => 'text',
+        'label' => 'Moderation queue',  
+        'display_column' => true,
+        'display_column_callback' => 'fv_tc_x_add_metadata_field'
         )
       );
     }
@@ -283,10 +284,10 @@ Thanks,
     * @return string Comment text with added features. 
     */
     function frontend ($content) {
-    		if( is_admin() ) {
-    			return $content;
-    		}
-    		
+        if( is_admin() ) {
+          return $content;
+        }
+        
         global  $user_ID, $comment, $post;
 
 
@@ -294,41 +295,41 @@ Thanks,
         if( current_user_can('manage_options') ) { 
           $child = $this->comment_has_child($comment->comment_ID, $comment->comment_post_ID);
           /*  Container   */
-        	$out = '<p class="tc-frontend">';
-        	/* Approve comment */
-        	if($comment->comment_approved == '0') {
+          $out = '<p class="tc-frontend">';
+          /* Approve comment */
+          if($comment->comment_approved == '0') {
             $out .= '<span id="comment-'.$comment->comment_ID.'-approve">'.$this->get_t_approve($comment).' | </span>';
           }
-					/*  Delete comment  */
-					$out .= $this->get_t_delete($comment).' | ';
-					/*  Delete thread   */
-					if($child>0) {
-						$out .= $this->get_t_delete_thread($comment).' | ';
-					}
-					/*  If IP isn't banned  */
-					if(stripos(trim(get_option('blacklist_keys')),$comment->comment_author_IP)===FALSE) {
-							/*  Delete and ban  */
-							$out .= $this->get_t_delete_ban($comment);//.' | ';
-							/*  Delete thread and ban   */
-							if($child>0)
-									$out .= ' | '.$this->get_t_delete_thread_ban($comment);
-					} else {
-							$out .= 'IP '.$comment->comment_author_IP.' ';
+          /*  Delete comment  */
+          $out .= $this->get_t_delete($comment).' | ';
+          /*  Delete thread   */
+          if($child>0) {
+            $out .= $this->get_t_delete_thread($comment).' | ';
+          }
+          /*  If IP isn't banned  */
+          if(stripos(trim(get_option('blacklist_keys')),$comment->comment_author_IP)===FALSE) {
+              /*  Delete and ban  */
+              $out .= $this->get_t_delete_ban($comment);//.' | ';
+              /*  Delete thread and ban   */
+              if($child>0)
+                  $out .= ' | '.$this->get_t_delete_thread_ban($comment);
+          } else {
+              $out .= 'IP '.$comment->comment_author_IP.' ';
                             $out .= __('already banned!', 'fv_tc' );
-					}
-					/*  Moderation status   */
+          }
+          /*  Moderation status   */
           $user_info = ( isset($comment->user_id) ) ? get_userdata($comment->user_id) : false;
-					if( $user_info && $user_info->user_level < 3) {
-							$out .= '<br />'.$this->get_t_moderated($comment->user_id);
-					} else if( $user_info && $user_info->user_level >= 3 ) {
-							$out .= '<br /><abbr title="' . __('Comments from this user level are automatically approved', 'fv_tc') . '">' . __('Power user', 'fv_tc') . '</a>';
-					}
-					$out .= '</p>';
-					$out .= '<span id="fv-tc-comment-'.$comment->comment_ID.'"></span>';   
+          if( $user_info && $user_info->user_level < 3) {
+              $out .= '<br />'.$this->get_t_moderated($comment->user_id);
+          } else if( $user_info && $user_info->user_level >= 3 ) {
+              $out .= '<br /><abbr title="' . __('Comments from this user level are automatically approved', 'fv_tc') . '">' . __('Power user', 'fv_tc') . '</a>';
+          }
+          $out .= '</p>';
+          $out .= '<span id="fv-tc-comment-'.$comment->comment_ID.'"></span>';   
 
-        	return $content . $out;	
-				}
-				return $content;
+          return $content . $out;  
+        }
+        return $content;
     }
 
     function get_js_translations() {
@@ -490,6 +491,7 @@ Thanks,
             $options_ic = array(
                 'commenter_importing' => ( isset($_POST['commenter_importing']) && $_POST['commenter_importing'] ) ? true : false,            
                 'commenter_importing_welcome_email' => ( isset($_POST['commenter_importing_welcome_email']) && $_POST['commenter_importing_welcome_email'] ) ? true : false,
+                'commenter_importing_welcome_email_count' => ( isset($_POST['commenter_importing_welcome_email_count']) && intval($_POST['commenter_importing_welcome_email_count']) ) ? intval($_POST['commenter_importing_welcome_email_count']) : 1,
                 'commenter_importing_welcome_email_subject' => ( isset($_POST['commenter_importing_welcome_email_subject']) && !empty($_POST['commenter_importing_welcome_email_subject']) ) ? $_POST['commenter_importing_welcome_email_subject'] : false,
                 'commenter_importing_welcome_email_content' => ( isset($_POST['commenter_importing_welcome_email_content']) && !empty($_POST['commenter_importing_welcome_email_content']) ) ? $_POST['commenter_importing_welcome_email_content'] : false
             );
@@ -583,6 +585,14 @@ Thanks,
                                     </td>
                                 </tr>
                                 <tr valign="top">
+                                    <th scope="row"><?php _e('Comment count', 'fv_tc'); ?> </th> 
+                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Comment count', 'fv_tc'); ?></span></legend>                              
+                                    <input type="text" name="commenter_importing_welcome_email_count" value="<?php if( isset($options_ic['commenter_importing_welcome_email_count']) && intval($options_ic['commenter_importing_welcome_email_count']) ) echo $options_ic['commenter_importing_welcome_email_count']; ?>" /><br/>                                     
+                                    <span><?php _e('Minimal comment count for sending welcome email to user.
+                                    <br/>This setting will be applied only on <i>Crawl all existing comments</i> import.', 'fv_tc'); ?></span><br />
+                                    </td>
+                                </tr>
+                                <tr valign="top">
                                     <th scope="row"><?php _e('Welcome email subject', 'fv_tc'); ?> </th> 
                                     <td>
                                       <input type="text" id="commenter_importing_welcome_email_subject" name="commenter_importing_welcome_email_subject" class="large-text code" value="<?php echo trim(stripslashes($options_ic['commenter_importing_welcome_email_subject'])); ?>" />
@@ -608,9 +618,9 @@ Thanks,
                                       <?php _e('Total anonymous comments in database: ', 'fv_tc'); ?>
                                       <?php
                                         global $fvtc_import_commenters;
-                                        echo '<strong>' . $fvtc_import_commenters->fv_return_anonymous_comment_count() . '</strong>';
+                                        echo '<strong>' . $fvtc_import_commenters->fv_get_anonymous_comment_count() . '</strong>';
                                       ?><br />
-                                    <div id="referesh-result" style="display:none">
+                                    <div id="refresh-result" style="display:none">
                                       
                                       <table>
                                         <tr>
@@ -645,10 +655,10 @@ Thanks,
         </div>
         
         <style>
-          #referesh-result{
+          #refresh-result{
             margin-top: 20px;
           }
-          #referesh-result td{
+          #refresh-resultt td{
             padding: 5px;
             border: solid 1px #ccc;
           }
@@ -660,7 +670,7 @@ Thanks,
           function fvtc_import_all_commenters(){
             jQuery('#commenter_importing_refresh').attr('disabled',true);
             jQuery('#commenter_importing_refresh_stop').attr('disabled',false);
-            jQuery('#referesh-result').show();
+            jQuery('#refresh-result').show();
             
             var data = { 'action': 'refresh_comments_import' };
             process = true;
@@ -749,9 +759,9 @@ Thanks,
      * Styling for the plugin
      */
     function styles() {
-    		global $post;
-    		//	this is executed in the header, so we can't do the check for every post on index/archive pages, so we better load styles if there are any unapproved comments to show. it's loaded even for contributors which don't need it.
-    		if(!is_admin() && current_user_can('edit_posts')) {
+        global $post;
+        //  this is executed in the header, so we can't do the check for every post on index/archive pages, so we better load styles if there are any unapproved comments to show. it's loaded even for contributors which don't need it.
+        if(!is_admin() && current_user_can('edit_posts')) {
           echo '<link rel="stylesheet" href="'.$this->url.'/css/frontend.css" type="text/css" media="screen" />'; 
         }
     }        
@@ -817,10 +827,10 @@ Thanks,
         global  $post;
             
         /*if( count($comments) > 200 ) {
-					remove_filter( 'comment_text', 'wptexturize'            );
-					remove_filter( 'comment_text', 'convert_smilies',    20 );
-					remove_filter( 'comment_text', 'wpautop',            30 );        
-					add_filter( 'comment_text', array( $this, 'wpautop_lite' ),            30 );					
+          remove_filter( 'comment_text', 'wptexturize'            );
+          remove_filter( 'comment_text', 'convert_smilies',    20 );
+          remove_filter( 'comment_text', 'wpautop',            30 );        
+          add_filter( 'comment_text', array( $this, 'wpautop_lite' ),            30 );          
         }*/
         
         /*  Check user permissions */
@@ -974,210 +984,210 @@ Thanks,
     }
     
     
-		function users_cache( $comments ) {
-			global $wpdb;
-			
-			if( $comments !== NULL && count( $comments ) > 0 ) {
-		
-				$all_IDs = array();
-				foreach( $comments AS $comment ) {
-					$all_IDs[] = $comment->user_id;
-				}      
-		
-				$all_IDs = array_unique( $all_IDs );
-				$all_IDs_string = implode (',', $all_IDs );
-		
-				$all_IDs_users = $wpdb->get_results( "SELECT * FROM `{$wpdb->users}` WHERE ID IN ({$all_IDs_string}) " );
-				$all_IDs_meta = $wpdb->get_results( "SELECT * FROM `{$wpdb->usermeta}` WHERE user_id IN ({$all_IDs_string}) ORDER BY user_id " );
-				//echo '<!--meta'.var_export( $all_IDs_meta, true ).'-->';
-				
-				$meta_cache = array();
-				foreach( $all_IDs_meta AS $all_IDs_meta_item ) {
-					$meta_cache[$all_IDs_meta_item->user_id][] = $all_IDs_meta_item;
-				}
-		
-				foreach( $all_IDs_users AS $all_IDs_users_item ) {
-					foreach( $meta_cache[$all_IDs_users_item->ID] AS $meta ) {
-						$value = maybe_unserialize($meta->meta_value);
-						// Keys used as object vars cannot have dashes.
-						$key = str_replace('-', '', $meta->meta_key);
-						$all_IDs_users_item->{$key} = $value;          
-					}
-					
-					wp_cache_set( $all_IDs_users_item->ID, $all_IDs_users_item, 'users' );
-					wp_cache_add( $all_IDs_users_item->user_login, $all_IDs_users_item->ID, 'userlogins');
-					wp_cache_add( $all_IDs_users_item->user_email, $all_IDs_users_item->ID, 'useremail');
-					wp_cache_add( $all_IDs_users_item->user_nicename, $all_IDs_users_item->ID, 'userslugs');        
-				}
-				
-				$column = esc_sql( 'user_id');
-				$cache_key = 'user_meta';    
-				if ( !empty($all_IDs_meta) ) {
-					foreach ( $all_IDs_meta as $metarow) {
-						$mpid = intval($metarow->{$column});
-						$mkey = $metarow->meta_key;
-						$mval = $metarow->meta_value;
-			
-						// Force subkeys to be array type:
-						if ( !isset($cache[$mpid]) || !is_array($cache[$mpid]) )
-							$cache[$mpid] = array();
-						if ( !isset($cache[$mpid][$mkey]) || !is_array($cache[$mpid][$mkey]) )
-							$cache[$mpid][$mkey] = array();
-			
-						// Add a value to the current pid/key:
-						$cache[$mpid][$mkey][] = $mval;
-					}
-				}
-			
-				foreach ( $all_IDs as $id ) {
-					if ( ! isset($cache[$id]) )
-						$cache[$id] = array();
-					wp_cache_add( $id, $cache[$id], $cache_key );
-				}    
-				
-			}
-			return $comments;
-		}
-	
-				
-		function mysql2date_lite($dateformatstring, $mysqlstring, $use_b2configmonthsdays = 1) {
-			global $month, $weekday;
-			$m = $mysqlstring;
-			if (empty($m)) {
-				return false;
-			}
-			$i = mktime(substr($m,11,2),substr($m,14,2),substr($m,17,2),substr($m,5,2),substr($m,8,2),substr($m,0,4)); 
-			if (!empty($month) && !empty($weekday) && $use_b2configmonthsdays) {
-				$datemonth = $month[date('m', $i)];
-				$dateweekday = $weekday[date('w', $i)];
-				$dateformatstring = ' '.$dateformatstring;
-				$dateformatstring = preg_replace("/([^\\\])D/", "\\1".backslashit(substr($dateweekday, 0, 3)), $dateformatstring);
-				$dateformatstring = preg_replace("/([^\\\])F/", "\\1".backslashit($datemonth), $dateformatstring);
-				$dateformatstring = preg_replace("/([^\\\])l/", "\\1".backslashit($dateweekday), $dateformatstring);
-				$dateformatstring = preg_replace("/([^\\\])M/", "\\1".backslashit(substr($datemonth, 0, 3)), $dateformatstring);
-				$dateformatstring = substr($dateformatstring, 1, strlen($dateformatstring)-1);
-			}
-			$j = @date($dateformatstring, $i);
-			if (!$j) {
-			// for debug purposes
-			//	echo $i." ".$mysqlstring;
-			}
-			return $j;
-		}		
-				
-		
-		function wpautop_lite( $comment_text ) {
-			if( stripos($comment_text,'<p') === false ) {
-				//$aParagraphs = explode( "\n", $comment_text );
-							
-				$pee = $comment_text;
-				$br = 1;
-				
-				/*
-				Taken from WP 1.0.1-miles
-				*/
-				$pee = $pee . "\n"; // just to make things a little easier, pad the end
-				$pee = preg_replace('|<br />\s*<br />|', "\n\n", $pee);
-				$pee = preg_replace('!(<(?:table|tr|td|th|div|ul|ol|li|pre|select|form|blockquote|p|h[1-6])[^>]*>)!', "\n$1", $pee); // Space things out a little
-				$pee = preg_replace('!(</(?:table|tr|td|th|div|ul|ol|li|pre|select|form|blockquote|p|h[1-6])>)!', "$1\n", $pee); // Space things out a little
-				$pee = preg_replace("/(\r\n|\r)/", "\n", $pee); // cross-platform newlines 
-				$pee = preg_replace("/\n\n+/", "\n\n", $pee); // take care of duplicates
-				$pee = preg_replace('/\n?(.+?)(?:\n\s*\n|\z)/s', "\t<p>$1</p>\n", $pee); // make paragraphs, including one at the end 
-				$pee = preg_replace('|<p>\s*?</p>|', '', $pee); // under certain strange conditions it could create a P of entirely whitespace 
-				$pee = preg_replace("|<p>(<li.+?)</p>|", "$1", $pee); // problem with nested lists
-				$pee = preg_replace('|<p><blockquote([^>]*)>|i', "<blockquote$1><p>", $pee);
-				$pee = str_replace('</blockquote></p>', '</p></blockquote>', $pee);
-				$pee = preg_replace('!<p>\s*(</?(?:table|tr|td|th|div|ul|ol|li|pre|select|form|blockquote|p|h[1-6])[^>]*>)!', "$1", $pee);
-				$pee = preg_replace('!(</?(?:table|tr|td|th|div|ul|ol|li|pre|select|form|blockquote|p|h[1-6])[^>]*>)\s*</p>!', "$1", $pee); 
-				if ($br) $pee = preg_replace('|(?<!<br />)\s*\n|', "<br />\n", $pee); // optionally make line breaks
-				$pee = preg_replace('!(</?(?:table|tr|td|th|div|dl|dd|dt|ul|ol|li|pre|select|form|blockquote|p|h[1-6])[^>]*>)\s*<br />!', "$1", $pee);
-				$pee = preg_replace('!<br />(\s*</?(?:p|li|div|th|pre|td|ul|ol)>)!', '$1', $pee);
-				$pee = preg_replace('/&([^#])(?![a-z]{1,8};)/', '&#038;$1', $pee);
-				
-				
-							
-				$comment_text = $pee;
-			}
-			return $comment_text;
-		}
-
-		function fv_tc_approve() {
-		    if(!wp_set_comment_status( $_REQUEST['id'], 'approve' ))
-		        die('db error');
-		}
-		
-
-		function fv_tc_delete() {
-		    global $wpdb;
-
-		    if(isset($_REQUEST['ip']) && stripos(trim(get_option('blacklist_keys')),$_REQUEST['ip'])===FALSE) {
-			    
-			    $objComment = get_comment( $_REQUEST['id'] );
-			    $commentStatus = $objComment->comment_approved;
-			    $blacklist_keys = trim(stripslashes(get_option('blacklist_keys')));      
-			    $blacklist_keys_update = $blacklist_keys."\n".$_REQUEST['ip'];
-			    update_option('blacklist_keys', $blacklist_keys_update);
-
-			    $wpdb->update( 'wp_comments', array( 'comment_approved' => 'spam' ), array( 'comment_ID' => intval($_REQUEST['id']) ) );
-			    do_action('transition_comment_status','spam','unapproved', $objComment );
-			    $wpdb->update( 'wp_comments', array( 'comment_approved' => $commentStatus ), array( 'comment_ID' => intval($_REQUEST['id']) ) );
-		    }
-
-			//check_admin_referer('fv-tc-delete_' . $_GET['id']);
-		    if (isset($_REQUEST['thread'])) {
-			    if($_REQUEST['thread'] == 'yes') {
-				$this->fv_tc_delete_recursive($_REQUEST['id']);
-			    } 
-		    }
-		    else {
-			if(!wp_delete_comment($_REQUEST['id']))
-			    die('db error');
-		    }       
-
-		}
-
-		function fv_tc_moderated() {
-		    if(get_user_meta($_REQUEST['id'],'fv_tc_moderated')) {
-		       if(!delete_user_meta($_REQUEST['id'],'fv_tc_moderated'))
-		            die('meta error');
-		        echo 'user moderated';
-		    }
-		    else {
-		        if(!update_user_meta($_REQUEST['id'],'fv_tc_moderated','no'))
-		            die('meta error');
-		        echo 'user non-moderated';
-		    }
-		}
-
-		function fv_tc_delete_recursive($id) {
-		    global  $wpdb;  
-		    echo ' '.$id.' ';
-		    $comments = $wpdb->get_results("SELECT * FROM {$wpdb->comments} WHERE `comment_parent` ='{$id}'",ARRAY_A);
-		    if(strlen($wpdb->last_error)>0)
-		        die('db error');
-		    if(!wp_delete_comment($id))
-		        die('db error');             
-		    /*  If there are no more children */
-		    if(count($comments)==0)
-		        return;
-		    foreach($comments AS $comment) {
-		        $this->fv_tc_delete_recursive($comment['comment_ID']);
-		    }
-		}
-
-		function get_comment_link( $link ) {
-				$link = preg_replace( '~/comment-page-1[$/]~', '', $link );	//	todo: make this an option, I guess!
-				return $link;
-		}
+    function users_cache( $comments ) {
+      global $wpdb;
+      
+      if( $comments !== NULL && count( $comments ) > 0 ) {
     
-		function get_comments_pagenum_link( $link ) {
+        $all_IDs = array();
+        foreach( $comments AS $comment ) {
+          $all_IDs[] = $comment->user_id;
+        }      
+    
+        $all_IDs = array_unique( $all_IDs );
+        $all_IDs_string = implode (',', $all_IDs );
+    
+        $all_IDs_users = $wpdb->get_results( "SELECT * FROM `{$wpdb->users}` WHERE ID IN ({$all_IDs_string}) " );
+        $all_IDs_meta = $wpdb->get_results( "SELECT * FROM `{$wpdb->usermeta}` WHERE user_id IN ({$all_IDs_string}) ORDER BY user_id " );
+        //echo '<!--meta'.var_export( $all_IDs_meta, true ).'-->';
+        
+        $meta_cache = array();
+        foreach( $all_IDs_meta AS $all_IDs_meta_item ) {
+          $meta_cache[$all_IDs_meta_item->user_id][] = $all_IDs_meta_item;
+        }
+    
+        foreach( $all_IDs_users AS $all_IDs_users_item ) {
+          foreach( $meta_cache[$all_IDs_users_item->ID] AS $meta ) {
+            $value = maybe_unserialize($meta->meta_value);
+            // Keys used as object vars cannot have dashes.
+            $key = str_replace('-', '', $meta->meta_key);
+            $all_IDs_users_item->{$key} = $value;          
+          }
+          
+          wp_cache_set( $all_IDs_users_item->ID, $all_IDs_users_item, 'users' );
+          wp_cache_add( $all_IDs_users_item->user_login, $all_IDs_users_item->ID, 'userlogins');
+          wp_cache_add( $all_IDs_users_item->user_email, $all_IDs_users_item->ID, 'useremail');
+          wp_cache_add( $all_IDs_users_item->user_nicename, $all_IDs_users_item->ID, 'userslugs');        
+        }
+        
+        $column = esc_sql( 'user_id');
+        $cache_key = 'user_meta';    
+        if ( !empty($all_IDs_meta) ) {
+          foreach ( $all_IDs_meta as $metarow) {
+            $mpid = intval($metarow->{$column});
+            $mkey = $metarow->meta_key;
+            $mval = $metarow->meta_value;
+      
+            // Force subkeys to be array type:
+            if ( !isset($cache[$mpid]) || !is_array($cache[$mpid]) )
+              $cache[$mpid] = array();
+            if ( !isset($cache[$mpid][$mkey]) || !is_array($cache[$mpid][$mkey]) )
+              $cache[$mpid][$mkey] = array();
+      
+            // Add a value to the current pid/key:
+            $cache[$mpid][$mkey][] = $mval;
+          }
+        }
+      
+        foreach ( $all_IDs as $id ) {
+          if ( ! isset($cache[$id]) )
+            $cache[$id] = array();
+          wp_cache_add( $id, $cache[$id], $cache_key );
+        }    
+        
+      }
+      return $comments;
+    }
+  
+        
+    function mysql2date_lite($dateformatstring, $mysqlstring, $use_b2configmonthsdays = 1) {
+      global $month, $weekday;
+      $m = $mysqlstring;
+      if (empty($m)) {
+        return false;
+      }
+      $i = mktime(substr($m,11,2),substr($m,14,2),substr($m,17,2),substr($m,5,2),substr($m,8,2),substr($m,0,4)); 
+      if (!empty($month) && !empty($weekday) && $use_b2configmonthsdays) {
+        $datemonth = $month[date('m', $i)];
+        $dateweekday = $weekday[date('w', $i)];
+        $dateformatstring = ' '.$dateformatstring;
+        $dateformatstring = preg_replace("/([^\\\])D/", "\\1".backslashit(substr($dateweekday, 0, 3)), $dateformatstring);
+        $dateformatstring = preg_replace("/([^\\\])F/", "\\1".backslashit($datemonth), $dateformatstring);
+        $dateformatstring = preg_replace("/([^\\\])l/", "\\1".backslashit($dateweekday), $dateformatstring);
+        $dateformatstring = preg_replace("/([^\\\])M/", "\\1".backslashit(substr($datemonth, 0, 3)), $dateformatstring);
+        $dateformatstring = substr($dateformatstring, 1, strlen($dateformatstring)-1);
+      }
+      $j = @date($dateformatstring, $i);
+      if (!$j) {
+      // for debug purposes
+      //  echo $i." ".$mysqlstring;
+      }
+      return $j;
+    }    
+        
+    
+    function wpautop_lite( $comment_text ) {
+      if( stripos($comment_text,'<p') === false ) {
+        //$aParagraphs = explode( "\n", $comment_text );
+              
+        $pee = $comment_text;
+        $br = 1;
+        
+        /*
+        Taken from WP 1.0.1-miles
+        */
+        $pee = $pee . "\n"; // just to make things a little easier, pad the end
+        $pee = preg_replace('|<br />\s*<br />|', "\n\n", $pee);
+        $pee = preg_replace('!(<(?:table|tr|td|th|div|ul|ol|li|pre|select|form|blockquote|p|h[1-6])[^>]*>)!', "\n$1", $pee); // Space things out a little
+        $pee = preg_replace('!(</(?:table|tr|td|th|div|ul|ol|li|pre|select|form|blockquote|p|h[1-6])>)!', "$1\n", $pee); // Space things out a little
+        $pee = preg_replace("/(\r\n|\r)/", "\n", $pee); // cross-platform newlines 
+        $pee = preg_replace("/\n\n+/", "\n\n", $pee); // take care of duplicates
+        $pee = preg_replace('/\n?(.+?)(?:\n\s*\n|\z)/s', "\t<p>$1</p>\n", $pee); // make paragraphs, including one at the end 
+        $pee = preg_replace('|<p>\s*?</p>|', '', $pee); // under certain strange conditions it could create a P of entirely whitespace 
+        $pee = preg_replace("|<p>(<li.+?)</p>|", "$1", $pee); // problem with nested lists
+        $pee = preg_replace('|<p><blockquote([^>]*)>|i', "<blockquote$1><p>", $pee);
+        $pee = str_replace('</blockquote></p>', '</p></blockquote>', $pee);
+        $pee = preg_replace('!<p>\s*(</?(?:table|tr|td|th|div|ul|ol|li|pre|select|form|blockquote|p|h[1-6])[^>]*>)!', "$1", $pee);
+        $pee = preg_replace('!(</?(?:table|tr|td|th|div|ul|ol|li|pre|select|form|blockquote|p|h[1-6])[^>]*>)\s*</p>!', "$1", $pee); 
+        if ($br) $pee = preg_replace('|(?<!<br />)\s*\n|', "<br />\n", $pee); // optionally make line breaks
+        $pee = preg_replace('!(</?(?:table|tr|td|th|div|dl|dd|dt|ul|ol|li|pre|select|form|blockquote|p|h[1-6])[^>]*>)\s*<br />!', "$1", $pee);
+        $pee = preg_replace('!<br />(\s*</?(?:p|li|div|th|pre|td|ul|ol)>)!', '$1', $pee);
+        $pee = preg_replace('/&([^#])(?![a-z]{1,8};)/', '&#038;$1', $pee);
+        
+        
+              
+        $comment_text = $pee;
+      }
+      return $comment_text;
+    }
+
+    function fv_tc_approve() {
+        if(!wp_set_comment_status( $_REQUEST['id'], 'approve' ))
+            die('db error');
+    }
+    
+
+    function fv_tc_delete() {
+        global $wpdb;
+
+        if(isset($_REQUEST['ip']) && stripos(trim(get_option('blacklist_keys')),$_REQUEST['ip'])===FALSE) {
+          
+          $objComment = get_comment( $_REQUEST['id'] );
+          $commentStatus = $objComment->comment_approved;
+          $blacklist_keys = trim(stripslashes(get_option('blacklist_keys')));      
+          $blacklist_keys_update = $blacklist_keys."\n".$_REQUEST['ip'];
+          update_option('blacklist_keys', $blacklist_keys_update);
+
+          $wpdb->update( 'wp_comments', array( 'comment_approved' => 'spam' ), array( 'comment_ID' => intval($_REQUEST['id']) ) );
+          do_action('transition_comment_status','spam','unapproved', $objComment );
+          $wpdb->update( 'wp_comments', array( 'comment_approved' => $commentStatus ), array( 'comment_ID' => intval($_REQUEST['id']) ) );
+        }
+
+      //check_admin_referer('fv-tc-delete_' . $_GET['id']);
+        if (isset($_REQUEST['thread'])) {
+          if($_REQUEST['thread'] == 'yes') {
+        $this->fv_tc_delete_recursive($_REQUEST['id']);
+          } 
+        }
+        else {
+      if(!wp_delete_comment($_REQUEST['id']))
+          die('db error');
+        }       
+
+    }
+
+    function fv_tc_moderated() {
+        if(get_user_meta($_REQUEST['id'],'fv_tc_moderated')) {
+           if(!delete_user_meta($_REQUEST['id'],'fv_tc_moderated'))
+                die('meta error');
+            echo 'user moderated';
+        }
+        else {
+            if(!update_user_meta($_REQUEST['id'],'fv_tc_moderated','no'))
+                die('meta error');
+            echo 'user non-moderated';
+        }
+    }
+
+    function fv_tc_delete_recursive($id) {
+        global  $wpdb;  
+        echo ' '.$id.' ';
+        $comments = $wpdb->get_results("SELECT * FROM {$wpdb->comments} WHERE `comment_parent` ='{$id}'",ARRAY_A);
+        if(strlen($wpdb->last_error)>0)
+            die('db error');
+        if(!wp_delete_comment($id))
+            die('db error');             
+        /*  If there are no more children */
+        if(count($comments)==0)
+            return;
+        foreach($comments AS $comment) {
+            $this->fv_tc_delete_recursive($comment['comment_ID']);
+        }
+    }
+
+    function get_comment_link( $link ) {
+        $link = preg_replace( '~/comment-page-1[$/]~', '', $link );  //  todo: make this an option, I guess!
+        return $link;
+    }
+    
+    function get_comments_pagenum_link( $link ) {
         if ( 'newest' == get_option('default_comments_page') ) {
           //  todo: how do we get the maximum page number?
         } else {
-          $link = preg_replace( '~/comment-page-1[$/]~', '', $link );	//	todo: make this an option, I guess!
+          $link = preg_replace( '~/comment-page-1[$/]~', '', $link );  //  todo: make this an option, I guess!
         }
-				return $link;
-		}    
+        return $link;
+    }    
     
 }
 $fv_tc = new fv_tc;
