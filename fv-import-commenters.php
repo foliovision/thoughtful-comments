@@ -31,6 +31,11 @@ class FVTC_Import_Commenters {
     if ( $new_status != 'approved')
       return;
     
+    //only for comment from non-logged in users
+    if( $comment->user_id != 0 ){
+      return;
+    }
+    
     if ( defined('WP_IMPORTING') && WP_IMPORTING == true )
       return;
     
@@ -65,7 +70,7 @@ class FVTC_Import_Commenters {
     $comments = get_comments( $aArgs );
     
     foreach( $comments as $comment ){
-      $this->fv_transition_comment_status('approved', false, $comment);
+      $this->fv_transition_comment_status('approved', false, $comment, true);
     }
     
     $total = count($comments);
