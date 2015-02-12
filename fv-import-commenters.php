@@ -66,14 +66,14 @@ class FVTC_Import_Commenters {
     $this->batch = true;
     $number = 20;
     
-    $aArgs = array( 'status' => 'approve', 'user_id' => 0, 'number' => $number );
-    $comments = get_comments( $aArgs );
+    global $wpdb;
+    $aComments = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}comments WHERE comment_approved = 1 AND user_id = 0 AND comment_author_email LIKE '%@%' LIMIT $number");
     
-    foreach( $comments as $comment ){
-      $this->fv_transition_comment_status('approved', false, $comment, true);
+    foreach( $aComments as $comment ){
+      $this->fv_transition_comment_status('approved', false, $comment);
     }
     
-    $total = count($comments);
+    $total = count($aComments);
     $last_status = ( $total < $number ) ? true : false;
       
     $aInfo = array( 'total' => $total,
@@ -90,8 +90,8 @@ class FVTC_Import_Commenters {
    * return count of anonymous comments
    * */
   function fv_get_anonymous_comment_count(){
-    $aArgs = array( 'status' => 'approve', 'user_id' => 0, 'count' => true );
-    $count = get_comments( $aArgs );
+    global $wpdb;
+    $count = $wpdb->get_var("SELECT count(*) FROM {$wpdb->prefix}comments WHERE comment_approved = 1 AND user_id = 0 AND comment_author_email LIKE '%@%'");
     
     return $count;
   }
