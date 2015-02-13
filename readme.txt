@@ -49,6 +49,7 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 
 = 0.2.7 =
 * added commenters importer functions
+* added auto-approving functionality for users, which have N comments already approved
 * removing comment-page-1 from comment links as it's not needed http://www.blindfiveyearold.com/wordpress-duplicate-content
 
 = 0.2.6 =
