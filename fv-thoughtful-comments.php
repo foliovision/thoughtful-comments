@@ -486,6 +486,7 @@ Thanks,
             $options = array(
                 'shorten_urls' => ( isset($_POST['shorten_urls']) && $_POST['shorten_urls'] ) ? true : false,            
                 'reply_link' => ( isset($_POST['reply_link']) && $_POST['reply_link'] ) ? true : false,
+                'comment_autoapprove_count' => ( isset($_POST['comment_autoapprove_count']) && intval($_POST['comment_autoapprove_count']) ) ? intval($_POST['comment_autoapprove_count']) : 0,
                 'tc_replyKW' => isset( $_POST['tc_replyKW'] ) ? $_POST['tc_replyKW'] : 'comment-'
             );
             $options_ic = array(
@@ -542,7 +543,14 @@ Thanks,
                                         <?php if( $options['reply_link'] ) echo 'checked="checked"'; ?> />                                     
                                     <label for="reply_link"><span><?php _e('Check to make comment reply links use JavaScript only. Useful if your site has a lot of comments and web crawlers are browsing through all of their reply links.', 'fv_tc'); ?></span></label><br />
                                     </td>
-                                </tr>                               
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row"><?php _e('Comment count to auto-approve', 'fv_tc'); ?> </th> 
+                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Comment count to auto-approve', 'fv_tc'); ?></span></legend>                              
+                                    <input id="comment_autoapprove_count" type="text" name="comment_autoapprove_count" value="<?php echo ( isset($options['comment_autoapprove_count']) && intval($options['comment_autoapprove_count'])) ? $options['comment_autoapprove_count'] : 0; ?>" />                                     
+                                    <label for="reply_link"><span><?php _e('Count of approved comments from user, to automatically approve his next comments. Set to "0" to turn this off.', 'fv_tc'); ?></span></label><br />
+                                    </td>
+                                </tr>
                                 <?php
                                 $bCommentReg = get_option( 'comment_registration' );
                                 if( isset( $bCommentReg ) && 1 == $bCommentReg ) { ?>
@@ -1187,7 +1195,34 @@ Thanks,
           $link = preg_replace( '~/comment-page-1[$/]~', '', $link );  //  todo: make this an option, I guess!
         }
         return $link;
-    }    
+    }
+    
+    
+    function fv_tc_auto_approve_comment($approved, $commentdata){
+      
+      //stop processing if comment is already approved or is SPAM
+      //stop processing if comments author email is empty
+      if( $approved != 0 || empty($commentdata['comment_author_email']) ){
+        return $approved;
+      }
+      
+      $options = get_option('thoughtful_comments');
+      $auto_approve_count = ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : false;
+      
+      //stop if auto-approve count is not set in administation or is set to zero
+      if( !$auto_approve_count ){
+        return $approved;
+      }
+      
+      global $wpdb;
+      $dbCount = $wpdb->get_var("SELECT count(*) FROM {$wpdb->prefix}comments WHERE comment_approved = 1 AND comment_author_email = '".$commentdata['comment_author_email']."'");
+      
+      if( $dbCount >= $auto_approve_count ){
+        $approved = 1;
+      }
+      
+      return $approved;
+    }
     
 }
 $fv_tc = new fv_tc;
@@ -1254,6 +1289,9 @@ add_action( 'transition_comment_status', array( $fv_tc, 'transition_comment_stat
 
 /* Admin's won't get the esc_html filter */
 add_filter( 'comment_author', array( $fv_tc, 'comment_author_no_esc_html' ), 0 );
+
+/* Whitelist commenters: Auto-apporove comments from authors, which have N comments already approved. */
+add_filter( 'pre_comment_approved', array( $fv_tc, 'fv_tc_auto_approve_comment' ), 10, 2 );
 
 /*  Experimental stuff  */
 
