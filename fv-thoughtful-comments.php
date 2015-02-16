@@ -54,6 +54,14 @@ class fv_tc extends fv_tc_Plugin {
     var $strVersion = '0.2.6.4';
     
     /**
+     * Decide if scripts will be loaded on current page
+     * True if array( $fv_tc, 'frontend' ) filter was aplied on current page
+     * @bool
+     */
+    var $loadScripts = false; 
+     
+    
+    /**
      * Class contructor. Sets all basic variables.
      */         
     function __construct(){
@@ -289,7 +297,8 @@ Thanks,
         }
         
         global  $user_ID, $comment, $post;
-
+        
+        $this->loadScripts = true;
 
         //if($user_ID && current_user_can('edit_post', $post->ID) && !is_admin()) { 
         if( current_user_can('manage_options') ) { 
@@ -721,8 +730,8 @@ Thanks,
     * @global int Current user ID        
     */
     function scripts() {
-        if( current_user_can('moderate_comments') ) {
-            wp_enqueue_script('fv_tc',$this->url. '/js/fv_tc.js',array('jquery'), $this->strVersion);
+        if( $this->loadScripts && current_user_can('moderate_comments') ) {
+            wp_enqueue_script('fv_tc',$this->url. '/js/fv_tc.js',array('jquery'), $this->strVersion, true);
             wp_localize_script('fv_tc', 'fv_tc_translations', $this->get_js_translations());
             wp_localize_script('fv_tc', 'fv_tc_ajaxurl', admin_url('admin-ajax.php'));
         }
@@ -1270,7 +1279,7 @@ add_filter( 'thesis_comment_text', array( $fv_tc, 'comment_links' ), 100 );
 add_filter( 'pre_comment_approved', array( $fv_tc, 'moderate' ) );
 
 /* Load js */
-add_action( 'wp_print_scripts', array( $fv_tc, 'scripts' ) );
+add_action( 'wp_footer', array( $fv_tc, 'scripts' ) );
 
 /* Show number of unapproved comments in frontend */
 add_filter( 'comments_number', array( $fv_tc, 'show_unapproved_count' ) );
