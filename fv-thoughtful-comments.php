@@ -1199,10 +1199,12 @@ Thanks,
     
     
     function fv_tc_auto_approve_comment($approved, $commentdata){
-      
-      //stop processing if comment is already approved or is SPAM
+      $bWhiteList = get_option('comment_whitelist');
+
+      //stop processing if comment is SPAM
+      //stop processing if white_list is on and comment is already unapproved
       //stop processing if comments author email is empty
-      if( $approved != 0 || empty($commentdata['comment_author_email']) ){
+      if( $approved == 'spam' || ( $bWhiteList && $approved == 0 ) || empty($commentdata['comment_author_email']) ){
         return $approved;
       }
       
@@ -1217,11 +1219,10 @@ Thanks,
       global $wpdb;
       $dbCount = $wpdb->get_var("SELECT count(*) FROM {$wpdb->prefix}comments WHERE comment_approved = 1 AND comment_author_email = '".$commentdata['comment_author_email']."'");
       
-      if( $dbCount >= $auto_approve_count ){
-        $approved = 1;
-      }
-      
-      return $approved;
+      if( $dbCount >= $auto_approve_count )
+        return 1;
+      else
+        return 0;
     }
     
 }
