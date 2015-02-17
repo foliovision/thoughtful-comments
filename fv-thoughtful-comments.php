@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.2.6.4
+Version: 0.2.6.5
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -30,7 +30,7 @@ The users cappable of moderate_comments are getting all of these features and ar
 /**
  * @package foliovision-tc
  * @author Foliovision <programming@foliovision.com>
- * version 0.2.6.4
+ * version 0.2.6.5
  */  
  
 include( 'fp-api.php' );
@@ -51,7 +51,7 @@ class fv_tc extends fv_tc_Plugin {
      * Plugin version
      * @var string
      */
-    var $strVersion = '0.2.6.4';
+    var $strVersion = '0.2.6.5';
     
     /**
      * Decide if scripts will be loaded on current page
@@ -307,13 +307,13 @@ Thanks,
           $out = '<p class="tc-frontend">';
           /* Approve comment */
           if($comment->comment_approved == '0') {
-            $out .= '<span id="comment-'.$comment->comment_ID.'-approve">'.$this->get_t_approve($comment).' | </span>';
+            $out .= '<span id="comment-'.$comment->comment_ID.'-approve">'.$this->get_t_approve($comment).' </span>';
           }
           /*  Delete comment  */
-          $out .= $this->get_t_delete($comment).' | ';
+          $out .= $this->get_t_delete($comment).' ';
           /*  Delete thread   */
           if($child>0) {
-            $out .= $this->get_t_delete_thread($comment).' | ';
+            $out .= $this->get_t_delete_thread($comment).' ';
           }
           /*  If IP isn't banned  */
           if(stripos(trim(get_option('blacklist_keys')),$comment->comment_author_IP)===FALSE) {
@@ -380,7 +380,7 @@ Thanks,
      * @return string HTML of the anchor
      */
     function get_t_delete($comment) {
-        return '<a href="#" onclick="fv_tc_delete('.$comment->comment_ID.'); return false">' . __('Delete', 'fv_tc') . '</a>';
+        return '<a href="#" class="fv-tc-del" onclick="fv_tc_delete('.$comment->comment_ID.'); return false">' . __('Delete', 'fv_tc') . '</a>';
     }
     
     
@@ -392,7 +392,7 @@ Thanks,
      * @return string HTML of the anchor
      */
     function get_t_delete_ban($comment) {
-        return '<a href="#" onclick="fv_tc_delete_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Delete & Ban IP', 'fv_tc') . '</a>';
+        return '<a href="#" class="fv-tc-ban" onclick="fv_tc_delete_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Delete & Ban IP', 'fv_tc') . '</a>';
     }
     
     
@@ -404,7 +404,7 @@ Thanks,
      * @return string HTML of the anchor
      */
     function get_t_delete_thread($comment) {
-        return '<a href="#" onclick="fv_tc_delete_thread('.$comment->comment_ID.'); return false">' . __('Delete Thread', 'fv_tc') . '</a>';
+        return '<a href="#" class="fv-tc-delthread" onclick="fv_tc_delete_thread('.$comment->comment_ID.'); return false">' . __('Delete Thread', 'fv_tc') . '</a>';
     }
 
     
@@ -416,7 +416,7 @@ Thanks,
      * @return string HTML of the anchor
      */
     function get_t_delete_thread_ban($comment) {
-        return '<a href="#" onclick="fv_tc_delete_thread_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Delete Thread & Ban IP','fv_tc') . '</a>';
+        return '<a href="#" class="fc-tc-banthread" onclick="fv_tc_delete_thread_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Delete Thread & Ban IP','fv_tc') . '</a>';
     }
     
     
@@ -531,18 +531,19 @@ Thanks,
             <form method="post" action="">
                 <?php wp_nonce_field('thoughtful_comments') ?>
                 <div id="poststuff" class="ui-sortable">
+                <h3><?php _e('Thoughtful Comments supercharges comment moderation by moving it into the front end (i.e. in context). It also allows banning by IP, email address or domain.', 'fv_tc') ?></h3><br />
                     <div class="postbox">
-                        <h3>
+                        <h3 class="hndle">
                             <?php _e('Comment Tweaks', 'fv_tc') ?>
                         </h3>
                         <div class="inside">
                             <table class="optiontable form-table">
                                 <tr valign="top">
-                                    <th scope="row"><?php _e('Link shortening', 'fv_tc'); ?> </th>  
+                                    <th scope="row"><?php _e('Automatic link shortening', 'fv_tc'); ?> </th>  
                                     <td><fieldset><legend class="screen-reader-text"><span><?php _e('Link shortening', 'fv_tc'); ?></span></legend>                                  
                                     <input id="shorten_urls" type="checkbox" name="shorten_urls" value="1" 
                                         <?php if( $options['shorten_urls'] ) echo 'checked="checked"'; ?> />
-                                    <label for="shorten_urls"><span><?php _e('Shortens the plain URL link text in comments to "link to: domain.com". Prevents display issues if the links have too long URL.', 'fv_tc'); ?></span></label><br />
+                                    <label for="shorten_urls"><span><?php _e('Shortens the plain URL link text in comments to "link to: domain.com". Hides long ugly URLs', 'fv_tc'); ?></span></label><br />
                                     </td>
                                 </tr>
                                 <tr valign="top">
@@ -550,7 +551,7 @@ Thanks,
                                     <td><fieldset><legend class="screen-reader-text"><span><?php _e('Reply link', 'fv_tc'); ?></span></legend>                              
                                     <input id="reply_link" type="checkbox" name="reply_link" value="1" 
                                         <?php if( $options['reply_link'] ) echo 'checked="checked"'; ?> />                                     
-                                    <label for="reply_link"><span><?php _e('Check to make comment reply links use JavaScript only. Useful if your site has a lot of comments and web crawlers are browsing through all of their reply links.', 'fv_tc'); ?></span></label><br />
+                                    <label for="reply_link"><span><?php _e('Disable HTML replies. <br /><small>(Lightens your server load. Reply function still works, but through JavaScript.)</small>', 'fv_tc'); ?></span></label><br />
                                     </td>
                                 </tr>
                                 <tr valign="top">
@@ -580,7 +581,7 @@ Thanks,
                     </div>
                     
                     <div class="postbox">
-                        <h3>
+                        <h3 class="hndle">
                             <?php _e('Import Commenters Settings', 'fv_tc') ?>
                         </h3>
                         <div class="inside">
@@ -664,6 +665,29 @@ Thanks,
                             <p>
                                 <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
                             </p>
+                        </div>
+                    </div>
+                    <div class="postbox">
+						<h3 class="hndle">Instructions</h3>
+                        <div class="inside">
+                            <table class="optiontable form-table">
+                                <tr valign="top">
+									<th></th>
+                                    <td><p><?php _e('After install with comments held up for moderation, you will notice several things on your site frontend:', 'fv_tc'); ?><br />
+                            <?php _e('- comments held up for moderation appear with highlighted commenters name,', 'fv_tc'); ?><br />
+                            <?php _e('- comments count in single posts or archives is highlighted if there are comments held up for moderation,', 'fv_tc'); ?><br />
+                            <?php _e('- all comments have additional buttons for moderation.', 'fv_tc'); ?></p></td>
+                            </tr>
+                            <tr valign="top">
+                            <th>Comment Moderation</th>
+                            <td><img src="<?php echo $this->url; ?>/screenshot-4.png" alt="FV Thoughtful Comments frontend"></td>
+                            </tr>
+                            <tr valign="top">
+                            <th>User Moderation</th>
+                            <td>
+                            <img src="<?php echo $this->url; ?>/screenshot-3.png" alt="FV Thoughtful Comments frontend"></td>
+                            </tr>							
+                            </table>
                         </div>
                     </div>
                     
@@ -779,7 +803,7 @@ Thanks,
         global $post;
         //  this is executed in the header, so we can't do the check for every post on index/archive pages, so we better load styles if there are any unapproved comments to show. it's loaded even for contributors which don't need it.
         if(!is_admin() && current_user_can('edit_posts')) {
-          echo '<link rel="stylesheet" href="'.$this->url.'/css/frontend.css" type="text/css" media="screen" />'; 
+          echo '<link rel="stylesheet" href="'.$this->url.'/css/frontend.css?ver='.$this->strVersion.'" type="text/css" media="screen" />'; 
         }
     }        
     
