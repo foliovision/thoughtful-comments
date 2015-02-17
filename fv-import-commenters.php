@@ -180,7 +180,7 @@ class FVTC_Import_Commenters {
       $aComment,
       $aWhere
     );
-    
+
     $res = add_comment_meta( $objComment->comment_ID, 'fv_user_imported', 'automatically linked comment to user ' . $user_id , true );
     
     $send_welcome_email = ( isset($this->options['commenter_importing_welcome_email']) && $this->options['commenter_importing_welcome_email'] ) ? true : false;    
@@ -193,10 +193,11 @@ class FVTC_Import_Commenters {
         $send_welcome_email = false;
       }
     }
-    
+
     if( $send_welcome_email ){
       $this->fv_send_mail_invite( $g_login, $strGeneratedPW, $objComment->comment_author_email, $sFirstName, $sLastName );
     }
+     
   }
   
   private function fv_send_mail_invite( $sLogin, $sPassword , $sEmail, $sFirstName, $sLastName ){
@@ -210,11 +211,12 @@ class FVTC_Import_Commenters {
     $content = str_replace( '%firstname%', $sFirstName, $content );
     $content = str_replace( '%lastname%', $sLastName, $content );
     $content = str_replace( '%sitename%', get_bloginfo('name'), $content );
-    $content = str_replace( '%login_page%', site_url('site/wp-login.php'), $content );
+    $content = str_replace( '%login_page%', site_url('wp-login.php'), $content );
     
     //TESTING!!
-    file_put_contents( dirname(__FILE__).'/mails.txt', date('r'). "\n" . $sEmail . "\n". $subject ."\n". $content . "\n" . "------------------\n", FILE_APPEND);
-    //wp_mail( $sEmail, $subject, $content );
+    file_put_contents( ABSPATH.'/mails.txt', date('r'). "\n" . $sEmail . "\n". $subject ."\n". $content . "\n" . "------------------\n", FILE_APPEND);
+    wp_mail( $sEmail, $subject, $content );
+
   }
 
 }
