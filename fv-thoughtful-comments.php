@@ -502,8 +502,8 @@ Thanks,
                 'commenter_importing' => ( isset($_POST['commenter_importing']) && $_POST['commenter_importing'] ) ? true : false,            
                 'commenter_importing_welcome_email' => ( isset($_POST['commenter_importing_welcome_email']) && $_POST['commenter_importing_welcome_email'] ) ? true : false,
                 'commenter_importing_welcome_email_count' => ( isset($_POST['commenter_importing_welcome_email_count']) && intval($_POST['commenter_importing_welcome_email_count']) ) ? intval($_POST['commenter_importing_welcome_email_count']) : 1,
-                'commenter_importing_welcome_email_subject' => ( isset($_POST['commenter_importing_welcome_email_subject']) && !empty($_POST['commenter_importing_welcome_email_subject']) ) ? $_POST['commenter_importing_welcome_email_subject'] : false,
-                'commenter_importing_welcome_email_content' => ( isset($_POST['commenter_importing_welcome_email_content']) && !empty($_POST['commenter_importing_welcome_email_content']) ) ? $_POST['commenter_importing_welcome_email_content'] : false
+                'commenter_importing_welcome_email_subject' => ( isset($_POST['commenter_importing_welcome_email_subject']) && !empty($_POST['commenter_importing_welcome_email_subject']) ) ? stripslashes($_POST['commenter_importing_welcome_email_subject']) : false,
+                'commenter_importing_welcome_email_content' => ( isset($_POST['commenter_importing_welcome_email_content']) && !empty($_POST['commenter_importing_welcome_email_content']) ) ? stripslashes($_POST['commenter_importing_welcome_email_content']) : false
             );
             if( update_option( 'thoughtful_comments', $options ) || update_option( 'thoughtful_comments_import_commenters', $options_ic ) ) :
             ?>
@@ -587,11 +587,11 @@ Thanks,
                         <div class="inside">
                             <table class="optiontable form-table">
                                 <tr valign="top">
-                                    <th scope="row"><?php _e('Allow commenter importing', 'fv_tc'); ?> </th>  
-                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Allow commenter importing', 'fv_tc'); ?></span></legend>                                  
+                                    <th scope="row"><?php _e('Import commenters as users', 'fv_tc'); ?> </th>  
+                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Import commenters as users', 'fv_tc'); ?></span></legend>                                  
                                     <input id="commenter_importing" type="checkbox" name="commenter_importing" value="1" 
                                         <?php if( isset($options_ic['commenter_importing']) && $options_ic['commenter_importing'] ) echo 'checked="checked"'; ?> />
-                                    <label for="commenter_importing"><span><?php _e('It creates user account automatically, if user doesn\'t have account on site. If user has account, but isn\'t logged in, comments are linked to his account.', 'fv_tc'); ?></span></label><br />
+                                    <label for="commenter_importing"><span><?php _e('When a comment is approved (also works if the comments are always approved, so make sure you use FV Antispam or Akismet!) it checks if the email address is registered and if not, it creates an user account automatically. If such account exists, the comment is linked to that account.', 'fv_tc'); ?></span></label><br />
                                     </td>
                                 </tr>
                                 <tr valign="top">
@@ -613,7 +613,7 @@ Thanks,
                                 <tr valign="top">
                                     <th scope="row"><?php _e('Welcome email subject', 'fv_tc'); ?> </th> 
                                     <td>
-                                      <input type="text" id="commenter_importing_welcome_email_subject" name="commenter_importing_welcome_email_subject" class="large-text code" value="<?php echo trim(stripslashes($options_ic['commenter_importing_welcome_email_subject'])); ?>" />
+                                      <input type="text" id="commenter_importing_welcome_email_subject" name="commenter_importing_welcome_email_subject" class="large-text code" value="<?php echo trim($options_ic['commenter_importing_welcome_email_subject']); ?>" />
                                       <br/>
                                       <small>Available tags: %sitename%</small>
                                     </td>
@@ -621,7 +621,7 @@ Thanks,
                                 <tr valign="top">
                                     <th scope="row"><?php _e('Welcome email content', 'fv_tc'); ?> </th> 
                                     <td>
-                                      <textarea rows="10" id="commenter_importing_welcome_email_content" name="commenter_importing_welcome_email_content" class="large-text code"><?php echo trim(stripslashes($options_ic['commenter_importing_welcome_email_content'])); ?></textarea>
+                                      <textarea rows="10" id="commenter_importing_welcome_email_content" name="commenter_importing_welcome_email_content" class="large-text code"><?php echo trim( $options_ic['commenter_importing_welcome_email_content'] ); ?></textarea>
                                       <br/>
                                       <small>Available tags: %login%, %password%, %firstname%, %lastname%, %sitename%, %login_page%</small>
                                     </td>
@@ -638,27 +638,34 @@ Thanks,
                                         global $fvtc_import_commenters;
                                         echo '<strong>' . $fvtc_import_commenters->fv_get_anonymous_comment_count() . '</strong>';
                                       ?><br />
-                                    <div id="refresh-result" style="display:none">
-                                      
-                                      <table>
-                                        <tr>
-                                          <td><strong> Updating result:</strong></th>
-                                          <td>Count</th>
-                                        </tr>
-                                        <tr>
-                                          <td>Total</td>
-                                          <td id="rcount-total">0</td>
-                                        </tr>
-                                        <tr>
-                                          <td>Added users</td>
-                                          <td id="rcount-added">0</td>
-                                        </tr>
-                                        <tr>
-                                          <td>Linked comment<br/>to existing users</td>
-                                          <td id="rcount-linked">0</td>
-                                        </tr>
-                                      </table>
-                                    </div>
+                                      <div id="refresh-result" style="display:none">
+                                        
+                                        <table>
+                                          <tr>
+                                            <td><strong> Updating result:</strong></th>
+                                            <td>Count</th>
+                                          </tr>
+                                          <tr>
+                                            <td>Total</td>
+                                            <td id="rcount-total">0</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Added users</td>
+                                            <td id="rcount-added">0</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Linked comment<br/>to existing users</td>
+                                            <td id="rcount-linked">0</td>
+                                          </tr>
+                                        </table>
+                                      </div>
+                                      <div style="display: none; ">
+                                        <pre>
+                                          update <?php global $wpdb; echo $wpdb->prefix; ?>comments set user_id = 0;
+                                          DELETE FROM wp_users WHERE ID IN ( SELECT user_id FROM `wp_usermeta` WHERE meta_key = 'fv_user_imported' );
+                                          DELETE FROM wp_usermeta WHERE user_id NOT IN ( SELECT ID FROM `wp_users` )
+                                        </pre>
+                                      </div>
                                     </td>
                                 </tr> 
                               </table>
@@ -1231,7 +1238,22 @@ Thanks,
     }
     
     
-    function fv_tc_auto_approve_comment($approved, $commentdata){
+    function fv_tc_auto_approve_comment( $approved, $commentdata ){
+      
+      if( !empty( $commentdata['user_id'] ) ) {
+        global $wpdb;
+      
+        $user = get_userdata( $commentdata['user_id'] );
+        $post_author = $wpdb->get_var( $wpdb->prepare(
+          "SELECT post_author FROM $wpdb->posts WHERE ID = %d LIMIT 1",
+          $commentdata['comment_post_ID']
+        ) );
+      }
+
+      if( isset( $user ) && ( $commentdata['user_id'] == $post_author || $user->has_cap( 'moderate_comments' ) ) ) {
+        return 1;
+      }
+      
       $bWhiteList = get_option('comment_whitelist');
 
       //stop processing if comment is SPAM
@@ -1252,10 +1274,11 @@ Thanks,
       global $wpdb;
       $dbCount = $wpdb->get_var("SELECT count(*) FROM {$wpdb->prefix}comments WHERE comment_approved = 1 AND comment_author_email = '".$commentdata['comment_author_email']."'");
       
-      if( $dbCount >= $auto_approve_count )
+      if( $dbCount >= $auto_approve_count ) {
         return 1;
-      else
+      } else {
         return 0;
+      }
     }
     
 }

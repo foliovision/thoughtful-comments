@@ -155,7 +155,8 @@ class FVTC_Import_Commenters {
 
     $strGeneratedPW = wp_generate_password( 12, false );
     $aUserData = array(
-      'user_login' => $g_login,
+      'user_login' => $objComment->comment_author_email,
+      'user_nicename' => $g_login,
       'user_pass' => $strGeneratedPW,
       'user_email' => $objComment->comment_author_email,
       'display_name' => $objComment->comment_author,
@@ -195,7 +196,7 @@ class FVTC_Import_Commenters {
     }
 
     if( $send_welcome_email ){
-      $this->fv_send_mail_invite( $g_login, $strGeneratedPW, $objComment->comment_author_email, $sFirstName, $sLastName );
+      $this->fv_send_mail_invite( $objComment->comment_author_email, $strGeneratedPW, $objComment->comment_author_email, $sFirstName, $sLastName );
     }
      
   }
@@ -214,7 +215,7 @@ class FVTC_Import_Commenters {
     $content = str_replace( '%login_page%', site_url('wp-login.php'), $content );
     
     //TESTING!!
-    file_put_contents( ABSPATH.'/mails.txt', date('r'). "\n" . $sEmail . "\n". $subject ."\n". $content . "\n" . "------------------\n", FILE_APPEND);
+    //file_put_contents( ABSPATH.'/fv-tc-mails.txt', date('r'). "\n" . $sEmail . "\n". $subject ."\n". $content . "\n" . "------------------\n", FILE_APPEND);
     wp_mail( $sEmail, $subject, $content );
 
   }
