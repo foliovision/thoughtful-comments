@@ -84,6 +84,9 @@ class FVTC_Import_Commenters {
     
     echo json_encode($aInfo);
     
+    //save information, that batch imporort was already done on this database
+    update_option( 'thoughtful_comments_batch_import_commenters', 1 );
+    
     wp_die();
   }
   /* @int
