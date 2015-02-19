@@ -1258,6 +1258,39 @@ Thanks,
         return 0;
     }
     
+    
+    function fv_tc_auto_approve_comment_override_notification(){
+      if( !is_admin() ){
+        return;
+      }
+      
+      $options = get_option('thoughtful_comments');
+      //do not add warning if option is not set or is set to zero => disabled
+      $auto_approve_count = ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : false;
+      if( !$auto_approve_count ){
+        return;
+      }
+
+      add_filter('thread_comments_depth_max', array($this,'fv_tc_override_notification_ob_start') );
+      add_filter('avatar_defaults', array($this,'fv_tc_override_notification_ob_end') );
+      
+    }
+    
+    function fv_tc_override_notification_ob_start( $maxdeep ){
+      ob_start();
+      return $maxdeep;
+    }
+    
+    function fv_tc_override_notification_ob_end( $avatar_defaults ){
+      $discussion_settings = ob_get_clean();
+      $fv_tc_link = admin_url('options-general.php?page=manage_fv_thoughtful_comments#comment_autoapprove_count');
+      
+      $discussion_settings = preg_replace( '~(<input[^>]*id="comment_whitelist"[^>]*>[^<]*)~', '$1 <br/><strong>WARNING:</strong> This setting is overridden by <a href="'.$fv_tc_link.'">FV Thoughtful Comments</a> plugin.', $discussion_settings );
+      
+      echo $discussion_settings;
+      return $avatar_defaults;
+    }
+    
 }
 $fv_tc = new fv_tc;
 
@@ -1326,6 +1359,9 @@ add_filter( 'comment_author', array( $fv_tc, 'comment_author_no_esc_html' ), 0 )
 
 /* Whitelist commenters: Auto-apporove comments from authors, which have N comments already approved. */
 add_filter( 'pre_comment_approved', array( $fv_tc, 'fv_tc_auto_approve_comment' ), 10, 2 );
+
+/* Notification about overriding whitelist settings */
+add_action('admin_init', array( $fv_tc, 'fv_tc_auto_approve_comment_override_notification' ) );
 
 /*  Experimental stuff  */
 
