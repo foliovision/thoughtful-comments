@@ -496,7 +496,8 @@ Thanks,
                 'shorten_urls' => ( isset($_POST['shorten_urls']) && $_POST['shorten_urls'] ) ? true : false,            
                 'reply_link' => ( isset($_POST['reply_link']) && $_POST['reply_link'] ) ? true : false,
                 'comment_autoapprove_count' => ( isset($_POST['comment_autoapprove_count']) && intval($_POST['comment_autoapprove_count']) ) ? intval($_POST['comment_autoapprove_count']) : 0,
-                'tc_replyKW' => isset( $_POST['tc_replyKW'] ) ? $_POST['tc_replyKW'] : 'comment-'
+                'tc_replyKW' => isset( $_POST['tc_replyKW'] ) ? $_POST['tc_replyKW'] : 'comment-',
+                'user_nicename_edit' => ( isset($_POST['user_nicename_edit']) && $_POST['user_nicename_edit'] ) ? true : false,
             );
             $options_ic = array(
                 'commenter_importing' => ( isset($_POST['commenter_importing']) && $_POST['commenter_importing'] ) ? true : false,            
@@ -552,6 +553,14 @@ Thanks,
                                     <input id="reply_link" type="checkbox" name="reply_link" value="1" 
                                         <?php if( $options['reply_link'] ) echo 'checked="checked"'; ?> />                                     
                                     <label for="reply_link"><span><?php _e('Disable HTML replies. <br /><small>(Lightens your server load. Reply function still works, but through JavaScript.)</small>', 'fv_tc'); ?></span></label><br />
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row"><?php _e('Allow nicename change', 'fv_tc'); ?> </th> 
+                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Allow nicename change', 'fv_tc'); ?></span></legend>                              
+                                    <input id="user_nicename_edit" type="checkbox" name="user_nicename_edit" value="1" 
+                                        <?php if( $options['user_nicename_edit'] ) echo 'checked="checked"'; ?> />                                     
+                                    <label for="user_nicename_edit"><span><?php _e('Allow site administrators to change nicenames in "Edit user" screen.', 'fv_tc'); ?></span></label><br />
                                     </td>
                                 </tr>
                                 <tr valign="top">
@@ -1281,6 +1290,52 @@ Thanks,
       }
     }
     
+    function fv_tc_user_nicename_change(){
+      if( !is_admin() || !current_user_can('manage_options') ){
+        return;
+      }
+
+      $options = get_option('thoughtful_comments');
+      //is user nicename editing on?
+      $allow_nicename_edit = ( isset($options['user_nicename_edit']) && $options['user_nicename_edit'] ) ? true : false;
+      if( !$allow_nicename_edit ){
+        return;
+      }
+
+      add_filter('personal_options', array($this,'fv_tc_nicename_personal_options') );    //ob start
+      add_filter('edit_user_profile', array($this,'fv_tc_nicename_edit_user_profile') );  //ob modified + echo
+      add_filter('pre_user_nicename', array($this,'fv_tc_nicename_pre_user_nicename') );  //saving nicename
+
+    }
+
+    function fv_tc_nicename_personal_options( $profileuser ){
+      ob_start();
+      return $profileuser;
+    }
+
+    function fv_tc_nicename_edit_user_profile( $profileuser ){
+      $user_edit_page = ob_get_clean();
+
+      $user_nicename_field = '<tr class="user-user-login-wrap">
+  <th><label for="user_nicename">Nicename</label></th>
+      <td><input type="text" name="user_nicename" id="user_nicename" value="'.$profileuser->user_nicename.'" class="regular-text" /></td>
+  </tr>';
+      $user_edit_page = preg_replace('~(<tr[^>]*user-role-wrap[^>]*>)~', $user_nicename_field.'$1', $user_edit_page);
+
+      echo $user_edit_page;
+      return $profileuser;
+    }
+    
+    function fv_tc_nicename_pre_user_nicename( $user_nicename ){
+      if( isset($_POST['user_nicename']) && !empty($_POST['user_nicename']) ){
+        $new_user_nicename = trim($_POST['user_nicename']);
+        return $new_user_nicename;
+      }
+      else{
+        return $user_nicename;
+      }
+    }
+
 }
 $fv_tc = new fv_tc;
 
@@ -1349,6 +1404,9 @@ add_filter( 'comment_author', array( $fv_tc, 'comment_author_no_esc_html' ), 0 )
 
 /* Whitelist commenters: Auto-apporove comments from authors, which have N comments already approved. */
 add_filter( 'pre_comment_approved', array( $fv_tc, 'fv_tc_auto_approve_comment' ), 10, 2 );
+
+/*user nicename change*/
+add_action('admin_init', array( $fv_tc, 'fv_tc_user_nicename_change' ) );
 
 /*  Experimental stuff  */
 
