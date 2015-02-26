@@ -520,6 +520,14 @@ Thanks,
               <label for="reply_link"><span><?php _e('Count of approved comments from user, to automatically approve his next comments. Set to "0" to turn this off.', 'fv_tc'); ?></span></label><br />
               </td>
           </tr>
+          <tr valign="top">     
+            <th scope="row"><?php _e('Allow nicename change', 'fv_tc'); ?> </th> 
+            <td><fieldset><legend class="screen-reader-text"><span><?php _e('Allow nicename editing', 'fv_tc'); ?></span></legend>                              
+              <input id="user_nicename_edit" type="checkbox" name="user_nicename_edit" value="1" 
+              <?php if( $options['user_nicename_edit'] ) echo 'checked="checked"'; ?> />                                     
+              <label for="user_nicename_edit"><span><?php _e('Allow site administrators to change user nicename (author URL) on the "Edit user" screen.', 'fv_tc'); ?></span></label><br />
+            </td>
+          </tr>
           <?php
           $bCommentReg = get_option( 'comment_registration' );
           if( isset( $bCommentReg ) && 1 == $bCommentReg ) { ?>
