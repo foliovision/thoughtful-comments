@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.2.6.5
+Version: 0.2.6.6
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -30,7 +30,7 @@ The users cappable of moderate_comments are getting all of these features and ar
 /**
  * @package foliovision-tc
  * @author Foliovision <programming@foliovision.com>
- * version 0.2.6.5
+ * version 0.2.6.6
  */  
  
 include( 'fp-api.php' );
@@ -489,37 +489,223 @@ Thanks,
     }
         
     
+    function fv_tc_admin_description(){
+      _e('Thoughtful Comments supercharges comment moderation by moving it into the front end (i.e. in context). It also allows banning by IP, email address or domain.', 'fv_tc');
+    }
+    
+    function fv_tc_admin_comment_tweaks(){
+      $options = get_option('thoughtful_comments');
+      ?>
+      <table class="optiontable form-table">
+          <tr valign="top">
+              <th scope="row"><?php _e('Automatic link shortening', 'fv_tc'); ?> </th>  
+              <td><fieldset><legend class="screen-reader-text"><span><?php _e('Link shortening', 'fv_tc'); ?></span></legend>                                  
+              <input id="shorten_urls" type="checkbox" name="shorten_urls" value="1" 
+                  <?php if( $options['shorten_urls'] ) echo 'checked="checked"'; ?> />
+              <label for="shorten_urls"><span><?php _e('Shortens the plain URL link text in comments to "link to: domain.com". Hides long ugly URLs', 'fv_tc'); ?></span></label><br />
+              </td>
+          </tr>
+          <tr valign="top">
+              <th scope="row"><?php _e('Reply link', 'fv_tc'); ?> </th> 
+              <td><fieldset><legend class="screen-reader-text"><span><?php _e('Reply link', 'fv_tc'); ?></span></legend>                              
+              <input id="reply_link" type="checkbox" name="reply_link" value="1" 
+                  <?php if( $options['reply_link'] ) echo 'checked="checked"'; ?> />                                     
+              <label for="reply_link"><span><?php _e('Disable HTML replies. <br /><small>(Lightens your server load. Reply function still works, but through JavaScript.)</small>', 'fv_tc'); ?></span></label><br />
+              </td>
+          </tr>
+          <tr valign="top">
+              <th scope="row"><?php _e('Comment count to auto-approve', 'fv_tc'); ?> </th> 
+              <td><fieldset><legend class="screen-reader-text"><span><?php _e('Comment count to auto-approve', 'fv_tc'); ?></span></legend>                              
+              <input id="comment_autoapprove_count" type="text" name="comment_autoapprove_count" value="<?php echo ( isset($options['comment_autoapprove_count']) && intval($options['comment_autoapprove_count'])) ? $options['comment_autoapprove_count'] : 0; ?>" />                                     
+              <label for="reply_link"><span><?php _e('Count of approved comments from user, to automatically approve his next comments. Set to "0" to turn this off.', 'fv_tc'); ?></span></label><br />
+              </td>
+          </tr>
+          <?php
+          $bCommentReg = get_option( 'comment_registration' );
+          if( isset( $bCommentReg ) && 1 == $bCommentReg ) { ?>
+          <tr valign="top">
+              <th scope="row"><?php _e('Reply link Keyword', 'fv_tc'); ?> </th> 
+              <td><fieldset><legend class="screen-reader-text"><span><?php _e('Reply link', 'fv_tc'); ?></span></legend>                              
+              <input id="tc_replyKW" type="text" name="tc_replyKW" size="10"
+                 value="<?php if( isset( $options['tc_replyKW'] ) ) echo $options['tc_replyKW']; else echo 'comment-'; ?>" />
+              <label for="tc_replyKW"><span><?php _e('<strong>Advanced!</strong> Only change this if your "Log in to Reply" link doesn\'t bring the commenter back to the comment they wanted to comment on after logging in.', 'fv_tc'); ?></span></label><br />
+              </td>
+          </tr>
+          <?php } ?>
+      </table>
+      <p>
+          <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
+      </p>
+      <?php
+    }
+    
+    function fv_tc_admin_comment_instructions(){
+      ?>
+      <table class="optiontable form-table">
+        <tr valign="top">
+          <th></th>
+          <td><p><?php _e('After install with comments held up for moderation, you will notice several things on your site frontend:', 'fv_tc'); ?><br />
+          <?php _e('- comments held up for moderation appear with highlighted commenters name,', 'fv_tc'); ?><br />
+          <?php _e('- comments count in single posts or archives is highlighted if there are comments held up for moderation,', 'fv_tc'); ?><br />
+          <?php _e('- all comments have additional buttons for moderation.', 'fv_tc'); ?></p></td>
+        </tr>
+        <tr valign="top">
+          <th>Comment Moderation</th>
+          <td><img src="<?php echo $this->url; ?>/screenshot-4.png" alt="FV Thoughtful Comments frontend"></td>
+        </tr>
+        <tr valign="top">
+          <th>User Moderation</th>
+          <td>
+          <img src="<?php echo $this->url; ?>/screenshot-3.png" alt="FV Thoughtful Comments frontend"></td>
+        </tr>							
+      </table>
+      <?php
+    }
+
+    function fv_tc_admin_commenters_importing(){
+      $options_ic = get_option('thoughtful_comments_import_commenters');
+      ?>
+      <table class="optiontable form-table">
+          <tr valign="top">
+              <th scope="row"><?php _e('Import commenters as users', 'fv_tc'); ?> </th>  
+              <td><fieldset><legend class="screen-reader-text"><span><?php _e('Import commenters as users', 'fv_tc'); ?></span></legend>                                  
+              <input id="commenter_importing" type="checkbox" name="commenter_importing" value="1" 
+                  <?php if( isset($options_ic['commenter_importing']) && $options_ic['commenter_importing'] ) echo 'checked="checked"'; ?> />
+              <label for="commenter_importing"><span><?php _e('When a comment is approved (also works if the comments are always approved, so make sure you use FV Antispam or Akismet!) it checks if the email address is registered and if not, it creates an user account automatically. If such account exists, the comment is linked to that account.', 'fv_tc'); ?></span></label><br />
+              </td>
+          </tr>
+          <tr valign="top">
+              <th scope="row"><?php _e('Welcome email', 'fv_tc'); ?> </th> 
+              <td><fieldset><legend class="screen-reader-text"><span><?php _e('Welcome email', 'fv_tc'); ?></span></legend>                              
+              <input id="commenter_importing_welcome_email" type="checkbox" name="commenter_importing_welcome_email" value="1" 
+                  <?php if( isset($options_ic['commenter_importing_welcome_email']) && $options_ic['commenter_importing_welcome_email'] ) echo 'checked="checked"'; ?> />                                     
+              <label for="commenter_importing_welcome_email"><span><?php _e('Send user email about account creation. If this is set to NO, users won\'t get their loggin information.', 'fv_tc'); ?></span></label><br />
+              </td>
+          </tr>
+          <tr valign="top">
+              <th scope="row"><?php _e('Comment count', 'fv_tc'); ?> </th> 
+              <td><fieldset><legend class="screen-reader-text"><span><?php _e('Comment count', 'fv_tc'); ?></span></legend>                              
+              <input type="text" name="commenter_importing_welcome_email_count" value="<?php if( isset($options_ic['commenter_importing_welcome_email_count']) && intval($options_ic['commenter_importing_welcome_email_count']) ) echo $options_ic['commenter_importing_welcome_email_count']; ?>" /><br/>                                     
+              <span><?php _e('Minimal comment count for sending welcome email to user.
+              <br/>This setting will be applied only on <i>Crawl all existing comments</i> import.', 'fv_tc'); ?></span><br />
+              </td>
+          </tr>
+          <tr valign="top">
+              <th scope="row"><?php _e('Welcome email subject', 'fv_tc'); ?> </th> 
+              <td>
+                <input type="text" id="commenter_importing_welcome_email_subject" name="commenter_importing_welcome_email_subject" class="large-text code" value="<?php echo trim($options_ic['commenter_importing_welcome_email_subject']); ?>" />
+                <br/>
+                <small>Available tags: %sitename%</small>
+              </td>
+          </tr> 
+          <tr valign="top">
+              <th scope="row"><?php _e('Welcome email content', 'fv_tc'); ?> </th> 
+              <td>
+                <textarea rows="10" id="commenter_importing_welcome_email_content" name="commenter_importing_welcome_email_content" class="large-text code"><?php echo trim( $options_ic['commenter_importing_welcome_email_content'] ); ?></textarea>
+                <br/>
+                <small>Available tags: %login%, %password%, %firstname%, %lastname%, %sitename%, %login_page%</small>
+              </td>
+          </tr>
+          <?php if( !get_option('thoughtful_comments_batch_import_commenters')) : ?>
+            <tr valign="top">
+                <th scope="row"><?php _e('Crawl all existing comments', 'fv_tc'); ?></th>
+                <td>
+                  <input id="commenter_importing_refresh" class="button" type="button" name="commenter_importing_refresh" onclick="fvtc_import_all_commenters()" value="Start" />
+                  <input id="commenter_importing_refresh_stop" class="button" type="button" name="commenter_importing_refresh_stop" onclick="fvtc_import_all_commenters_stop()" value="Stop" disabled />
+                  <br/><br/>
+                  <?php _e('Go through all existing comments and perform same operation as on newly posted comments.', 'fv_tc'); ?><br />
+                  <?php _e('Total anonymous comments in database: ', 'fv_tc'); ?>
+                  <?php
+                    global $fvtc_import_commenters;
+                    echo '<strong>' . $fvtc_import_commenters->fv_get_anonymous_comment_count() . '</strong>';
+                  ?><br />
+                  <div id="refresh-result" style="display:none">
+                    
+                    <table>
+                      <tr>
+                        <td><strong> Updating result:</strong></th>
+                        <td>Count</th>
+                      </tr>
+                      <tr>
+                        <td>Total</td>
+                        <td id="rcount-total">0</td>
+                      </tr>
+                      <tr>
+                        <td>Added users</td>
+                        <td id="rcount-added">0</td>
+                      </tr>
+                      <tr>
+                        <td>Linked comment<br/>to existing users</td>
+                        <td id="rcount-linked">0</td>
+                      </tr>
+                    </table>
+                  </div>
+                  <div style="display: none; ">
+                    <pre>
+                      update <?php global $wpdb; echo $wpdb->prefix; ?>comments set user_id = 0;
+                      DELETE FROM wp_users WHERE ID IN ( SELECT user_id FROM `wp_usermeta` WHERE meta_key = 'fv_user_imported' );
+                      DELETE FROM wp_usermeta WHERE user_id NOT IN ( SELECT ID FROM `wp_users` )
+                    </pre>
+                  </div>
+                </td>
+            </tr>
+          <?php endif; ?>
+        </table>
+      <p>
+          <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
+      </p>
+      <?php
+    }
+    
+    function fv_tc_admin_enqueue_scripts(){
+      if( !isset($_GET['page']) || $_GET['page'] != 'manage_fv_thoughtful_comments' ) {
+        return;
+      }
+      
+      wp_enqueue_script('postbox');
+    }
+    
+    function fv_tc_closed_meta_boxes( $closed ){
+      if ( false === $closed )
+          $closed = array( 'fv_tc_commenters_importing' );
+  
+      return $closed;
+    }
+    
     function options_panel() {
-        if (!empty($_POST)) :
-            check_admin_referer('thoughtful_comments');
-            $options = array(
-                'shorten_urls' => ( isset($_POST['shorten_urls']) && $_POST['shorten_urls'] ) ? true : false,            
-                'reply_link' => ( isset($_POST['reply_link']) && $_POST['reply_link'] ) ? true : false,
-                'comment_autoapprove_count' => ( isset($_POST['comment_autoapprove_count']) && intval($_POST['comment_autoapprove_count']) ) ? intval($_POST['comment_autoapprove_count']) : 0,
-                'tc_replyKW' => isset( $_POST['tc_replyKW'] ) ? $_POST['tc_replyKW'] : 'comment-'
-            );
-            $options_ic = array(
-                'commenter_importing' => ( isset($_POST['commenter_importing']) && $_POST['commenter_importing'] ) ? true : false,            
-                'commenter_importing_welcome_email' => ( isset($_POST['commenter_importing_welcome_email']) && $_POST['commenter_importing_welcome_email'] ) ? true : false,
-                'commenter_importing_welcome_email_count' => ( isset($_POST['commenter_importing_welcome_email_count']) && intval($_POST['commenter_importing_welcome_email_count']) ) ? intval($_POST['commenter_importing_welcome_email_count']) : 1,
-                'commenter_importing_welcome_email_subject' => ( isset($_POST['commenter_importing_welcome_email_subject']) && !empty($_POST['commenter_importing_welcome_email_subject']) ) ? stripslashes($_POST['commenter_importing_welcome_email_subject']) : false,
-                'commenter_importing_welcome_email_content' => ( isset($_POST['commenter_importing_welcome_email_content']) && !empty($_POST['commenter_importing_welcome_email_content']) ) ? stripslashes($_POST['commenter_importing_welcome_email_content']) : false
-            );
-            if( update_option( 'thoughtful_comments', $options ) || update_option( 'thoughtful_comments_import_commenters', $options_ic ) ) :
-            ?>
-            <div id="message" class="updated fade">
-                <p>
-                    <strong>
-                        <?php _e('Settings saved', 'fv_tc'); ?>
-                    </strong>
-                </p>
-            </div>
-            <?php
-            endif;  //  update_option
-        endif;  //  $_POST
-        $options = get_option('thoughtful_comments');
-        $options_ic = get_option('thoughtful_comments_import_commenters');
-        ?>
+      add_meta_box( 'fv_tc_description', 'Description', array( $this, 'fv_tc_admin_description' ), 'fv_tc_settings', 'normal' );
+      add_meta_box( 'fv_tc_comment_tweaks', 'Comment Tweaks', array( $this,'fv_tc_admin_comment_tweaks' ), 'fv_tc_settings', 'normal' );
+      add_meta_box( 'fv_tc_comment_instructions', 'Instructions', array( $this,'fv_tc_admin_comment_instructions' ), 'fv_tc_settings', 'normal' );
+      add_meta_box( 'fv_tc_commenters_importing', 'Commenters Importing', array( $this,'fv_tc_admin_commenters_importing' ), 'fv_tc_settings', 'normal' );
+      
+      if (!empty($_POST)) :
+          check_admin_referer('thoughtful_comments');
+          $options = array(
+              'shorten_urls' => ( isset($_POST['shorten_urls']) && $_POST['shorten_urls'] ) ? true : false,            
+              'reply_link' => ( isset($_POST['reply_link']) && $_POST['reply_link'] ) ? true : false,
+              'comment_autoapprove_count' => ( isset($_POST['comment_autoapprove_count']) && intval($_POST['comment_autoapprove_count']) ) ? intval($_POST['comment_autoapprove_count']) : 0,
+              'tc_replyKW' => isset( $_POST['tc_replyKW'] ) ? $_POST['tc_replyKW'] : 'comment-'
+          );
+          $options_ic = array(
+              'commenter_importing' => ( isset($_POST['commenter_importing']) && $_POST['commenter_importing'] ) ? true : false,            
+              'commenter_importing_welcome_email' => ( isset($_POST['commenter_importing_welcome_email']) && $_POST['commenter_importing_welcome_email'] ) ? true : false,
+              'commenter_importing_welcome_email_count' => ( isset($_POST['commenter_importing_welcome_email_count']) && intval($_POST['commenter_importing_welcome_email_count']) ) ? intval($_POST['commenter_importing_welcome_email_count']) : 1,
+              'commenter_importing_welcome_email_subject' => ( isset($_POST['commenter_importing_welcome_email_subject']) && !empty($_POST['commenter_importing_welcome_email_subject']) ) ? stripslashes($_POST['commenter_importing_welcome_email_subject']) : false,
+              'commenter_importing_welcome_email_content' => ( isset($_POST['commenter_importing_welcome_email_content']) && !empty($_POST['commenter_importing_welcome_email_content']) ) ? stripslashes($_POST['commenter_importing_welcome_email_content']) : false
+          );
+          if( update_option( 'thoughtful_comments', $options ) || update_option( 'thoughtful_comments_import_commenters', $options_ic ) ) :
+          ?>
+          <div id="message" class="updated fade">
+              <p>
+                  <strong>
+                      <?php _e('Settings saved', 'fv_tc'); ?>
+                  </strong>
+              </p>
+          </div>
+          <?php
+          endif;  //  update_option
+      endif;  //  $_POST
+      ?>
         <div class="wrap">
             <div style="position: absolute; right: 20px; margin-top: 5px">
                 <a href="http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments" target="_blank" title="Documentation"><img alt="visit foliovision" src="http://foliovision.com/shared/fv-logo.png" /></a>
@@ -531,173 +717,11 @@ Thanks,
             <form method="post" action="">
                 <?php wp_nonce_field('thoughtful_comments') ?>
                 <div id="poststuff" class="ui-sortable">
-                <h3><?php _e('Thoughtful Comments supercharges comment moderation by moving it into the front end (i.e. in context). It also allows banning by IP, email address or domain.', 'fv_tc') ?></h3><br />
-                    <div class="postbox">
-                        <h3 class="hndle">
-                            <?php _e('Comment Tweaks', 'fv_tc') ?>
-                        </h3>
-                        <div class="inside">
-                            <table class="optiontable form-table">
-                                <tr valign="top">
-                                    <th scope="row"><?php _e('Automatic link shortening', 'fv_tc'); ?> </th>  
-                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Link shortening', 'fv_tc'); ?></span></legend>                                  
-                                    <input id="shorten_urls" type="checkbox" name="shorten_urls" value="1" 
-                                        <?php if( $options['shorten_urls'] ) echo 'checked="checked"'; ?> />
-                                    <label for="shorten_urls"><span><?php _e('Shortens the plain URL link text in comments to "link to: domain.com". Hides long ugly URLs', 'fv_tc'); ?></span></label><br />
-                                    </td>
-                                </tr>
-                                <tr valign="top">
-                                    <th scope="row"><?php _e('Reply link', 'fv_tc'); ?> </th> 
-                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Reply link', 'fv_tc'); ?></span></legend>                              
-                                    <input id="reply_link" type="checkbox" name="reply_link" value="1" 
-                                        <?php if( $options['reply_link'] ) echo 'checked="checked"'; ?> />                                     
-                                    <label for="reply_link"><span><?php _e('Disable HTML replies. <br /><small>(Lightens your server load. Reply function still works, but through JavaScript.)</small>', 'fv_tc'); ?></span></label><br />
-                                    </td>
-                                </tr>
-                                <tr valign="top">
-                                    <th scope="row"><?php _e('Comment count to auto-approve', 'fv_tc'); ?> </th> 
-                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Comment count to auto-approve', 'fv_tc'); ?></span></legend>                              
-                                    <input id="comment_autoapprove_count" type="text" name="comment_autoapprove_count" value="<?php echo ( isset($options['comment_autoapprove_count']) && intval($options['comment_autoapprove_count'])) ? $options['comment_autoapprove_count'] : 0; ?>" />                                     
-                                    <label for="reply_link"><span><?php _e('Count of approved comments from user, to automatically approve his next comments. Set to "0" to turn this off.', 'fv_tc'); ?></span></label><br />
-                                    </td>
-                                </tr>
-                                <?php
-                                $bCommentReg = get_option( 'comment_registration' );
-                                if( isset( $bCommentReg ) && 1 == $bCommentReg ) { ?>
-                                <tr valign="top">
-                                    <th scope="row"><?php _e('Reply link Keyword', 'fv_tc'); ?> </th> 
-                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Reply link', 'fv_tc'); ?></span></legend>                              
-                                    <input id="tc_replyKW" type="text" name="tc_replyKW" size="10"
-                                       value="<?php if( isset( $options['tc_replyKW'] ) ) echo $options['tc_replyKW']; else echo 'comment-'; ?>" />
-                                    <label for="tc_replyKW"><span><?php _e('<strong>Advanced!</strong> Only change this if your "Log in to Reply" link doesn\'t bring the commenter back to the comment they wanted to comment on after logging in.', 'fv_tc'); ?></span></label><br />
-                                    </td>
-                                </tr>
-                                <?php } ?>
-                            </table>
-                            <p>
-                                <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <div class="postbox">
-                        <h3 class="hndle">
-                            <?php _e('Import Commenters Settings', 'fv_tc') ?>
-                        </h3>
-                        <div class="inside">
-                            <table class="optiontable form-table">
-                                <tr valign="top">
-                                    <th scope="row"><?php _e('Import commenters as users', 'fv_tc'); ?> </th>  
-                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Import commenters as users', 'fv_tc'); ?></span></legend>                                  
-                                    <input id="commenter_importing" type="checkbox" name="commenter_importing" value="1" 
-                                        <?php if( isset($options_ic['commenter_importing']) && $options_ic['commenter_importing'] ) echo 'checked="checked"'; ?> />
-                                    <label for="commenter_importing"><span><?php _e('When a comment is approved (also works if the comments are always approved, so make sure you use FV Antispam or Akismet!) it checks if the email address is registered and if not, it creates an user account automatically. If such account exists, the comment is linked to that account.', 'fv_tc'); ?></span></label><br />
-                                    </td>
-                                </tr>
-                                <tr valign="top">
-                                    <th scope="row"><?php _e('Welcome email', 'fv_tc'); ?> </th> 
-                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Welcome email', 'fv_tc'); ?></span></legend>                              
-                                    <input id="commenter_importing_welcome_email" type="checkbox" name="commenter_importing_welcome_email" value="1" 
-                                        <?php if( isset($options_ic['commenter_importing_welcome_email']) && $options_ic['commenter_importing_welcome_email'] ) echo 'checked="checked"'; ?> />                                     
-                                    <label for="commenter_importing_welcome_email"><span><?php _e('Send user email about account creation. If this is set to NO, users won\'t get their loggin information.', 'fv_tc'); ?></span></label><br />
-                                    </td>
-                                </tr>
-                                <tr valign="top">
-                                    <th scope="row"><?php _e('Comment count', 'fv_tc'); ?> </th> 
-                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Comment count', 'fv_tc'); ?></span></legend>                              
-                                    <input type="text" name="commenter_importing_welcome_email_count" value="<?php if( isset($options_ic['commenter_importing_welcome_email_count']) && intval($options_ic['commenter_importing_welcome_email_count']) ) echo $options_ic['commenter_importing_welcome_email_count']; ?>" /><br/>                                     
-                                    <span><?php _e('Minimal comment count for sending welcome email to user.
-                                    <br/>This setting will be applied only on <i>Crawl all existing comments</i> import.', 'fv_tc'); ?></span><br />
-                                    </td>
-                                </tr>
-                                <tr valign="top">
-                                    <th scope="row"><?php _e('Welcome email subject', 'fv_tc'); ?> </th> 
-                                    <td>
-                                      <input type="text" id="commenter_importing_welcome_email_subject" name="commenter_importing_welcome_email_subject" class="large-text code" value="<?php echo trim($options_ic['commenter_importing_welcome_email_subject']); ?>" />
-                                      <br/>
-                                      <small>Available tags: %sitename%</small>
-                                    </td>
-                                </tr> 
-                                <tr valign="top">
-                                    <th scope="row"><?php _e('Welcome email content', 'fv_tc'); ?> </th> 
-                                    <td>
-                                      <textarea rows="10" id="commenter_importing_welcome_email_content" name="commenter_importing_welcome_email_content" class="large-text code"><?php echo trim( $options_ic['commenter_importing_welcome_email_content'] ); ?></textarea>
-                                      <br/>
-                                      <small>Available tags: %login%, %password%, %firstname%, %lastname%, %sitename%, %login_page%</small>
-                                    </td>
-                                </tr>
-                                <tr valign="top">
-                                    <th scope="row"><?php _e('Crawl all existing comments', 'fv_tc'); ?></th>
-                                    <td>
-                                      <input id="commenter_importing_refresh" class="button" type="button" name="commenter_importing_refresh" onclick="fvtc_import_all_commenters()" value="Start" />
-                                      <input id="commenter_importing_refresh_stop" class="button" type="button" name="commenter_importing_refresh_stop" onclick="fvtc_import_all_commenters_stop()" value="Stop" disabled />
-                                      <br/><br/>
-                                      <?php _e('Go through all existing comments and perform same operation as on newly posted comments.', 'fv_tc'); ?><br />
-                                      <?php _e('Total anonymous comments in database: ', 'fv_tc'); ?>
-                                      <?php
-                                        global $fvtc_import_commenters;
-                                        echo '<strong>' . $fvtc_import_commenters->fv_get_anonymous_comment_count() . '</strong>';
-                                      ?><br />
-                                      <div id="refresh-result" style="display:none">
-                                        
-                                        <table>
-                                          <tr>
-                                            <td><strong> Updating result:</strong></th>
-                                            <td>Count</th>
-                                          </tr>
-                                          <tr>
-                                            <td>Total</td>
-                                            <td id="rcount-total">0</td>
-                                          </tr>
-                                          <tr>
-                                            <td>Added users</td>
-                                            <td id="rcount-added">0</td>
-                                          </tr>
-                                          <tr>
-                                            <td>Linked comment<br/>to existing users</td>
-                                            <td id="rcount-linked">0</td>
-                                          </tr>
-                                        </table>
-                                      </div>
-                                      <div style="display: none; ">
-                                        <pre>
-                                          update <?php global $wpdb; echo $wpdb->prefix; ?>comments set user_id = 0;
-                                          DELETE FROM wp_users WHERE ID IN ( SELECT user_id FROM `wp_usermeta` WHERE meta_key = 'fv_user_imported' );
-                                          DELETE FROM wp_usermeta WHERE user_id NOT IN ( SELECT ID FROM `wp_users` )
-                                        </pre>
-                                      </div>
-                                    </td>
-                                </tr> 
-                              </table>
-                            <p>
-                                <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
-                            </p>
-                        </div>
-                    </div>
-                    <div class="postbox">
-						<h3 class="hndle">Instructions</h3>
-                        <div class="inside">
-                            <table class="optiontable form-table">
-                                <tr valign="top">
-									<th></th>
-                                    <td><p><?php _e('After install with comments held up for moderation, you will notice several things on your site frontend:', 'fv_tc'); ?><br />
-                            <?php _e('- comments held up for moderation appear with highlighted commenters name,', 'fv_tc'); ?><br />
-                            <?php _e('- comments count in single posts or archives is highlighted if there are comments held up for moderation,', 'fv_tc'); ?><br />
-                            <?php _e('- all comments have additional buttons for moderation.', 'fv_tc'); ?></p></td>
-                            </tr>
-                            <tr valign="top">
-                            <th>Comment Moderation</th>
-                            <td><img src="<?php echo $this->url; ?>/screenshot-4.png" alt="FV Thoughtful Comments frontend"></td>
-                            </tr>
-                            <tr valign="top">
-                            <th>User Moderation</th>
-                            <td>
-                            <img src="<?php echo $this->url; ?>/screenshot-3.png" alt="FV Thoughtful Comments frontend"></td>
-                            </tr>							
-                            </table>
-                        </div>
-                    </div>
-                    
+                  <?php
+                    do_meta_boxes('fv_tc_settings', 'normal', false );
+                    wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
+                    wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false );
+                  ?>
                 </div>
             </form>
         </div>
@@ -713,6 +737,15 @@ Thanks,
         </style>
         
         <script type="text/javascript">
+          //<![CDATA[
+          jQuery(document).ready( function($) {
+            // close postboxes that should be closed
+            $('.if-js-closed').removeClass('if-js-closed').addClass('closed');
+            // postboxes setup
+            postboxes.add_postbox_toggles('fv_tc_settings');
+          });
+          
+          
           var process = true;      
           
           function fvtc_import_all_commenters(){
@@ -749,6 +782,7 @@ Thanks,
           function fvtc_import_all_commenters_stop(){
             process = false;
           }
+        //]]>
         </script>
         
         <?php
@@ -1402,7 +1436,9 @@ add_action('deleted_comment', array( $fv_tc, 'stc_comment_deleted'), 0, 1);
 add_action('wp_set_comment_status', array( $fv_tc, 'stc_comment_status_changed'), 0, 1);
 
 
-add_action( 'admin_menu', array($fv_tc, 'admin_menu') ); 
+add_action( 'admin_menu', array($fv_tc, 'admin_menu') );
+add_action( 'admin_enqueue_scripts', array( $fv_tc, 'fv_tc_admin_enqueue_scripts' ) );
+add_filter( 'get_user_option_closedpostboxes_fv_tc_settings', array( $fv_tc, 'fv_tc_closed_meta_boxes' ) );
 
 add_filter('comment_reply_link', array($fv_tc, 'comment_reply_links'));
 
