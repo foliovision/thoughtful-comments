@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.2.6.6
+Version: 0.2.6.7
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -30,15 +30,11 @@ The users cappable of moderate_comments are getting all of these features and ar
 /**
  * @package foliovision-tc
  * @author Foliovision <programming@foliovision.com>
- * version 0.2.6.6
+ * version 0.2.6.7
  */  
  
 include( 'fp-api.php' );
 if( class_exists('fv_tc_Plugin') ) :
-
-if( !class_exists('FVTC_Import_Commenters') ){
-  include( 'fv-import-commenters.php' );
-}
 
 class fv_tc extends fv_tc_Plugin {
     /**
@@ -51,7 +47,7 @@ class fv_tc extends fv_tc_Plugin {
      * Plugin version
      * @var string
      */
-    var $strVersion = '0.2.6.5';
+    var $strVersion = '0.2.6.7';
     
     /**
      * Decide if scripts will be loaded on current page
@@ -65,37 +61,16 @@ class fv_tc extends fv_tc_Plugin {
      * Class contructor. Sets all basic variables.
      */         
     function __construct(){
-        global $fvtc_import_commenters;
-      
         $this->url = trailingslashit( site_url() ).PLUGINDIR.'/'. dirname( plugin_basename(__FILE__) );
         $this->readme_URL = 'http://plugins.trac.wordpress.org/browser/thoughtful-comments/trunk/readme.txt?format=txt';    
         add_action( 'in_plugin_update_message-thoughtful-comments/fv-thoughtful-comments.php', array( &$this, 'plugin_update_message' ) );    
         add_action( 'activate_' .plugin_basename(__FILE__), array( $this, 'activate' ) );
-        add_action( 'wp_ajax_refresh_comments_import', array( $fvtc_import_commenters, 'fv_refresh_comments_import_callback') );
     }
 
 
     function activate() {
         if( !get_option('thoughtful_comments') )
           update_option( 'thoughtful_comments', array( 'shorten_urls' => true, 'reply_link' => false ) );
-        if( !get_option('thoughtful_comments_import_commenters') ){
-          $thoughtful_comments_import_commenters = array(
-'commenter_importing' => 0,
-'commenter_importing_welcome_email' => 0,
-'commenter_importing_welcome_email_count' => 3,
-'commenter_importing_welcome_email_subject' => "%sitename%: Welcome %firstname%",
-'commenter_importing_welcome_email_content' => "Hi %firstname%,
-Thanks for your comment on %sitename%.
-
-We created an account for you. You can log in on %login_page% with following credentials:
-LOGIN: %login%
-PASSWORD: %password%
-
-Thanks,
-%sitename%"
-                                                        );
-          update_option( 'thoughtful_comments_import_commenters', $thoughtful_comments_import_commenters );
-        }
     }
 
     function ap_action_init()
@@ -524,7 +499,7 @@ Thanks,
             <th scope="row"><?php _e('Allow nicename change', 'fv_tc'); ?> </th> 
             <td><fieldset><legend class="screen-reader-text"><span><?php _e('Allow nicename editing', 'fv_tc'); ?></span></legend>                              
               <input id="user_nicename_edit" type="checkbox" name="user_nicename_edit" value="1" 
-              <?php if( $options['user_nicename_edit'] ) echo 'checked="checked"'; ?> />                                     
+              <?php if( isset($options['user_nicename_edit']) && $options['user_nicename_edit'] ) echo 'checked="checked"'; ?> />                                     
               <label for="user_nicename_edit"><span><?php _e('Allow site administrators to change user nicename (author URL) on the "Edit user" screen.', 'fv_tc'); ?></span></label><br />
             </td>
           </tr>
@@ -569,101 +544,6 @@ Thanks,
       </table>
       <?php
     }
-
-    function fv_tc_admin_commenters_importing(){
-      $options_ic = get_option('thoughtful_comments_import_commenters');
-      ?>
-      <table class="optiontable form-table">
-          <tr valign="top">
-              <th scope="row"><?php _e('Import commenters as users', 'fv_tc'); ?> </th>  
-              <td><fieldset><legend class="screen-reader-text"><span><?php _e('Import commenters as users', 'fv_tc'); ?></span></legend>                                  
-              <input id="commenter_importing" type="checkbox" name="commenter_importing" value="1" 
-                  <?php if( isset($options_ic['commenter_importing']) && $options_ic['commenter_importing'] ) echo 'checked="checked"'; ?> />
-              <label for="commenter_importing"><span><?php _e('When a comment is approved (also works if the comments are always approved, so make sure you use FV Antispam or Akismet!) it checks if the email address is registered and if not, it creates an user account automatically. If such account exists, the comment is linked to that account.', 'fv_tc'); ?></span></label><br />
-              </td>
-          </tr>
-          <tr valign="top">
-              <th scope="row"><?php _e('Welcome email', 'fv_tc'); ?> </th> 
-              <td><fieldset><legend class="screen-reader-text"><span><?php _e('Welcome email', 'fv_tc'); ?></span></legend>                              
-              <input id="commenter_importing_welcome_email" type="checkbox" name="commenter_importing_welcome_email" value="1" 
-                  <?php if( isset($options_ic['commenter_importing_welcome_email']) && $options_ic['commenter_importing_welcome_email'] ) echo 'checked="checked"'; ?> />                                     
-              <label for="commenter_importing_welcome_email"><span><?php _e('Send user email about account creation. If this is set to NO, users won\'t get their loggin information.', 'fv_tc'); ?></span></label><br />
-              </td>
-          </tr>
-          <tr valign="top">
-              <th scope="row"><?php _e('Comment count', 'fv_tc'); ?> </th> 
-              <td><fieldset><legend class="screen-reader-text"><span><?php _e('Comment count', 'fv_tc'); ?></span></legend>                              
-              <input type="text" name="commenter_importing_welcome_email_count" value="<?php if( isset($options_ic['commenter_importing_welcome_email_count']) && intval($options_ic['commenter_importing_welcome_email_count']) ) echo $options_ic['commenter_importing_welcome_email_count']; ?>" /><br/>                                     
-              <span><?php _e('Minimal comment count for sending welcome email to user.
-              <br/>This setting will be applied only on <i>Crawl all existing comments</i> import.', 'fv_tc'); ?></span><br />
-              </td>
-          </tr>
-          <tr valign="top">
-              <th scope="row"><?php _e('Welcome email subject', 'fv_tc'); ?> </th> 
-              <td>
-                <input type="text" id="commenter_importing_welcome_email_subject" name="commenter_importing_welcome_email_subject" class="large-text code" value="<?php echo trim($options_ic['commenter_importing_welcome_email_subject']); ?>" />
-                <br/>
-                <small>Available tags: %sitename%</small>
-              </td>
-          </tr> 
-          <tr valign="top">
-              <th scope="row"><?php _e('Welcome email content', 'fv_tc'); ?> </th> 
-              <td>
-                <textarea rows="10" id="commenter_importing_welcome_email_content" name="commenter_importing_welcome_email_content" class="large-text code"><?php echo trim( $options_ic['commenter_importing_welcome_email_content'] ); ?></textarea>
-                <br/>
-                <small>Available tags: %login%, %password%, %firstname%, %lastname%, %sitename%, %login_page%</small>
-              </td>
-          </tr>
-          <?php if( !get_option('thoughtful_comments_batch_import_commenters')) : ?>
-            <tr valign="top">
-                <th scope="row"><?php _e('Crawl all existing comments', 'fv_tc'); ?></th>
-                <td>
-                  <input id="commenter_importing_refresh" class="button" type="button" name="commenter_importing_refresh" onclick="fvtc_import_all_commenters()" value="Start" />
-                  <input id="commenter_importing_refresh_stop" class="button" type="button" name="commenter_importing_refresh_stop" onclick="fvtc_import_all_commenters_stop()" value="Stop" disabled />
-                  <br/><br/>
-                  <?php _e('Go through all existing comments and perform same operation as on newly posted comments.', 'fv_tc'); ?><br />
-                  <?php _e('Total anonymous comments in database: ', 'fv_tc'); ?>
-                  <?php
-                    global $fvtc_import_commenters;
-                    echo '<strong>' . $fvtc_import_commenters->fv_get_anonymous_comment_count() . '</strong>';
-                  ?><br />
-                  <div id="refresh-result" style="display:none">
-                    
-                    <table>
-                      <tr>
-                        <td><strong> Updating result:</strong></th>
-                        <td>Count</th>
-                      </tr>
-                      <tr>
-                        <td>Total</td>
-                        <td id="rcount-total">0</td>
-                      </tr>
-                      <tr>
-                        <td>Added users</td>
-                        <td id="rcount-added">0</td>
-                      </tr>
-                      <tr>
-                        <td>Linked comment<br/>to existing users</td>
-                        <td id="rcount-linked">0</td>
-                      </tr>
-                    </table>
-                  </div>
-                  <div style="display: none; ">
-                    <pre>
-                      update <?php global $wpdb; echo $wpdb->prefix; ?>comments set user_id = 0;
-                      DELETE FROM wp_users WHERE ID IN ( SELECT user_id FROM `wp_usermeta` WHERE meta_key = 'fv_user_imported' );
-                      DELETE FROM wp_usermeta WHERE user_id NOT IN ( SELECT ID FROM `wp_users` )
-                    </pre>
-                  </div>
-                </td>
-            </tr>
-          <?php endif; ?>
-        </table>
-      <p>
-          <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
-      </p>
-      <?php
-    }
     
     function fv_tc_admin_enqueue_scripts(){
       if( !isset($_GET['page']) || $_GET['page'] != 'manage_fv_thoughtful_comments' ) {
@@ -673,18 +553,11 @@ Thanks,
       wp_enqueue_script('postbox');
     }
     
-    function fv_tc_closed_meta_boxes( $closed ){
-      if ( false === $closed )
-          $closed = array( 'fv_tc_commenters_importing' );
-  
-      return $closed;
-    }
     
     function options_panel() {
       add_meta_box( 'fv_tc_description', 'Description', array( $this, 'fv_tc_admin_description' ), 'fv_tc_settings', 'normal' );
       add_meta_box( 'fv_tc_comment_tweaks', 'Comment Tweaks', array( $this,'fv_tc_admin_comment_tweaks' ), 'fv_tc_settings', 'normal' );
       add_meta_box( 'fv_tc_comment_instructions', 'Instructions', array( $this,'fv_tc_admin_comment_instructions' ), 'fv_tc_settings', 'normal' );
-      add_meta_box( 'fv_tc_commenters_importing', 'Commenters Importing', array( $this,'fv_tc_admin_commenters_importing' ), 'fv_tc_settings', 'normal' );
       
       if (!empty($_POST)) :
           check_admin_referer('thoughtful_comments');
@@ -695,14 +568,7 @@ Thanks,
               'tc_replyKW' => isset( $_POST['tc_replyKW'] ) ? $_POST['tc_replyKW'] : 'comment-',
               'user_nicename_edit' => ( isset($_POST['user_nicename_edit']) && $_POST['user_nicename_edit'] ) ? true : false,
           );
-          $options_ic = array(
-              'commenter_importing' => ( isset($_POST['commenter_importing']) && $_POST['commenter_importing'] ) ? true : false,            
-              'commenter_importing_welcome_email' => ( isset($_POST['commenter_importing_welcome_email']) && $_POST['commenter_importing_welcome_email'] ) ? true : false,
-              'commenter_importing_welcome_email_count' => ( isset($_POST['commenter_importing_welcome_email_count']) && intval($_POST['commenter_importing_welcome_email_count']) ) ? intval($_POST['commenter_importing_welcome_email_count']) : 1,
-              'commenter_importing_welcome_email_subject' => ( isset($_POST['commenter_importing_welcome_email_subject']) && !empty($_POST['commenter_importing_welcome_email_subject']) ) ? stripslashes($_POST['commenter_importing_welcome_email_subject']) : false,
-              'commenter_importing_welcome_email_content' => ( isset($_POST['commenter_importing_welcome_email_content']) && !empty($_POST['commenter_importing_welcome_email_content']) ) ? stripslashes($_POST['commenter_importing_welcome_email_content']) : false
-          );
-          if( update_option( 'thoughtful_comments', $options ) || update_option( 'thoughtful_comments_import_commenters', $options_ic ) ) :
+          if( update_option( 'thoughtful_comments', $options ) ) :
           ?>
           <div id="message" class="updated fade">
               <p>
@@ -753,44 +619,7 @@ Thanks,
             // postboxes setup
             postboxes.add_postbox_toggles('fv_tc_settings');
           });
-          
-          
-          var process = true;      
-          
-          function fvtc_import_all_commenters(){
-            jQuery('#commenter_importing_refresh').attr('disabled',true);
-            jQuery('#commenter_importing_refresh_stop').attr('disabled',false);
-            jQuery('#refresh-result').show();
-            
-            var data = { 'action': 'refresh_comments_import' };
-            process = true;
-            
-            jQuery.post(ajaxurl, data, fvtc_import_all_commenters_continue);
-          }
-          
-          function fvtc_import_all_commenters_continue( response ){
-            var result = JSON.parse(response);
-            var iTotal = parseInt( jQuery("#rcount-total").text() ) + result.total;
-            var iAdded = parseInt( jQuery("#rcount-added").text() ) + result.added;
-            var iLinked = parseInt( jQuery("#rcount-linked").text() ) + result.linked;
-            
-            jQuery("#rcount-total").text(iTotal);
-            jQuery("#rcount-added").text(iAdded);
-            jQuery("#rcount-linked").text(iLinked);
-            
-            if ( !process || result.last == true ){
-                jQuery('#commenter_importing_refresh').attr('disabled',false);
-                jQuery('#commenter_importing_refresh_stop').attr('disabled',true);
-            }
-            else{
-              var data = { 'action': 'refresh_comments_import' };
-              jQuery.post(ajaxurl, data, fvtc_import_all_commenters_continue);
-            }
-          }
-          
-          function fvtc_import_all_commenters_stop(){
-            process = false;
-          }
+
         //]]>
         </script>
         
@@ -1500,7 +1329,6 @@ add_action('wp_set_comment_status', array( $fv_tc, 'stc_comment_status_changed')
 
 add_action( 'admin_menu', array($fv_tc, 'admin_menu') );
 add_action( 'admin_enqueue_scripts', array( $fv_tc, 'fv_tc_admin_enqueue_scripts' ) );
-add_filter( 'get_user_option_closedpostboxes_fv_tc_settings', array( $fv_tc, 'fv_tc_closed_meta_boxes' ) );
 
 add_filter('comment_reply_link', array($fv_tc, 'comment_reply_links'));
 
