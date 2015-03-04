@@ -64,18 +64,18 @@ class fv_tc extends fv_tc_Plugin {
         $this->url = trailingslashit( site_url() ).PLUGINDIR.'/'. dirname( plugin_basename(__FILE__) );
         $this->readme_URL = 'http://plugins.trac.wordpress.org/browser/thoughtful-comments/trunk/readme.txt?format=txt';    
         add_action( 'in_plugin_update_message-thoughtful-comments/fv-thoughtful-comments.php', array( &$this, 'plugin_update_message' ) );    
-        add_action( 'activate_' .plugin_basename(__FILE__), array( $this, 'activate' ) );
+        add_action( 'admin_init', array( $this, 'option_defaults' ) );
     }
 
 
-    function activate() {
+    function option_defaults() {
       $options = get_option('thoughtful_comments');
       if( !$options ){
         update_option( 'thoughtful_comments', array( 'shorten_urls' => true, 'reply_link' => true, 'comment_autoapprove_count' => 1 ) );
       }
       else{
         //make autoapprove count 1 by default
-        if( !isset($options['comment_autoapprove_count']) || !intval($options['comment_autoapprove_count']) ){
+        if( !isset($options['comment_autoapprove_count']) || (intval($options['comment_autoapprove_count']) < 1) ){
           $options['comment_autoapprove_count'] = 1;
           update_option( 'thoughtful_comments', $options );
         }
@@ -501,7 +501,7 @@ class fv_tc extends fv_tc_Plugin {
             <tr valign="top">
                 <th scope="row"><?php _e('Comments before auto-approval', 'fv_tc'); ?> </th> 
                 <td><fieldset><legend class="screen-reader-text"><span><?php _e('Comments before auto-approval', 'fv_tc'); ?></span></legend>                              
-                <input id="comment_autoapprove_count" type="text" name="comment_autoapprove_count" value="<?php echo ( isset($options['comment_autoapprove_count']) && intval($options['comment_autoapprove_count'])) ? $options['comment_autoapprove_count'] : 0; ?>" />                                     
+                <input id="comment_autoapprove_count" type="text" name="comment_autoapprove_count" value="<?php echo ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : 1; ?>" />                                     
                 <label for="reply_link"><span><?php _e('Number of approved comments before auto-approval', 'fv_tc'); ?></span></label><br />
                 </td>
             </tr>
@@ -575,7 +575,7 @@ class fv_tc extends fv_tc_Plugin {
           $options = array(
               'shorten_urls' => ( isset($_POST['shorten_urls']) && $_POST['shorten_urls'] ) ? true : false,            
               'reply_link' => ( isset($_POST['reply_link']) && $_POST['reply_link'] ) ? true : false,
-              'comment_autoapprove_count' => ( isset($_POST['comment_autoapprove_count']) && intval($_POST['comment_autoapprove_count']) ) ? intval($_POST['comment_autoapprove_count']) : 1,
+              'comment_autoapprove_count' => ( isset($_POST['comment_autoapprove_count']) && intval($_POST['comment_autoapprove_count']) > 0 ) ? intval($_POST['comment_autoapprove_count']) : 1,
               'tc_replyKW' => isset( $_POST['tc_replyKW'] ) ? $_POST['tc_replyKW'] : 'comment-',
               'user_nicename_edit' => ( isset($_POST['user_nicename_edit']) && $_POST['user_nicename_edit'] ) ? true : false,
           );
