@@ -70,7 +70,7 @@ class fv_tc extends fv_tc_Plugin {
 
     function activate() {
         if( !get_option('thoughtful_comments') )
-          update_option( 'thoughtful_comments', array( 'shorten_urls' => true, 'reply_link' => false ) );
+          update_option( 'thoughtful_comments', array( 'shorten_urls' => true, 'reply_link' => false, 'comment_autoapprove_count' => 1 ) );
     }
 
     function ap_action_init()
@@ -1171,9 +1171,9 @@ class fv_tc extends fv_tc_Plugin {
       }
       
       $options = get_option('thoughtful_comments');
-      //do not add warning if option is not set or is set to zero
+      //do not add warning if option is not set or is set to 1
       $auto_approve_count = ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : false;
-      if( !$auto_approve_count ){
+      if( !$auto_approve_count || $auto_approve_count <= 1 ){
         return;
       }
 
