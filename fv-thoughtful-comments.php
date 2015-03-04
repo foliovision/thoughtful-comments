@@ -69,8 +69,17 @@ class fv_tc extends fv_tc_Plugin {
 
 
     function activate() {
-        if( !get_option('thoughtful_comments') )
-          update_option( 'thoughtful_comments', array( 'shorten_urls' => true, 'reply_link' => false, 'comment_autoapprove_count' => 1 ) );
+      $options = get_option('thoughtful_comments');
+      if( !$options ){
+        update_option( 'thoughtful_comments', array( 'shorten_urls' => true, 'reply_link' => true, 'comment_autoapprove_count' => 1 ) );
+      }
+      else{
+        //make autoapprove count 1 by default
+        if( !isset($options['comment_autoapprove_count']) || !intval($options['comment_autoapprove_count']) ){
+          $options['comment_autoapprove_count'] = 1;
+          update_option( 'thoughtful_comments', $options );
+        }
+      }
     }
 
     function ap_action_init()
