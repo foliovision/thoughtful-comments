@@ -488,13 +488,15 @@ class fv_tc extends fv_tc_Plugin {
               <label for="reply_link"><span><?php _e('Disable HTML replies. <br /><small>(Lightens your server load. Reply function still works, but through JavaScript.)</small>', 'fv_tc'); ?></span></label><br />
               </td>
           </tr>
-          <tr valign="top">
-              <th scope="row"><?php _e('Comment count to auto-approve', 'fv_tc'); ?> </th> 
-              <td><fieldset><legend class="screen-reader-text"><span><?php _e('Comment count to auto-approve', 'fv_tc'); ?></span></legend>                              
-              <input id="comment_autoapprove_count" type="text" name="comment_autoapprove_count" value="<?php echo ( isset($options['comment_autoapprove_count']) && intval($options['comment_autoapprove_count'])) ? $options['comment_autoapprove_count'] : 0; ?>" />                                     
-              <label for="reply_link"><span><?php _e('Count of approved comments from user, to automatically approve his next comments. Set to "0" to turn this off.', 'fv_tc'); ?></span></label><br />
-              </td>
-          </tr>
+          <?php if( get_option('comment_whitelist') ): ?>
+            <tr valign="top">
+                <th scope="row"><?php _e('Comments before auto-approval', 'fv_tc'); ?> </th> 
+                <td><fieldset><legend class="screen-reader-text"><span><?php _e('Comments before auto-approval', 'fv_tc'); ?></span></legend>                              
+                <input id="comment_autoapprove_count" type="text" name="comment_autoapprove_count" value="<?php echo ( isset($options['comment_autoapprove_count']) && intval($options['comment_autoapprove_count'])) ? $options['comment_autoapprove_count'] : 0; ?>" />                                     
+                <label for="reply_link"><span><?php _e('Number of approved comments before auto-approval', 'fv_tc'); ?></span></label><br />
+                </td>
+            </tr>
+          <?php endif; ?>
           <tr valign="top">     
             <th scope="row"><?php _e('Allow nicename change', 'fv_tc'); ?> </th> 
             <td><fieldset><legend class="screen-reader-text"><span><?php _e('Allow nicename editing', 'fv_tc'); ?></span></legend>                              
@@ -564,7 +566,7 @@ class fv_tc extends fv_tc_Plugin {
           $options = array(
               'shorten_urls' => ( isset($_POST['shorten_urls']) && $_POST['shorten_urls'] ) ? true : false,            
               'reply_link' => ( isset($_POST['reply_link']) && $_POST['reply_link'] ) ? true : false,
-              'comment_autoapprove_count' => ( isset($_POST['comment_autoapprove_count']) && intval($_POST['comment_autoapprove_count']) ) ? intval($_POST['comment_autoapprove_count']) : 0,
+              'comment_autoapprove_count' => ( isset($_POST['comment_autoapprove_count']) && intval($_POST['comment_autoapprove_count']) ) ? intval($_POST['comment_autoapprove_count']) : 1,
               'tc_replyKW' => isset( $_POST['tc_replyKW'] ) ? $_POST['tc_replyKW'] : 'comment-',
               'user_nicename_edit' => ( isset($_POST['user_nicename_edit']) && $_POST['user_nicename_edit'] ) ? true : false,
           );
@@ -1112,6 +1114,12 @@ class fv_tc extends fv_tc_Plugin {
     
     function fv_tc_auto_approve_comment( $approved, $commentdata ){
       
+      //edit: whitelist has to be on to trigger this functionality
+      if( !get_option('comment_whitelist') ){
+        return $approved;
+      }
+
+      
       if( !empty( $commentdata['user_id'] ) ) {
         global $wpdb;
       
@@ -1125,26 +1133,24 @@ class fv_tc extends fv_tc_Plugin {
       if( isset( $user ) && ( $commentdata['user_id'] == $post_author || $user->has_cap( 'moderate_comments' ) ) ) {
         return 1;
       }
-      
-      $bWhiteList = get_option('comment_whitelist');
 
       //stop processing if comment is SPAM
       //stop processing if white_list is on and comment is already unapproved
       //stop processing if comments author email is empty
-      if( $approved == 'spam' || ( $bWhiteList && $approved == 0 ) || empty($commentdata['comment_author_email']) ){
+      if( $approved == 'spam' || $approved == 0 || empty($commentdata['comment_author_email']) ){
         return $approved;
       }
-      
+
       $options = get_option('thoughtful_comments');
       $auto_approve_count = ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : false;
       
-      //stop if auto-approve count is not set in administation or is set to zero
-      if( !$auto_approve_count ){
+      //stop if auto-approve count is not set OR is less or equal 1 (comment whitelist already handle this)
+      if( !$auto_approve_count || $auto_approve_count <= 1 ){
         return $approved;
       }
-      
+
       global $wpdb;
-      $dbCount = $wpdb->get_var("SELECT count(*) FROM {$wpdb->prefix}comments WHERE comment_approved = 1 AND comment_author_email = '".$commentdata['comment_author_email']."'");
+      $dbCount = $wpdb->get_var("SELECT count(*) FROM {$wpdb->prefix}comments WHERE comment_author = '".$commentdata['comment_author']."' AND comment_author_email = '".$commentdata['comment_author_email']."' AND comment_approved = 1");
       
       if( $dbCount >= $auto_approve_count ) {
         return 1;
@@ -1159,8 +1165,13 @@ class fv_tc extends fv_tc_Plugin {
         return;
       }
       
+      //do not add warning if this setting is disabled
+      if( !get_option('comment_whitelist') ){
+        return;
+      }
+      
       $options = get_option('thoughtful_comments');
-      //do not add warning if option is not set or is set to zero => disabled
+      //do not add warning if option is not set or is set to zero
       $auto_approve_count = ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : false;
       if( !$auto_approve_count ){
         return;
