@@ -483,35 +483,33 @@ class fv_tc extends fv_tc_Plugin {
       <table class="optiontable form-table">
           <tr valign="top">
               <th scope="row"><?php _e('Automatic link shortening', 'fv_tc'); ?> </th>  
-              <td><fieldset><legend class="screen-reader-text"><span><?php _e('Link shortening', 'fv_tc'); ?></span></legend>                                  
-              <input id="shorten_urls" type="checkbox" name="shorten_urls" value="1" 
-                  <?php if( $options['shorten_urls'] ) echo 'checked="checked"'; ?> />
-              <label for="shorten_urls"><span><?php _e('Shortens the plain URL link text in comments to "link to: domain.com". Hides long ugly URLs', 'fv_tc'); ?></span></label><br />
+              <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Link shortening', 'fv_tc'); ?></span></legend>                                  
+              <input id="shorten_urls" type="checkbox" name="shorten_urls" value="1" <?php if( $options['shorten_urls'] ) echo 'checked="checked"'; ?> /></td>
+              <td><label for="shorten_urls"><span><?php _e('Shortens the plain URL link text in comments to "link to: domain.com". Hides long ugly URLs', 'fv_tc'); ?></span></label><br />
               </td>
           </tr>
           <tr valign="top">
               <th scope="row"><?php _e('Reply link', 'fv_tc'); ?> </th> 
-              <td><fieldset><legend class="screen-reader-text"><span><?php _e('Reply link', 'fv_tc'); ?></span></legend>                              
-              <input id="reply_link" type="checkbox" name="reply_link" value="1" 
-                  <?php if( $options['reply_link'] ) echo 'checked="checked"'; ?> />                                     
-              <label for="reply_link"><span><?php _e('Disable HTML replies. <br /><small>(Lightens your server load. Reply function still works, but through JavaScript.)</small>', 'fv_tc'); ?></span></label><br />
+              <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Reply link', 'fv_tc'); ?></span></legend>                              
+              <input id="reply_link" type="checkbox" name="reply_link" value="1" <?php if( $options['reply_link'] ) echo 'checked="checked"'; ?> /></td>                                    
+              <td><label for="reply_link"><span><?php _e('Disable HTML replies. <br /><small>(Lightens your server load. Reply function still works, but through JavaScript.)</small>', 'fv_tc'); ?></span></label><br />
               </td>
           </tr>
           <?php if( get_option('comment_whitelist') ): ?>
             <tr valign="top">
                 <th scope="row"><?php _e('Comments before auto-approval', 'fv_tc'); ?> </th> 
-                <td><fieldset><legend class="screen-reader-text"><span><?php _e('Comments before auto-approval', 'fv_tc'); ?></span></legend>                              
-                <input id="comment_autoapprove_count" type="text" name="comment_autoapprove_count" value="<?php echo ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : 1; ?>" />                                     
+                <td colspan="2"><fieldset><legend class="screen-reader-text"><span><?php _e('Comments before auto-approval', 'fv_tc'); ?></span></legend>                              
+                <input id="comment_autoapprove_count" type="text" name="comment_autoapprove_count" value="<?php echo ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : 1; ?>" />                               
                 <label for="reply_link"><span><?php _e('Number of approved comments before auto-approval', 'fv_tc'); ?></span></label><br />
                 </td>
             </tr>
           <?php endif; ?>
           <tr valign="top">     
             <th scope="row"><?php _e('Allow nicename change', 'fv_tc'); ?> </th> 
-            <td><fieldset><legend class="screen-reader-text"><span><?php _e('Allow nicename editing', 'fv_tc'); ?></span></legend>                              
+            <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Allow nicename editing', 'fv_tc'); ?></span></legend>                              
               <input id="user_nicename_edit" type="checkbox" name="user_nicename_edit" value="1" 
-              <?php if( isset($options['user_nicename_edit']) && $options['user_nicename_edit'] ) echo 'checked="checked"'; ?> />                                     
-              <label for="user_nicename_edit"><span><?php _e('Allow site administrators to change user nicename (author URL) on the "Edit user" screen.', 'fv_tc'); ?></span></label><br />
+              <?php if( isset($options['user_nicename_edit']) && $options['user_nicename_edit'] ) echo 'checked="checked"'; ?> /></td>                               
+              <td><label for="user_nicename_edit"><span><?php _e('Allow site administrators to change user nicename (author URL) on the "Edit user" screen.', 'fv_tc'); ?></span></label><br />
             </td>
           </tr>
           <?php
@@ -519,10 +517,9 @@ class fv_tc extends fv_tc_Plugin {
           if( isset( $bCommentReg ) && 1 == $bCommentReg ) { ?>
           <tr valign="top">
               <th scope="row"><?php _e('Reply link Keyword', 'fv_tc'); ?> </th> 
-              <td><fieldset><legend class="screen-reader-text"><span><?php _e('Reply link', 'fv_tc'); ?></span></legend>                              
-              <input id="tc_replyKW" type="text" name="tc_replyKW" size="10"
-                 value="<?php if( isset( $options['tc_replyKW'] ) ) echo $options['tc_replyKW']; else echo 'comment-'; ?>" />
-              <label for="tc_replyKW"><span><?php _e('<strong>Advanced!</strong> Only change this if your "Log in to Reply" link doesn\'t bring the commenter back to the comment they wanted to comment on after logging in.', 'fv_tc'); ?></span></label><br />
+              <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Reply link', 'fv_tc'); ?></span></legend>                              
+              <input id="tc_replyKW" type="text" name="tc_replyKW" size="10" value="<?php if( isset( $options['tc_replyKW'] ) ) echo $options['tc_replyKW']; else echo 'comment-'; ?>" /></td>
+              <td><label for="tc_replyKW"><span><?php _e('<strong>Advanced!</strong> Only change this if your "Log in to Reply" link doesn\'t bring the commenter back to the comment they wanted to comment on after logging in.', 'fv_tc'); ?></span></label><br />
               </td>
           </tr>
           <?php } ?>
@@ -537,20 +534,20 @@ class fv_tc extends fv_tc_Plugin {
       ?>
       <table class="optiontable form-table">
         <tr valign="top">
-          <th></th>
+          <th scope="row"></th>
           <td><p><?php _e('After install with comments held up for moderation, you will notice several things on your site frontend:', 'fv_tc'); ?><br />
           <?php _e('- comments held up for moderation appear with highlighted commenters name,', 'fv_tc'); ?><br />
           <?php _e('- comments count in single posts or archives is highlighted if there are comments held up for moderation,', 'fv_tc'); ?><br />
           <?php _e('- all comments have additional buttons for moderation.', 'fv_tc'); ?></p></td>
         </tr>
         <tr valign="top">
-          <th>Comment Moderation</th>
-          <td><img src="<?php echo $this->url; ?>/screenshot-4.png" alt="FV Thoughtful Comments frontend"></td>
+          <th scope="row">Comment Moderation</th>
+          <td><img src="<?php echo $this->url; ?>/screenshot-4.png" alt="FV Thoughtful Comments frontend" style="max-width: 100%; height: auto;"></td>
         </tr>
         <tr valign="top">
-          <th>User Moderation</th>
+          <th scope="row">User Moderation</th>
           <td>
-          <img src="<?php echo $this->url; ?>/screenshot-3.png" alt="FV Thoughtful Comments frontend"></td>
+          <img src="<?php echo $this->url; ?>/screenshot-3.png" alt="FV Thoughtful Comments frontend" style="max-width: 100%; height: auto;"></td>
         </tr>							
       </table>
       <?php
