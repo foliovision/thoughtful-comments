@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.2.6.7
+Version: 0.2.6.8
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -78,6 +78,7 @@ class fv_tc extends fv_tc_Plugin {
         if( !isset($options['comment_autoapprove_count']) || (intval($options['comment_autoapprove_count']) < 1) ){
           $options['comment_autoapprove_count'] = 1;
           update_option( 'thoughtful_comments', $options );
+          // ok
         }
       }
     }
