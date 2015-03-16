@@ -81,6 +81,18 @@ class fv_tc extends fv_tc_Plugin {
         }
       }
     }
+	
+	
+	function admin_css(){
+		
+		if( !isset($_GET['page']) || $_GET['page'] != 'manage_fv_thoughtful_comments' ) {
+			return; 
+		}
+		?>
+		<link rel="stylesheet" type="text/css" href="<?php echo plugins_url('css/admin.css',__FILE__); ?>" />
+		<?php 
+	}
+	
 
     function ap_action_init()
     {
@@ -1346,7 +1358,7 @@ add_filter( 'comment_moderation_text', array( $fv_tc, 'comment_moderation_text' 
 add_action('deleted_comment', array( $fv_tc, 'stc_comment_deleted'), 0, 1);
 add_action('wp_set_comment_status', array( $fv_tc, 'stc_comment_status_changed'), 0, 1);
 
-
+add_action( 'admin_head', array($fv_tc, 'admin_css' )) ;
 add_action( 'admin_menu', array($fv_tc, 'admin_menu') );
 add_action( 'admin_enqueue_scripts', array( $fv_tc, 'fv_tc_admin_enqueue_scripts' ) );
 
