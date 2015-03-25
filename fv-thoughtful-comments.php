@@ -554,7 +554,7 @@ class fv_tc extends fv_tc_Plugin {
         </tr>
         <tr valign="top">
           <th scope="row">Comment Moderation</th>
-          <td><img src="<?php echo $this->url; ?>/screenshot-4.png" alt="FV Thoughtful Comments frontend" style="max-width: 100%; height: auto;"></td>
+          <td><img src="<?php echo $this->url; ?>/screenshot-1.png" alt="FV Thoughtful Comments frontend" style="max-width: 100%; height: auto;"></td>
         </tr>
         <tr valign="top">
           <th scope="row">User Moderation</th>
