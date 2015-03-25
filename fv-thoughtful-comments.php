@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.2.6
+Version: 0.2.6.7
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -30,11 +30,10 @@ The users cappable of moderate_comments are getting all of these features and ar
 /**
  * @package foliovision-tc
  * @author Foliovision <programming@foliovision.com>
- * version 0.2.6
+ * version 0.2.6.7
  */  
-
+ 
 include( 'fp-api.php' );
-
 if( class_exists('fv_tc_Plugin') ) :
 
 class fv_tc extends fv_tc_Plugin {
@@ -48,22 +47,52 @@ class fv_tc extends fv_tc_Plugin {
      * Plugin version
      * @var string
      */
-    var $strVersion = '0.2.6';
+    var $strVersion = '0.2.6.7';
+    
+    /**
+     * Decide if scripts will be loaded on current page
+     * True if array( $fv_tc, 'frontend' ) filter was aplied on current page
+     * @bool
+     */
+    var $loadScripts = false; 
+     
     
     /**
      * Class contructor. Sets all basic variables.
      */         
-    function __construct(){ 
+    function __construct(){
         $this->url = trailingslashit( site_url() ).PLUGINDIR.'/'. dirname( plugin_basename(__FILE__) );
         $this->readme_URL = 'http://plugins.trac.wordpress.org/browser/thoughtful-comments/trunk/readme.txt?format=txt';    
         add_action( 'in_plugin_update_message-thoughtful-comments/fv-thoughtful-comments.php', array( &$this, 'plugin_update_message' ) );    
-        add_action( 'activate_' .plugin_basename(__FILE__), array( $this, 'activate' ) );   
+        add_action( 'admin_init', array( $this, 'option_defaults' ) );
     }
 
 
-    function activate() {
-        if( !get_option('thoughtful_comments') ) update_option( 'thoughtful_comments', array( 'shorten_urls' => true, 'reply_link' => false ) );
+    function option_defaults() {
+      $options = get_option('thoughtful_comments');
+      if( !$options ){
+        update_option( 'thoughtful_comments', array( 'shorten_urls' => true, 'reply_link' => true, 'comment_autoapprove_count' => 1 ) );
+      }
+      else{
+        //make autoapprove count 1 by default
+        if( !isset($options['comment_autoapprove_count']) || (intval($options['comment_autoapprove_count']) < 1) ){
+          $options['comment_autoapprove_count'] = 1;
+          update_option( 'thoughtful_comments', $options );
+        }
+      }
     }
+	
+	
+	function admin_css(){
+		
+		if( !isset($_GET['page']) || $_GET['page'] != 'manage_fv_thoughtful_comments' ) {
+			return; 
+		}
+		?>
+		<link rel="stylesheet" type="text/css" href="<?php echo plugins_url('css/admin.css',__FILE__); ?>" />
+		<?php 
+	}
+	
 
     function ap_action_init()
     {
@@ -77,10 +106,10 @@ class fv_tc extends fv_tc_Plugin {
       Simple text field  which is sanitized to fit into YYYY-MM-DD and only >= editors are able to edit it for themselves
       */
       x_add_metadata_field( 'fv_tc_moderated', 'user', array(
-      	'field_type' => 'text',
-      	'label' => 'Moderation queue',	
-      	'display_column' => true,
-      	'display_column_callback' => 'fv_tc_x_add_metadata_field'
+        'field_type' => 'text',
+        'label' => 'Moderation queue',  
+        'display_column' => true,
+        'display_column_callback' => 'fv_tc_x_add_metadata_field'
         )
       );
     }
@@ -259,51 +288,53 @@ class fv_tc extends fv_tc_Plugin {
     * @return string Comment text with added features. 
     */
     function frontend ($content) {
-    		if( is_admin() ) {
-    			return $content;
-    		}
-    		
+        if( is_admin() ) {
+          return $content;
+        }
+        
         global  $user_ID, $comment, $post;
-        $user_info = get_userdata($comment->user_id);
+        
+        $this->loadScripts = true;
 
         //if($user_ID && current_user_can('edit_post', $post->ID) && !is_admin()) { 
         if( current_user_can('manage_options') ) { 
           $child = $this->comment_has_child($comment->comment_ID, $comment->comment_post_ID);
           /*  Container   */
-        	$out = '<p class="tc-frontend">';
-        	/* Approve comment */
-        	if($comment->comment_approved == '0') {
-            $out .= '<span id="comment-'.$comment->comment_ID.'-approve">'.$this->get_t_approve($comment).' | </span>';
+          $out = '<p class="tc-frontend">';
+          /* Approve comment */
+          if($comment->comment_approved == '0') {
+            $out .= '<span id="comment-'.$comment->comment_ID.'-approve">'.$this->get_t_approve($comment).' </span>';
           }
-					/*  Delete comment  */
-					$out .= $this->get_t_delete($comment).' | ';
-					/*  Delete thread   */
-					if($child>0) {
-						$out .= $this->get_t_delete_thread($comment).' | ';
-					}
-					/*  If IP isn't banned  */
-					if(stripos(trim(get_option('blacklist_keys')),$comment->comment_author_IP)===FALSE) {
-							/*  Delete and ban  */
-							$out .= $this->get_t_delete_ban($comment);//.' | ';
-							/*  Delete thread and ban   */
-							if($child>0)
-									$out .= ' | '.$this->get_t_delete_thread_ban($comment);
-					} else {
-							$out .= 'IP '.$comment->comment_author_IP.' ';
+          /*  Delete comment  */
+          $out .= $this->get_t_delete($comment).' ';
+          /*  Delete thread   */
+          if($child>0) {
+            $out .= $this->get_t_delete_thread($comment).' ';
+          }
+          /*  If IP isn't banned  */
+          if(stripos(trim(get_option('blacklist_keys')),$comment->comment_author_IP)===FALSE) {
+              /*  Delete and ban  */
+              $out .= $this->get_t_delete_ban($comment);//.' | ';
+              /*  Delete thread and ban   */
+              if($child>0)
+                  $out .= ' | '.$this->get_t_delete_thread_ban($comment);
+          } else {
+              $out .= 'IP '.$comment->comment_author_IP.' ';
                             $out .= __('already banned!', 'fv_tc' );
-					}
-					/*  Moderation status   */
-					if( $user_info && $user_info->user_level < 3) {
-							$out .= '<br />'.$this->get_t_moderated($comment->user_id);
-					} else if( $user_info && $user_info->user_level >= 3 ) {
-							$out .= '<br /><abbr title="' . __('Comments from this user level are automatically approved', 'fv_tc') . '">' . __('Power user', 'fv_tc') . '</a>';
-					}
-					$out .= '</p>';
-					$out .= '<span id="fv-tc-comment-'.$comment->comment_ID.'"></span>';   
+          }
+          /*  Moderation status   */
+          $user_info = ( isset($comment->user_id) ) ? get_userdata($comment->user_id) : false;
+          if( $user_info && $user_info->user_level < 3) {
+              $out .= '<br />'.$this->get_t_moderated($comment->user_id);
+          } else if( $user_info && $user_info->user_level >= 3 ) {
+              $out .= '<br /><abbr title="' . __('Comments from this user level are automatically approved', 'fv_tc') . '">' . __('Power user', 'fv_tc') . '</a>';
+          }
+          $out .= '</p>';
+          $out .= '<span id="fv-tc-comment-'.$comment->comment_ID.'"></span>';   
 
-        	return $content . $out;	
-				}
-				return $content;
+          return $content . $out;  
+        }
+        return $content;
     }
 
     function get_js_translations() {
@@ -345,7 +376,7 @@ class fv_tc extends fv_tc_Plugin {
      * @return string HTML of the anchor
      */
     function get_t_delete($comment) {
-        return '<a href="#" onclick="fv_tc_delete('.$comment->comment_ID.'); return false">' . __('Trash', 'fv_tc') . '</a>';
+        return '<a href="#" class="fv-tc-del" onclick="fv_tc_delete('.$comment->comment_ID.'); return false">' . __('Trash', 'fv_tc') . '</a>';
     }
     
     
@@ -357,7 +388,7 @@ class fv_tc extends fv_tc_Plugin {
      * @return string HTML of the anchor
      */
     function get_t_delete_ban($comment) {
-        return '<a href="#" onclick="fv_tc_delete_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Trash & Ban IP', 'fv_tc') . '</a>';
+        return '<a href="#" class="fv-tc-ban" onclick="fv_tc_delete_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Trash & Ban IP', 'fv_tc') . '</a>';
     }
     
     
@@ -369,7 +400,7 @@ class fv_tc extends fv_tc_Plugin {
      * @return string HTML of the anchor
      */
     function get_t_delete_thread($comment) {
-        return '<a href="#" onclick="fv_tc_delete_thread('.$comment->comment_ID.'); return false">' . __('Trash Thread', 'fv_tc') . '</a>';
+        return '<a href="#" class="fv-tc-delthread" onclick="fv_tc_delete_thread('.$comment->comment_ID.'); return false">' . __('Trash Thread', 'fv_tc') . '</a>';
     }
 
     
@@ -381,7 +412,7 @@ class fv_tc extends fv_tc_Plugin {
      * @return string HTML of the anchor
      */
     function get_t_delete_thread_ban($comment) {
-        return '<a href="#" onclick="fv_tc_delete_thread_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Trash Thread & Ban IP','fv_tc') . '</a>';
+        return '<a href="#" class="fc-tc-banthread" onclick="fv_tc_delete_thread_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Trash Thread & Ban IP','fv_tc') . '</a>';
     }
     
     
@@ -454,28 +485,122 @@ class fv_tc extends fv_tc_Plugin {
     }
         
     
+    function fv_tc_admin_description(){
+      _e('Thoughtful Comments supercharges comment moderation by moving it into the front end (i.e. in context). It also allows banning by IP, email address or domain.', 'fv_tc');
+    }
+    
+    function fv_tc_admin_comment_tweaks(){
+      $options = get_option('thoughtful_comments');
+      ?>
+      <table class="optiontable form-table">
+          <tr valign="top">
+              <th scope="row"><?php _e('Automatic link shortening', 'fv_tc'); ?> </th>  
+              <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Link shortening', 'fv_tc'); ?></span></legend>                                  
+              <input id="shorten_urls" type="checkbox" name="shorten_urls" value="1" <?php if( $options['shorten_urls'] ) echo 'checked="checked"'; ?> /></td>
+              <td><label for="shorten_urls"><span><?php _e('Shortens the plain URL link text in comments to "link to: domain.com". Hides long ugly URLs', 'fv_tc'); ?></span></label><br />
+              </td>
+          </tr>
+          <tr valign="top">
+              <th scope="row"><?php _e('Reply link', 'fv_tc'); ?> </th> 
+              <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Reply link', 'fv_tc'); ?></span></legend>                              
+              <input id="reply_link" type="checkbox" name="reply_link" value="1" <?php if( $options['reply_link'] ) echo 'checked="checked"'; ?> /></td>                                    
+              <td><label for="reply_link"><span><?php _e('Disable HTML replies. <br /><small>(Lightens your server load. Reply function still works, but through JavaScript.)</small>', 'fv_tc'); ?></span></label><br />
+              </td>
+          </tr>
+          <?php if( get_option('comment_whitelist') ): ?>
+            <tr valign="top">
+                <th scope="row"><?php _e('Comments before auto-approval', 'fv_tc'); ?> </th> 
+                <td colspan="2"><fieldset><legend class="screen-reader-text"><span><?php _e('Comments before auto-approval', 'fv_tc'); ?></span></legend>                              
+                <input id="comment_autoapprove_count" type="text" name="comment_autoapprove_count" value="<?php echo ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : 1; ?>" />                               
+                <label for="reply_link"><span><?php _e('Number of approved comments before auto-approval', 'fv_tc'); ?></span></label><br />
+                </td>
+            </tr>
+          <?php endif; ?>
+          <tr valign="top">     
+            <th scope="row"><?php _e('Allow nicename change', 'fv_tc'); ?> </th> 
+            <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Allow nicename editing', 'fv_tc'); ?></span></legend>                              
+              <input id="user_nicename_edit" type="checkbox" name="user_nicename_edit" value="1" 
+              <?php if( isset($options['user_nicename_edit']) && $options['user_nicename_edit'] ) echo 'checked="checked"'; ?> /></td>                               
+              <td><label for="user_nicename_edit"><span><?php _e('Allow site administrators to change user nicename (author URL) on the "Edit user" screen.', 'fv_tc'); ?></span></label><br />
+            </td>
+          </tr>
+          <?php
+          $bCommentReg = get_option( 'comment_registration' );
+          if( isset( $bCommentReg ) && 1 == $bCommentReg ) { ?>
+          <tr valign="top">
+              <th scope="row"><?php _e('Reply link Keyword', 'fv_tc'); ?> </th> 
+              <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Reply link', 'fv_tc'); ?></span></legend>                              
+              <input id="tc_replyKW" type="text" name="tc_replyKW" size="10" value="<?php if( isset( $options['tc_replyKW'] ) ) echo $options['tc_replyKW']; else echo 'comment-'; ?>" /></td>
+              <td><label for="tc_replyKW"><span><?php _e('<strong>Advanced!</strong> Only change this if your "Log in to Reply" link doesn\'t bring the commenter back to the comment they wanted to comment on after logging in.', 'fv_tc'); ?></span></label><br />
+              </td>
+          </tr>
+          <?php } ?>
+      </table>
+      <p>
+          <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
+      </p>
+      <?php
+    }
+    
+    function fv_tc_admin_comment_instructions(){
+      ?>
+      <table class="optiontable form-table">
+        <tr valign="top">
+          <th scope="row"></th>
+          <td><p><?php _e('After install with comments held up for moderation, you will notice several things on your site frontend:', 'fv_tc'); ?><br />
+          <?php _e('- comments held up for moderation appear with highlighted commenters name,', 'fv_tc'); ?><br />
+          <?php _e('- comments count in single posts or archives is highlighted if there are comments held up for moderation,', 'fv_tc'); ?><br />
+          <?php _e('- all comments have additional buttons for moderation.', 'fv_tc'); ?></p></td>
+        </tr>
+        <tr valign="top">
+          <th scope="row">Comment Moderation</th>
+          <td><img src="<?php echo $this->url; ?>/screenshot-1.png" alt="FV Thoughtful Comments frontend" style="max-width: 100%; height: auto;"></td>
+        </tr>
+        <tr valign="top">
+          <th scope="row">User Moderation</th>
+          <td>
+          <img src="<?php echo $this->url; ?>/screenshot-3.png" alt="FV Thoughtful Comments frontend" style="max-width: 100%; height: auto;"></td>
+        </tr>							
+      </table>
+      <?php
+    }
+    
+    function fv_tc_admin_enqueue_scripts(){
+      if( !isset($_GET['page']) || $_GET['page'] != 'manage_fv_thoughtful_comments' ) {
+        return;
+      }
+      
+      wp_enqueue_script('postbox');
+    }
+    
+    
     function options_panel() {
-        if (!empty($_POST)) :
-            check_admin_referer('thoughtful_comments');
-            $options = array(
-                'shorten_urls' => ( $_POST['shorten_urls'] ) ? true : false,            
-                'reply_link' => ( $_POST['reply_link'] ) ? true : false,
-                'tc_replyKW' => isset( $_POST['tc_replyKW'] ) ? $_POST['tc_replyKW'] : 'comment-'
-            );
-            if( update_option( 'thoughtful_comments', $options ) ) :
-            ?>
-            <div id="message" class="updated fade">
-                <p>
-                    <strong>
-                        <?php _e('Settings saved', 'fv_tc'); ?>
-                    </strong>
-                </p>
-            </div>
-            <?php
-            endif;  //  update_option
-        endif;  //  $_POST
-        $options = get_option('thoughtful_comments');
-        ?>
+      add_meta_box( 'fv_tc_description', 'Description', array( $this, 'fv_tc_admin_description' ), 'fv_tc_settings', 'normal' );
+      add_meta_box( 'fv_tc_comment_tweaks', 'Comment Tweaks', array( $this,'fv_tc_admin_comment_tweaks' ), 'fv_tc_settings', 'normal' );
+      add_meta_box( 'fv_tc_comment_instructions', 'Instructions', array( $this,'fv_tc_admin_comment_instructions' ), 'fv_tc_settings', 'normal' );
+      
+      if (!empty($_POST)) :
+          check_admin_referer('thoughtful_comments');
+          $options = array(
+              'shorten_urls' => ( isset($_POST['shorten_urls']) && $_POST['shorten_urls'] ) ? true : false,            
+              'reply_link' => ( isset($_POST['reply_link']) && $_POST['reply_link'] ) ? true : false,
+              'comment_autoapprove_count' => ( isset($_POST['comment_autoapprove_count']) && intval($_POST['comment_autoapprove_count']) > 0 ) ? intval($_POST['comment_autoapprove_count']) : 1,
+              'tc_replyKW' => isset( $_POST['tc_replyKW'] ) ? $_POST['tc_replyKW'] : 'comment-',
+              'user_nicename_edit' => ( isset($_POST['user_nicename_edit']) && $_POST['user_nicename_edit'] ) ? true : false,
+          );
+          if( update_option( 'thoughtful_comments', $options ) ) :
+          ?>
+          <div id="message" class="updated fade">
+              <p>
+                  <strong>
+                      <?php _e('Settings saved', 'fv_tc'); ?>
+                  </strong>
+              </p>
+          </div>
+          <?php
+          endif;  //  update_option
+      endif;  //  $_POST
+      ?>
         <div class="wrap">
             <div style="position: absolute; right: 20px; margin-top: 5px">
                 <a href="http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments" target="_blank" title="Documentation"><img alt="visit foliovision" src="http://foliovision.com/shared/fv-logo.png" /></a>
@@ -487,52 +612,40 @@ class fv_tc extends fv_tc_Plugin {
             <form method="post" action="">
                 <?php wp_nonce_field('thoughtful_comments') ?>
                 <div id="poststuff" class="ui-sortable">
-                    <div class="postbox">
-                        <h3>
-                            <?php _e('Comment Tweaks', 'fv_tc') ?>
-                        </h3>
-                        <div class="inside">
-                            <table class="optiontable form-table">
-                                <tr valign="top">
-                                    <th scope="row"><?php _e('Link shortening', 'fv_tc'); ?> </th>  
-                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Link shortening', 'fv_tc'); ?></span></legend>                                  
-                                    <input id="shorten_urls" type="checkbox" name="shorten_urls" value="1" 
-                                        <?php if( $options['shorten_urls'] ) echo 'checked="checked"'; ?> />
-                                    <label for="shorten_urls"><span><?php _e('Shortens the plain URL link text in comments to "link to: domain.com". Prevents display issues if the links have too long URL.', 'fv_tc'); ?></span></label><br />
-                                    </td>
-                                </tr>
-                                <tr valign="top">
-                                    <th scope="row"><?php _e('Reply link', 'fv_tc'); ?> </th> 
-                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Reply link', 'fv_tc'); ?></span></legend>                              
-                                    <input id="reply_link" type="checkbox" name="reply_link" value="1" 
-                                        <?php if( $options['reply_link'] ) echo 'checked="checked"'; ?> />                                     
-                                    <label for="reply_link"><span><?php _e('Check to make comment reply links use JavaScript only. Useful if your site has a lot of comments and web crawlers are browsing through all of their reply links.', 'fv_tc'); ?></span></label><br />
-                                    </td>
-                                </tr>                               
-                                <?php
-                                $bCommentReg = get_option( 'comment_registration' );
-                                if( isset( $bCommentReg ) && 1 == $bCommentReg ) { ?>
-                                <tr valign="top">
-                                    <th scope="row"><?php _e('Reply link Keyword', 'fv_tc'); ?> </th> 
-                                    <td><fieldset><legend class="screen-reader-text"><span><?php _e('Reply link', 'fv_tc'); ?></span></legend>                              
-                                    <input id="tc_replyKW" type="text" name="tc_replyKW" size="10"
-                                       value="<?php if( isset( $options['tc_replyKW'] ) ) echo $options['tc_replyKW']; else echo 'comment-'; ?>" />
-                                    <label for="tc_replyKW"><span><?php _e('<strong>Advanced!</strong> Only change this if your "Log in to Reply" link doesn\'t bring the commenter back to the comment they wanted to comment on after logging in.', 'fv_tc'); ?></span></label><br />
-                                    </td>
-                                </tr>
-                                <?php } ?>
-                            </table>
-                            <p>
-                                <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
-                            </p>
-                        </div>
-                    </div>
+                  <?php
+                    do_meta_boxes('fv_tc_settings', 'normal', false );
+                    wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
+                    wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false );
+                  ?>
                 </div>
             </form>
         </div>
+        
+        <style>
+          #refresh-result{
+            margin-top: 20px;
+          }
+          #refresh-resultt td{
+            padding: 5px;
+            border: solid 1px #ccc;
+          }
+        </style>
+        
+        <script type="text/javascript">
+          //<![CDATA[
+          jQuery(document).ready( function($) {
+            // close postboxes that should be closed
+            $('.if-js-closed').removeClass('if-js-closed').addClass('closed');
+            // postboxes setup
+            postboxes.add_postbox_toggles('fv_tc_settings');
+          });
+
+        //]]>
+        </script>
+        
         <?php
     }
-          
+    
         
     /**
     * Action for wp_print_scripts - enqueues plugin js which is dependend on jquery. Improved in 0.2.3  ////
@@ -540,8 +653,8 @@ class fv_tc extends fv_tc_Plugin {
     * @global int Current user ID        
     */
     function scripts() {
-        if( current_user_can('moderate_comments') ) {
-            wp_enqueue_script('fv_tc',$this->url. '/js/fv_tc.js',array('jquery'), $this->strVersion);
+        if( $this->loadScripts && current_user_can('moderate_comments') ) {
+            wp_enqueue_script('fv_tc',$this->url. '/js/fv_tc.js',array('jquery'), $this->strVersion, true);
             wp_localize_script('fv_tc', 'fv_tc_translations', $this->get_js_translations());
             wp_localize_script('fv_tc', 'fv_tc_ajaxurl', admin_url('admin-ajax.php'));
         }
@@ -586,10 +699,10 @@ class fv_tc extends fv_tc_Plugin {
      * Styling for the plugin
      */
     function styles() {
-    		global $post;
-    		//	this is executed in the header, so we can't do the check for every post on index/archive pages, so we better load styles if there are any unapproved comments to show. it's loaded even for contributors which don't need it.
-    		if(!is_admin() && current_user_can('edit_posts')) {
-          echo '<link rel="stylesheet" href="'.$this->url.'/css/frontend.css" type="text/css" media="screen" />'; 
+        global $post;
+        //  this is executed in the header, so we can't do the check for every post on index/archive pages, so we better load styles if there are any unapproved comments to show. it's loaded even for contributors which don't need it.
+        if(!is_admin() && current_user_can('edit_posts')) {
+          echo '<link rel="stylesheet" href="'.$this->url.'/css/frontend.css?ver='.$this->strVersion.'" type="text/css" media="screen" />'; 
         }
     }        
     
@@ -654,10 +767,10 @@ class fv_tc extends fv_tc_Plugin {
         global  $post;
             
         /*if( count($comments) > 200 ) {
-					remove_filter( 'comment_text', 'wptexturize'            );
-					remove_filter( 'comment_text', 'convert_smilies',    20 );
-					remove_filter( 'comment_text', 'wpautop',            30 );        
-					add_filter( 'comment_text', array( $this, 'wpautop_lite' ),            30 );					
+          remove_filter( 'comment_text', 'wptexturize'            );
+          remove_filter( 'comment_text', 'convert_smilies',    20 );
+          remove_filter( 'comment_text', 'wpautop',            30 );        
+          add_filter( 'comment_text', array( $this, 'wpautop_lite' ),            30 );          
         }*/
         
         /*  Check user permissions */
@@ -704,14 +817,14 @@ class fv_tc extends fv_tc_Plugin {
     
     function comment_moderation_headers( $message_headers ) {
         $options = get_option('thoughtful_comments');
-        if( $options['enhance_notify'] == false && isset( $options['enhance_notify'] ) ) return $message_headers;      
+        if( isset( $options['enhance_notify'] ) && $options['enhance_notify'] == false ) return $message_headers;      
         $message_headers .= "\r\n"."Content-Type: text/html"; //  this should add up
         return $message_headers;
     }
     
     function comment_moderation_text( $notify_message ) {
         $options = get_option('thoughtful_comments');
-        if( $options['enhance_notify'] == false && isset( $options['enhance_notify'] ) ) return $notify_message;        
+        if( isset( $options['enhance_notify'] ) && $options['enhance_notify'] == false  ) return $notify_message;        
         global $wpdb;        
         preg_match( '~&c=(\d+)~', $notify_message, $comment_id ); //  we must get the comment ID somehow
         $comment_id = $comment_id[1];        
@@ -726,8 +839,8 @@ class fv_tc extends fv_tc_Plugin {
           }
           $content = "\r\n\r\n".implode( "\n", $rows );
           $sApproveTranslated = substr(__('Approve it: %s'), 0, strlen(__('Approve it: %s')) - 3);
-            $replyto = __('Reply to comment via email', 'fv_tc') . ': <a href="mailto:'.rawurlencode('"'.$comment->comment_author.'" ').'<'.$comment->comment_author_email.'>'.'?subject='.rawurlencode( __('Your comment on', 'fv_tc') . ' "'.$post->post_title.'"' ).'&body='.rawurlencode( $content ).'&bcc='.$options['reply_bcc'].'">' . __('Email reply', 'fv_tc') . '</a>'."\r\n";
-            $linkto .= __('Link to comment', 'fv_tc') . ': <a href="'.get_permalink($comment->comment_post_ID) . '#comment-'.$comment_id.'">' . __('Comment link', 'fv_tc') . '</a>'."\r\n";
+            $replyto = __('Reply to comment via email', 'fv_tc') . ': <a href="mailto:'.rawurlencode('"'.$comment->comment_author.'" ').'<'.$comment->comment_author_email.'>'.'?subject='.rawurlencode( __('Your comment on', 'fv_tc') . ' "'.$post->post_title.'"' ).'&body='.rawurlencode( $content ).'">' . __('Email reply', 'fv_tc') . '</a>'."\r\n";
+            $linkto = __('Link to comment', 'fv_tc') . ': <a href="'.get_permalink($comment->comment_post_ID) . '#comment-'.$comment_id.'">' . __('Comment link', 'fv_tc') . '</a>'."\r\n";
             $notify_message = str_replace(  $sApproveTranslated, $replyto.$sApproveTranslated, $notify_message );
             $notify_message = str_replace( $sApproveTranslated, $linkto.$sApproveTranslated, $notify_message );
             $notify_message = wpautop( $notify_message );
@@ -811,197 +924,345 @@ class fv_tc extends fv_tc_Plugin {
     }
     
     
-		function users_cache( $comments ) {
-			global $wpdb;
-			
-			if( $comments !== NULL && count( $comments ) > 0 ) {
-		
-				$all_IDs = array();
-				foreach( $comments AS $comment ) {
-					$all_IDs[] = $comment->user_id;
-				}      
-		
-				$all_IDs = array_unique( $all_IDs );
-				$all_IDs_string = implode (',', $all_IDs );
-		
-				$all_IDs_users = $wpdb->get_results( "SELECT * FROM `{$wpdb->users}` WHERE ID IN ({$all_IDs_string}) " );
-				$all_IDs_meta = $wpdb->get_results( "SELECT * FROM `{$wpdb->usermeta}` WHERE user_id IN ({$all_IDs_string}) ORDER BY user_id " );
-				//echo '<!--meta'.var_export( $all_IDs_meta, true ).'-->';
-				
-				$meta_cache = array();
-				foreach( $all_IDs_meta AS $all_IDs_meta_item ) {
-					$meta_cache[$all_IDs_meta_item->user_id][] = $all_IDs_meta_item;
-				}
-		
-				foreach( $all_IDs_users AS $all_IDs_users_item ) {
-					foreach( $meta_cache[$all_IDs_users_item->ID] AS $meta ) {
-						$value = maybe_unserialize($meta->meta_value);
-						// Keys used as object vars cannot have dashes.
-						$key = str_replace('-', '', $meta->meta_key);
-						$all_IDs_users_item->{$key} = $value;          
-					}
-					
-					wp_cache_set( $all_IDs_users_item->ID, $all_IDs_users_item, 'users' );
-					wp_cache_add( $all_IDs_users_item->user_login, $all_IDs_users_item->ID, 'userlogins');
-					wp_cache_add( $all_IDs_users_item->user_email, $all_IDs_users_item->ID, 'useremail');
-					wp_cache_add( $all_IDs_users_item->user_nicename, $all_IDs_users_item->ID, 'userslugs');        
-				}
-				
-				$column = esc_sql( 'user_id');
-				$cache_key = 'user_meta';    
-				if ( !empty($all_IDs_meta) ) {
-					foreach ( $all_IDs_meta as $metarow) {
-						$mpid = intval($metarow->{$column});
-						$mkey = $metarow->meta_key;
-						$mval = $metarow->meta_value;
-			
-						// Force subkeys to be array type:
-						if ( !isset($cache[$mpid]) || !is_array($cache[$mpid]) )
-							$cache[$mpid] = array();
-						if ( !isset($cache[$mpid][$mkey]) || !is_array($cache[$mpid][$mkey]) )
-							$cache[$mpid][$mkey] = array();
-			
-						// Add a value to the current pid/key:
-						$cache[$mpid][$mkey][] = $mval;
-					}
-				}
-			
-				foreach ( $all_IDs as $id ) {
-					if ( ! isset($cache[$id]) )
-						$cache[$id] = array();
-					wp_cache_add( $id, $cache[$id], $cache_key );
-				}    
-				
-			}
-			return $comments;
-		}
-	
-				
-		function mysql2date_lite($dateformatstring, $mysqlstring, $use_b2configmonthsdays = 1) {
-			global $month, $weekday;
-			$m = $mysqlstring;
-			if (empty($m)) {
-				return false;
-			}
-			$i = mktime(substr($m,11,2),substr($m,14,2),substr($m,17,2),substr($m,5,2),substr($m,8,2),substr($m,0,4)); 
-			if (!empty($month) && !empty($weekday) && $use_b2configmonthsdays) {
-				$datemonth = $month[date('m', $i)];
-				$dateweekday = $weekday[date('w', $i)];
-				$dateformatstring = ' '.$dateformatstring;
-				$dateformatstring = preg_replace("/([^\\\])D/", "\\1".backslashit(substr($dateweekday, 0, 3)), $dateformatstring);
-				$dateformatstring = preg_replace("/([^\\\])F/", "\\1".backslashit($datemonth), $dateformatstring);
-				$dateformatstring = preg_replace("/([^\\\])l/", "\\1".backslashit($dateweekday), $dateformatstring);
-				$dateformatstring = preg_replace("/([^\\\])M/", "\\1".backslashit(substr($datemonth, 0, 3)), $dateformatstring);
-				$dateformatstring = substr($dateformatstring, 1, strlen($dateformatstring)-1);
-			}
-			$j = @date($dateformatstring, $i);
-			if (!$j) {
-			// for debug purposes
-			//	echo $i." ".$mysqlstring;
-			}
-			return $j;
-		}		
-				
-		
-		function wpautop_lite( $comment_text ) {
-			if( stripos($comment_text,'<p') === false ) {
-				//$aParagraphs = explode( "\n", $comment_text );
-							
-				$pee = $comment_text;
-				$br = 1;
-				
-				/*
-				Taken from WP 1.0.1-miles
-				*/
-				$pee = $pee . "\n"; // just to make things a little easier, pad the end
-				$pee = preg_replace('|<br />\s*<br />|', "\n\n", $pee);
-				$pee = preg_replace('!(<(?:table|tr|td|th|div|ul|ol|li|pre|select|form|blockquote|p|h[1-6])[^>]*>)!', "\n$1", $pee); // Space things out a little
-				$pee = preg_replace('!(</(?:table|tr|td|th|div|ul|ol|li|pre|select|form|blockquote|p|h[1-6])>)!', "$1\n", $pee); // Space things out a little
-				$pee = preg_replace("/(\r\n|\r)/", "\n", $pee); // cross-platform newlines 
-				$pee = preg_replace("/\n\n+/", "\n\n", $pee); // take care of duplicates
-				$pee = preg_replace('/\n?(.+?)(?:\n\s*\n|\z)/s', "\t<p>$1</p>\n", $pee); // make paragraphs, including one at the end 
-				$pee = preg_replace('|<p>\s*?</p>|', '', $pee); // under certain strange conditions it could create a P of entirely whitespace 
-				$pee = preg_replace("|<p>(<li.+?)</p>|", "$1", $pee); // problem with nested lists
-				$pee = preg_replace('|<p><blockquote([^>]*)>|i', "<blockquote$1><p>", $pee);
-				$pee = str_replace('</blockquote></p>', '</p></blockquote>', $pee);
-				$pee = preg_replace('!<p>\s*(</?(?:table|tr|td|th|div|ul|ol|li|pre|select|form|blockquote|p|h[1-6])[^>]*>)!', "$1", $pee);
-				$pee = preg_replace('!(</?(?:table|tr|td|th|div|ul|ol|li|pre|select|form|blockquote|p|h[1-6])[^>]*>)\s*</p>!', "$1", $pee); 
-				if ($br) $pee = preg_replace('|(?<!<br />)\s*\n|', "<br />\n", $pee); // optionally make line breaks
-				$pee = preg_replace('!(</?(?:table|tr|td|th|div|dl|dd|dt|ul|ol|li|pre|select|form|blockquote|p|h[1-6])[^>]*>)\s*<br />!', "$1", $pee);
-				$pee = preg_replace('!<br />(\s*</?(?:p|li|div|th|pre|td|ul|ol)>)!', '$1', $pee);
-				$pee = preg_replace('/&([^#])(?![a-z]{1,8};)/', '&#038;$1', $pee);
-				
-				
-							
-				$comment_text = $pee;
-			}
-			return $comment_text;
-		}
-
-		function fv_tc_approve() {
-		    if(!wp_set_comment_status( $_REQUEST['id'], 'approve' ))
-		        die('db error');
-		}
-		
-
-		function fv_tc_delete() {
-		    global $wpdb;
-
-		    if(isset($_REQUEST['ip']) && stripos(trim(get_option('blacklist_keys')),$_REQUEST['ip'])===FALSE) {
-			    
-			    $objComment = get_comment( $_REQUEST['id'] );
-			    $commentStatus = $objComment->comment_approved;
-			    $blacklist_keys = trim(stripslashes(get_option('blacklist_keys')));      
-			    $blacklist_keys_update = $blacklist_keys."\n".$_REQUEST['ip'];
-			    update_option('blacklist_keys', $blacklist_keys_update);
-
-			    $wpdb->update( 'wp_comments', array( 'comment_approved' => 'spam' ), array( 'comment_ID' => intval($_REQUEST['id']) ) );
-			    do_action('transition_comment_status','spam','unapproved', $objComment );
-			    $wpdb->update( 'wp_comments', array( 'comment_approved' => $commentStatus ), array( 'comment_ID' => intval($_REQUEST['id']) ) );
-		    }
-
-			//check_admin_referer('fv-tc-delete_' . $_GET['id']);
-		    if (isset($_REQUEST['thread'])) {
-			    if($_REQUEST['thread'] == 'yes') {
-				$this->fv_tc_delete_recursive($_REQUEST['id']);
-			    } 
-		    }
-		    else {
-			if(!wp_delete_comment($_REQUEST['id']))
-			    die('db error');
-		    }       
-
-		}
-
-		function fv_tc_moderated() {
-		    if(get_user_meta($_REQUEST['id'],'fv_tc_moderated')) {
-		       if(!delete_user_meta($_REQUEST['id'],'fv_tc_moderated'))
-		            die('meta error');
-		        echo 'user moderated';
-		    }
-		    else {
-		        if(!update_user_meta($_REQUEST['id'],'fv_tc_moderated','no'))
-		            die('meta error');
-		        echo 'user non-moderated';
-		    }
-		}
-
-		function fv_tc_delete_recursive($id) {
-		    global  $wpdb;  
-		    echo ' '.$id.' ';
-		    $comments = $wpdb->get_results("SELECT * FROM {$wpdb->comments} WHERE `comment_parent` ='{$id}'",ARRAY_A);
-		    if(strlen($wpdb->last_error)>0)
-		        die('db error');
-		    if(!wp_delete_comment($id))
-		        die('db error');             
-		    /*  If there are no more children */
-		    if(count($comments)==0)
-		        return;
-		    foreach($comments AS $comment) {
-		        $this->fv_tc_delete_recursive($comment['comment_ID']);
-		    }
-		}
+    function users_cache( $comments ) {
+      global $wpdb;
+      
+      if( $comments !== NULL && count( $comments ) > 0 ) {
     
+        $all_IDs = array();
+        foreach( $comments AS $comment ) {
+          $all_IDs[] = $comment->user_id;
+        }      
+    
+        $all_IDs = array_unique( $all_IDs );
+        $all_IDs_string = implode (',', $all_IDs );
+    
+        $all_IDs_users = $wpdb->get_results( "SELECT * FROM `{$wpdb->users}` WHERE ID IN ({$all_IDs_string}) " );
+        $all_IDs_meta = $wpdb->get_results( "SELECT * FROM `{$wpdb->usermeta}` WHERE user_id IN ({$all_IDs_string}) ORDER BY user_id " );
+        //echo '<!--meta'.var_export( $all_IDs_meta, true ).'-->';
+        
+        $meta_cache = array();
+        foreach( $all_IDs_meta AS $all_IDs_meta_item ) {
+          $meta_cache[$all_IDs_meta_item->user_id][] = $all_IDs_meta_item;
+        }
+    
+        foreach( $all_IDs_users AS $all_IDs_users_item ) {
+          foreach( $meta_cache[$all_IDs_users_item->ID] AS $meta ) {
+            $value = maybe_unserialize($meta->meta_value);
+            // Keys used as object vars cannot have dashes.
+            $key = str_replace('-', '', $meta->meta_key);
+            $all_IDs_users_item->{$key} = $value;          
+          }
+          
+          wp_cache_set( $all_IDs_users_item->ID, $all_IDs_users_item, 'users' );
+          wp_cache_add( $all_IDs_users_item->user_login, $all_IDs_users_item->ID, 'userlogins');
+          wp_cache_add( $all_IDs_users_item->user_email, $all_IDs_users_item->ID, 'useremail');
+          wp_cache_add( $all_IDs_users_item->user_nicename, $all_IDs_users_item->ID, 'userslugs');        
+        }
+        
+        $column = esc_sql( 'user_id');
+        $cache_key = 'user_meta';    
+        if ( !empty($all_IDs_meta) ) {
+          foreach ( $all_IDs_meta as $metarow) {
+            $mpid = intval($metarow->{$column});
+            $mkey = $metarow->meta_key;
+            $mval = $metarow->meta_value;
+      
+            // Force subkeys to be array type:
+            if ( !isset($cache[$mpid]) || !is_array($cache[$mpid]) )
+              $cache[$mpid] = array();
+            if ( !isset($cache[$mpid][$mkey]) || !is_array($cache[$mpid][$mkey]) )
+              $cache[$mpid][$mkey] = array();
+      
+            // Add a value to the current pid/key:
+            $cache[$mpid][$mkey][] = $mval;
+          }
+        }
+      
+        foreach ( $all_IDs as $id ) {
+          if ( ! isset($cache[$id]) )
+            $cache[$id] = array();
+          wp_cache_add( $id, $cache[$id], $cache_key );
+        }    
+        
+      }
+      return $comments;
+    }
+  
+        
+    function mysql2date_lite($dateformatstring, $mysqlstring, $use_b2configmonthsdays = 1) {
+      global $month, $weekday;
+      $m = $mysqlstring;
+      if (empty($m)) {
+        return false;
+      }
+      $i = mktime(substr($m,11,2),substr($m,14,2),substr($m,17,2),substr($m,5,2),substr($m,8,2),substr($m,0,4)); 
+      if (!empty($month) && !empty($weekday) && $use_b2configmonthsdays) {
+        $datemonth = $month[date('m', $i)];
+        $dateweekday = $weekday[date('w', $i)];
+        $dateformatstring = ' '.$dateformatstring;
+        $dateformatstring = preg_replace("/([^\\\])D/", "\\1".backslashit(substr($dateweekday, 0, 3)), $dateformatstring);
+        $dateformatstring = preg_replace("/([^\\\])F/", "\\1".backslashit($datemonth), $dateformatstring);
+        $dateformatstring = preg_replace("/([^\\\])l/", "\\1".backslashit($dateweekday), $dateformatstring);
+        $dateformatstring = preg_replace("/([^\\\])M/", "\\1".backslashit(substr($datemonth, 0, 3)), $dateformatstring);
+        $dateformatstring = substr($dateformatstring, 1, strlen($dateformatstring)-1);
+      }
+      $j = @date($dateformatstring, $i);
+      if (!$j) {
+      // for debug purposes
+      //  echo $i." ".$mysqlstring;
+      }
+      return $j;
+    }    
+        
+    
+    function wpautop_lite( $comment_text ) {
+      if( stripos($comment_text,'<p') === false ) {
+        //$aParagraphs = explode( "\n", $comment_text );
+              
+        $pee = $comment_text;
+        $br = 1;
+        
+        /*
+        Taken from WP 1.0.1-miles
+        */
+        $pee = $pee . "\n"; // just to make things a little easier, pad the end
+        $pee = preg_replace('|<br />\s*<br />|', "\n\n", $pee);
+        $pee = preg_replace('!(<(?:table|tr|td|th|div|ul|ol|li|pre|select|form|blockquote|p|h[1-6])[^>]*>)!', "\n$1", $pee); // Space things out a little
+        $pee = preg_replace('!(</(?:table|tr|td|th|div|ul|ol|li|pre|select|form|blockquote|p|h[1-6])>)!', "$1\n", $pee); // Space things out a little
+        $pee = preg_replace("/(\r\n|\r)/", "\n", $pee); // cross-platform newlines 
+        $pee = preg_replace("/\n\n+/", "\n\n", $pee); // take care of duplicates
+        $pee = preg_replace('/\n?(.+?)(?:\n\s*\n|\z)/s', "\t<p>$1</p>\n", $pee); // make paragraphs, including one at the end 
+        $pee = preg_replace('|<p>\s*?</p>|', '', $pee); // under certain strange conditions it could create a P of entirely whitespace 
+        $pee = preg_replace("|<p>(<li.+?)</p>|", "$1", $pee); // problem with nested lists
+        $pee = preg_replace('|<p><blockquote([^>]*)>|i', "<blockquote$1><p>", $pee);
+        $pee = str_replace('</blockquote></p>', '</p></blockquote>', $pee);
+        $pee = preg_replace('!<p>\s*(</?(?:table|tr|td|th|div|ul|ol|li|pre|select|form|blockquote|p|h[1-6])[^>]*>)!', "$1", $pee);
+        $pee = preg_replace('!(</?(?:table|tr|td|th|div|ul|ol|li|pre|select|form|blockquote|p|h[1-6])[^>]*>)\s*</p>!', "$1", $pee); 
+        if ($br) $pee = preg_replace('|(?<!<br />)\s*\n|', "<br />\n", $pee); // optionally make line breaks
+        $pee = preg_replace('!(</?(?:table|tr|td|th|div|dl|dd|dt|ul|ol|li|pre|select|form|blockquote|p|h[1-6])[^>]*>)\s*<br />!', "$1", $pee);
+        $pee = preg_replace('!<br />(\s*</?(?:p|li|div|th|pre|td|ul|ol)>)!', '$1', $pee);
+        $pee = preg_replace('/&([^#])(?![a-z]{1,8};)/', '&#038;$1', $pee);
+        
+        
+              
+        $comment_text = $pee;
+      }
+      return $comment_text;
+    }
+
+    function fv_tc_approve() {
+        if(!wp_set_comment_status( $_REQUEST['id'], 'approve' ))
+            die('db error');
+    }
+    
+
+    function fv_tc_delete() {
+        global $wpdb;
+
+        if(isset($_REQUEST['ip']) && stripos(trim(get_option('blacklist_keys')),$_REQUEST['ip'])===FALSE) {
+          
+          $objComment = get_comment( $_REQUEST['id'] );
+          $commentStatus = $objComment->comment_approved;
+          $blacklist_keys = trim(stripslashes(get_option('blacklist_keys')));      
+          $blacklist_keys_update = $blacklist_keys."\n".$_REQUEST['ip'];
+          update_option('blacklist_keys', $blacklist_keys_update);
+
+          $wpdb->update( 'wp_comments', array( 'comment_approved' => 'spam' ), array( 'comment_ID' => intval($_REQUEST['id']) ) );
+          do_action('transition_comment_status','spam','unapproved', $objComment );
+          $wpdb->update( 'wp_comments', array( 'comment_approved' => $commentStatus ), array( 'comment_ID' => intval($_REQUEST['id']) ) );
+        }
+
+      //check_admin_referer('fv-tc-delete_' . $_GET['id']);
+        if (isset($_REQUEST['thread'])) {
+          if($_REQUEST['thread'] == 'yes') {
+        $this->fv_tc_delete_recursive($_REQUEST['id']);
+          } 
+        }
+        else {
+      if(!wp_delete_comment($_REQUEST['id']))
+          die('db error');
+        }       
+
+    }
+
+    function fv_tc_moderated() {
+        if(get_user_meta($_REQUEST['id'],'fv_tc_moderated')) {
+           if(!delete_user_meta($_REQUEST['id'],'fv_tc_moderated'))
+                die('meta error');
+            echo 'user moderated';
+        }
+        else {
+            if(!update_user_meta($_REQUEST['id'],'fv_tc_moderated','no'))
+                die('meta error');
+            echo 'user non-moderated';
+        }
+    }
+
+    function fv_tc_delete_recursive($id) {
+        global  $wpdb;  
+        echo ' '.$id.' ';
+        $comments = $wpdb->get_results("SELECT * FROM {$wpdb->comments} WHERE `comment_parent` ='{$id}'",ARRAY_A);
+        if(strlen($wpdb->last_error)>0)
+            die('db error');
+        if(!wp_delete_comment($id))
+            die('db error');             
+        /*  If there are no more children */
+        if(count($comments)==0)
+            return;
+        foreach($comments AS $comment) {
+            $this->fv_tc_delete_recursive($comment['comment_ID']);
+        }
+    }
+
+    function get_comment_link( $link ) {
+        $link = preg_replace( '~/comment-page-1[$/]~', '', $link );  //  todo: make this an option, I guess!
+        return $link;
+    }
+    
+    function get_comments_pagenum_link( $link ) {
+        if ( 'newest' == get_option('default_comments_page') ) {
+          //  todo: how do we get the maximum page number?
+        } else {
+          $link = preg_replace( '~/comment-page-1[$/]~', '', $link );  //  todo: make this an option, I guess!
+        }
+        return $link;
+    }
+    
+    
+    function fv_tc_auto_approve_comment( $approved, $commentdata ){
+      
+      //edit: whitelist has to be on to trigger this functionality
+      if( !get_option('comment_whitelist') ){
+        return $approved;
+      }
+
+      
+      if( !empty( $commentdata['user_id'] ) ) {
+        global $wpdb;
+      
+        $user = get_userdata( $commentdata['user_id'] );
+        $post_author = $wpdb->get_var( $wpdb->prepare(
+          "SELECT post_author FROM $wpdb->posts WHERE ID = %d LIMIT 1",
+          $commentdata['comment_post_ID']
+        ) );
+      }
+
+      if( isset( $user ) && ( $commentdata['user_id'] == $post_author || $user->has_cap( 'moderate_comments' ) ) ) {
+        return 1;
+      }
+
+      //stop processing if comment is SPAM
+      //stop processing if white_list is on and comment is already unapproved
+      //stop processing if comments author email is empty
+      if( $approved == 'spam' || $approved == 0 || empty($commentdata['comment_author_email']) ){
+        return $approved;
+      }
+
+      $options = get_option('thoughtful_comments');
+      $auto_approve_count = ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : false;
+      
+      //stop if auto-approve count is not set OR is less or equal 1 (comment whitelist already handle this)
+      if( !$auto_approve_count || $auto_approve_count <= 1 ){
+        return $approved;
+      }
+
+      global $wpdb;
+      $dbCount = $wpdb->get_var("SELECT count(*) FROM {$wpdb->prefix}comments WHERE comment_author = '".$commentdata['comment_author']."' AND comment_author_email = '".$commentdata['comment_author_email']."' AND comment_approved = 1");
+      
+      if( $dbCount >= $auto_approve_count ) {
+        return 1;
+      } else {
+        return 0;
+      }
+    }
+    
+
+    function fv_tc_auto_approve_comment_override_notification(){
+      if( !is_admin() ){
+        return;
+      }
+      
+      //do not add warning if this setting is disabled
+      if( !get_option('comment_whitelist') ){
+        return;
+      }
+      
+      $options = get_option('thoughtful_comments');
+      //do not add warning if option is not set or is set to 1
+      $auto_approve_count = ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : false;
+      if( !$auto_approve_count || $auto_approve_count <= 1 ){
+        return;
+      }
+
+      add_filter('thread_comments_depth_max', array($this,'fv_tc_override_notification_ob_start') );
+      add_filter('avatar_defaults', array($this,'fv_tc_override_notification_ob_end') );
+      
+    }
+    
+    function fv_tc_override_notification_ob_start( $maxdeep ){
+      ob_start();
+      return $maxdeep;
+    }
+    
+    function fv_tc_override_notification_ob_end( $avatar_defaults ){
+      $discussion_settings = ob_get_clean();
+      $fv_tc_link = admin_url('options-general.php?page=manage_fv_thoughtful_comments#comment_autoapprove_count');
+      
+      $discussion_settings = preg_replace( '~(<input[^>]*id="comment_whitelist"[^>]*>[^<]*)~', '$1 <br/><strong>WARNING:</strong> This setting is overridden by <a href="'.$fv_tc_link.'">FV Thoughtful Comments</a> plugin.', $discussion_settings );
+      
+      echo $discussion_settings;
+      return $avatar_defaults;
+    }
+    
+
+    function fv_tc_user_nicename_change(){
+      if( !is_admin() || !current_user_can('manage_options') ){
+        return;
+      }
+
+      $options = get_option('thoughtful_comments');
+      //is user nicename editing on?
+      $allow_nicename_edit = ( isset($options['user_nicename_edit']) && $options['user_nicename_edit'] ) ? true : false;
+      if( !$allow_nicename_edit ){
+        return;
+      }
+
+      add_filter('personal_options', array($this,'fv_tc_nicename_personal_options') );    //ob start
+      add_filter('edit_user_profile', array($this,'fv_tc_nicename_edit_user_profile') );  //ob modified + echo
+      add_filter('pre_user_nicename', array($this,'fv_tc_nicename_pre_user_nicename') );  //saving nicename
+
+    }
+
+    function fv_tc_nicename_personal_options( $profileuser ){
+      ob_start();
+      return $profileuser;
+    }
+
+    function fv_tc_nicename_edit_user_profile( $profileuser ){
+      $user_edit_page = ob_get_clean();
+
+      $user_nicename_field = '<tr class="user-user-login-wrap">
+  <th><label for="user_nicename">Nicename</label></th>
+      <td><input type="text" name="user_nicename" id="user_nicename" value="'.$profileuser->user_nicename.'" class="regular-text" /></td>
+  </tr>';
+      $user_edit_page = preg_replace('~(<tr[^>]*user-role-wrap[^>]*>)~', $user_nicename_field.'$1', $user_edit_page);
+
+      echo $user_edit_page;
+      return $profileuser;
+    }
+    
+    function fv_tc_nicename_pre_user_nicename( $user_nicename ){
+      if( isset($_POST['user_nicename']) && !empty($_POST['user_nicename']) ){
+        $new_user_nicename = trim($_POST['user_nicename']);
+        return $new_user_nicename;
+      }
+      else{
+        return $user_nicename;
+      }
+    }
+
+
 }
 $fv_tc = new fv_tc;
 
@@ -1047,7 +1308,7 @@ add_filter( 'thesis_comment_text', array( $fv_tc, 'comment_links' ), 100 );
 add_filter( 'pre_comment_approved', array( $fv_tc, 'moderate' ) );
 
 /* Load js */
-add_action( 'wp_print_scripts', array( $fv_tc, 'scripts' ) );
+add_action( 'wp_footer', array( $fv_tc, 'scripts' ) );
 
 /* Show number of unapproved comments in frontend */
 add_filter( 'comments_number', array( $fv_tc, 'show_unapproved_count' ) );
@@ -1068,6 +1329,16 @@ add_action( 'transition_comment_status', array( $fv_tc, 'transition_comment_stat
 /* Admin's won't get the esc_html filter */
 add_filter( 'comment_author', array( $fv_tc, 'comment_author_no_esc_html' ), 0 );
 
+/* Whitelist commenters: Auto-apporove comments from authors, which have N comments already approved. */
+add_filter( 'pre_comment_approved', array( $fv_tc, 'fv_tc_auto_approve_comment' ), 10, 2 );
+
+
+/* Notification about overriding whitelist settings */
+add_action('admin_init', array( $fv_tc, 'fv_tc_auto_approve_comment_override_notification' ) );
+
+/*user nicename change*/
+add_action('admin_init', array( $fv_tc, 'fv_tc_user_nicename_change' ) );
+
 /*  Experimental stuff  */
 
 /* Override Wordpress Blacklisting */
@@ -1084,9 +1355,14 @@ add_filter( 'comment_moderation_text', array( $fv_tc, 'comment_moderation_text' 
 add_action('deleted_comment', array( $fv_tc, 'stc_comment_deleted'), 0, 1);
 add_action('wp_set_comment_status', array( $fv_tc, 'stc_comment_status_changed'), 0, 1);
 
-
-add_action( 'admin_menu', array($fv_tc, 'admin_menu') ); 
+add_action( 'admin_head', array($fv_tc, 'admin_css' )) ;
+add_action( 'admin_menu', array($fv_tc, 'admin_menu') );
+add_action( 'admin_enqueue_scripts', array( $fv_tc, 'fv_tc_admin_enqueue_scripts' ) );
 
 add_filter('comment_reply_link', array($fv_tc, 'comment_reply_links'));
 
 add_action('init', array($fv_tc, 'ap_action_init'));
+
+add_filter('get_comment_link', array($fv_tc, 'get_comment_link'));
+add_filter('get_comments_pagenum_link', array($fv_tc, 'get_comments_pagenum_link'));  //  todo: test!
+add_filter('paginate_links', array($fv_tc, 'get_comments_pagenum_link'));
