@@ -57,6 +57,7 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 1. The front end comment moderation which editor and admin users are able to see and use.
 2. Number of unapproved comments shown for editor and admin users in the frontend. The number is highlighted as there are some unapproved comments and there's a tooltip.
 3. Per-user moderation settings.
+4. Admin screen settings.
 
 == Changelog ==
 
