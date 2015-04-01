@@ -1,14 +1,6 @@
 <?php
-
-/**
- * Foliopress base class
- */
-
-/**
- * Class Foliopress_Plugin
- */
-class fv_tc_Plugin
-{
+/** * Foliopress base class */
+/** * Class Foliopress_Plugin */class fv_tc_Plugin{
 	/**
 	 * Stores the path to readme.txt available on trac, needs to be set from plugin
 	 * @var string
