@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.2.7
+Version: 0.2.8
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -30,7 +30,7 @@ The users cappable of moderate_comments are getting all of these features and ar
 /**
  * @package foliovision-tc
  * @author Foliovision <programming@foliovision.com>
- * version 0.2.6.7
+ * version 0.2.8
  */  
  
 include( 'fp-api.php' );
@@ -47,7 +47,7 @@ class fv_tc extends fv_tc_Plugin {
      * Plugin version
      * @var string
      */
-    var $strVersion = '0.2.7';
+    var $strVersion = '0.2.8';
     
     /**
      * Decide if scripts will be loaded on current page
@@ -136,26 +136,28 @@ class fv_tc extends fv_tc_Plugin {
         global $comment, $post;/*, $_comment_pending_count;*/
         
         if ( current_user_can('edit_post', $post->ID) ) {
-            /*  If the IP isn't on the blacklist yet, display delete and ban ip link  */
-            $banned = stripos(trim(get_option('blacklist_keys')),$comment->comment_author_IP);
-            $child = $this->comment_has_child($comment->comment_ID, $comment->comment_post_ID);
-            if($banned===FALSE)
-                $actions['delete_ban'] = $this->get_t_delete_ban($comment);
-            else
-                $actions['delete_ban'] = '<a href="#">' . __('Already banned!', 'fv_tc') . '</a>';
-            if($child>0) {
-              $actions['delete_thread'] = $this->get_t_delete_thread($comment);
-              if($banned===FALSE)            
-                  $actions['delete_thread_ban'] = $this->get_t_delete_thread_ban($comment);
-              /*else
-                  $actions['delete_banned'] = '<a href="#">Already banned!</a>';*/
-            }
-            
-            //  blacklist email address
-            /*if(stripos(trim(get_option('blacklist_keys')),$comment->comment_author_email)!==FALSE)
-                $actions['blacklist_email'] = "Email Already Blacklisted";
-            else
-                $actions['blacklist_email'] = "<a href='$blacklist_email' target='_blank' class='dim:the-comment-list:comment-$comment->comment_ID:unapproved:e7e7d3:e7e7d3:new=approved vim-a' title='" . __( 'Blacklist Email' ) . "'>" . __( 'Blacklist Email' ) . '</a>';*/
+          $this->loadScripts = true;
+          
+          /*  If the IP isn't on the blacklist yet, display delete and ban ip link  */
+          $banned = stripos(trim(get_option('blacklist_keys')),$comment->comment_author_IP);
+          $child = $this->comment_has_child($comment->comment_ID, $comment->comment_post_ID);
+          if($banned===FALSE)
+              $actions['delete_ban'] = $this->get_t_delete_ban($comment);
+          else
+              $actions['delete_ban'] = '<a href="#">' . __('Already banned!', 'fv_tc') . '</a>';
+          if($child>0) {
+            $actions['delete_thread'] = $this->get_t_delete_thread($comment);
+            if($banned===FALSE)            
+                $actions['delete_thread_ban'] = $this->get_t_delete_thread_ban($comment);
+            /*else
+                $actions['delete_banned'] = '<a href="#">Already banned!</a>';*/
+          }
+          
+          //  blacklist email address
+          /*if(stripos(trim(get_option('blacklist_keys')),$comment->comment_author_email)!==FALSE)
+              $actions['blacklist_email'] = "Email Already Blacklisted";
+          else
+              $actions['blacklist_email'] = "<a href='$blacklist_email' target='_blank' class='dim:the-comment-list:comment-$comment->comment_ID:unapproved:e7e7d3:e7e7d3:new=approved vim-a' title='" . __( 'Blacklist Email' ) . "'>" . __( 'Blacklist Email' ) . '</a>';*/
         } 
         return $actions;
     }
@@ -1309,6 +1311,7 @@ add_filter( 'pre_comment_approved', array( $fv_tc, 'moderate' ) );
 
 /* Load js */
 add_action( 'wp_footer', array( $fv_tc, 'scripts' ) );
+add_action( 'admin_footer', array( $fv_tc, 'scripts' ) );
 
 /* Show number of unapproved comments in frontend */
 add_filter( 'comments_number', array( $fv_tc, 'show_unapproved_count' ) );

@@ -61,6 +61,9 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 
 == Changelog ==
 
+= 0.2.8 =
+* fix for broken "Trash and Ban IP" in wp-admin
+
 = 0.2.7 =
 * added auto-approving functionality for users, which have N comments already approved
 * added possibility to change user nicename for administrator
