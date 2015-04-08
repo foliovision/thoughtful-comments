@@ -3,21 +3,34 @@
 Contributors: FolioVision
 Tags: comments,moderation,frontend,unapproved
 Requires at least: 2.7
-Tested up to: 3.9.1
+Tested up to: 4.1.1
 Stable tag: trunk
 
-FV Thoughtful Comments adds advanced front end comment moderation and cool thread and user banning mechanisms to your Wordpress blog.
+FV Thoughtful Comments adds front end comment moderation including sophisticated banning mechanisms. Say Goodbye to Disqus!
 
 == Description ==
 
-FV Thoughtful Comments adds advanced front end comment moderation and cool thread and user banning mechanisms.
+We’ve always found the comment moderation/management a bit weak (no wonder so many people are using the Disqus crutch). Our plugin Thoughtful Comments supercharges comment moderation by moving it into the front end (i.e. in context). It also allows banning by IP, email address or domain.
 
-Features:
-**Front-end comment moderation**
-**Unapproved comments shown in front-end**
-**Per-user moderation settings**
+Unlike many comment plugins, Thoughtful Comments works hand in hand with Akismet, feeding all the information into Akismet as well as the existing WordPress whitelist and blacklist features.
+
+What’s cool about Thoughtful Comments is that you can add it to a WordPress site with no changes to existing comment moderation tables and you can remove it from a WordPress site with no loss of core functionality. I.e. I think Thoughtful Comments could be integrated into core with a minimum amount of pain. Thoughtful Comments works with all current Subscribe to Comment plugins as well. As we use all core functions and tables, Thoughtful Comments works with all current Subscribe to Comment plugins as well.
+
+Thoughtful Comments is the most powerful and useful code we’ve ever written (we have four very popular plugins). It’s integration into core would save many, many site owners the pain of Disqus.
+
+Thoughtful Comments is entirely stable and active on some of the most heavily commented political and lifestyle sites in the world.
+
+While Automattic has a horse in the ring (Intense Debate), we'd really like to see Thoughtful Comments included in core.
+
+###Features:
+
+* Front-end comment moderation
+* Unapproved comments shown in front-end
+* Per-user moderation settings
 
 All of these features apply to logged in editors and administrators only!
+
+Upcoming: we have additional invisible caching coming for heavily commented posts (so that if there are hundreds of older comments, they get saved as flat html, lightening PHP load and speeding up busy sites significantly.
 
 **[Download now!](http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/)**
 
@@ -47,6 +60,9 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 4. Admin screen settings.
 
 == Changelog ==
+
+= 0.2.9 =
+* fixed frontend moderation for editor and author roles
 
 = 0.2.8 =
 * fix for broken "Trash and Ban IP" in wp-admin
