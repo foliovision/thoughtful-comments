@@ -3,7 +3,7 @@
 Contributors: FolioVision
 Tags: comments,moderation,frontend,unapproved
 Requires at least: 2.7
-Tested up to: 4.1
+Tested up to: 4.1.1
 Stable tag: trunk
 
 FV Thoughtful Comments adds front end comment moderation including sophisticated banning mechanisms. Say Goodbye to Disqus!
@@ -60,6 +60,9 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 4. Admin screen settings.
 
 == Changelog ==
+
+= 0.2.9 =
+* fixed frontend moderation for editor and author roles
 
 = 0.2.8 =
 * fix for broken "Trash and Ban IP" in wp-admin
