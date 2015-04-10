@@ -61,6 +61,9 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 
 == Changelog ==
 
+= 0.3 =
+* comment caching added - enable in plugin settings and gain considerably faster post load times for posts with high number of comments
+
 = 0.2.9 =
 * fixed frontend moderation for editor and author roles
 
