@@ -61,6 +61,9 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 
 == Changelog ==
 
+= 0.2.9.1 =
+* fix for comments going into moderation on websites with moderation disabled - caused by the permission check during the comment validation
+
 = 0.2.9 =
 * fixed frontend moderation for editor and author roles
 
