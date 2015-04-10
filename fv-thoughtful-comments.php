@@ -225,13 +225,13 @@ class fv_tc extends fv_tc_Plugin {
       $this->cache_comment_author = false;
       
       foreach ($_COOKIE as $n => $v) {
-        if (substr($n, 0, 14) == 'comment_author') {
-          $this->cache_comment_author = true;    
+        if (substr($n, 0, 20) == 'comment_author_email') {
+          $this->cache_comment_author = $v;    
         }
       }
       
       $bCommenterUnapproved = false;
-      if( $wp_query->comments ) {
+      if( $this->cache_comment_author && $wp_query->comments ) {
         foreach( $wp_query->comments as $objComment ) {
           if( $objComment->comment_author_email == $this->cache_comment_author && $objComment->comment_approved == 0 ) {
             $bCommenterUnapproved = true;
