@@ -415,7 +415,7 @@ class fv_tc extends fv_tc_Plugin {
         global  $user_ID, $comment, $post;
 
         //if($user_ID && current_user_can('edit_post', $post->ID) && !is_admin()) { 
-        if( current_user_can( 'edit_comment', $comment->comment_ID ) ) {
+        if( current_user_can('edit_posts') && current_user_can( 'edit_comment', $comment->comment_ID ) ) {
           $this->loadScripts = true;
           $child = $this->comment_has_child($comment->comment_ID, $comment->comment_post_ID);
           /*  Container   */
