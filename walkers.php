@@ -64,7 +64,9 @@ class FV_TC_Walker_Comment_capture extends Walker_Comment {
         $output .= "</li><!-- #comment-## -->\n";
     }
     
+        
     global $wp_query;
+    //$output .= "<!--fv comments cache - DEBUG ".$this->count." ".$wp_query->query_vars['comments_per_page']." remainder ".($wp_query->queried_object->comment_count % $wp_query->query_vars['comments_per_page'])."-->\n";
     if(
       $this->count == $wp_query->queried_object->comment_count ||
       $this->count == $wp_query->query_vars['comments_per_page'] ||

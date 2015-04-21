@@ -199,7 +199,7 @@ class fv_tc extends fv_tc_Plugin {
         return;
       }
       
-      $files = glob(WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/*'); //
+      $files = @glob(WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/*'); //
       foreach($files as $file){ // iterate files
         if(is_file($file))
           unlink($file); // delete file
@@ -219,7 +219,7 @@ class fv_tc extends fv_tc_Plugin {
       
       require_once( dirname(__FILE__).'/walkers.php' );
       
-      global $wp_query, $post, $blog_id;
+      global $wp_query, $post, $blog_id, $wptouch_pro;
       
       $this->cache_comment_count = get_comments_number();
       $this->cache_comment_author = false;
@@ -246,8 +246,10 @@ class fv_tc extends fv_tc_Plugin {
         echo "<!--fv comments cache - unapproved comments for $this->cache_comment_author - not serving cached data -->\n";
       }
             
+      $sMobile = ( !empty($wptouch_pro->is_mobile_device) && $wptouch_pro->is_mobile_device ) ? '-wptouch' : '';
+          
       $this->cache_data = false;
-      $this->cache_filename = $post->ID.'-'.$post->post_name.'-cpage'.$wp_query->query_vars['cpage'].'.tmp';
+      $this->cache_filename = $post->ID.'-'.$post->post_name.$sMobile.'-cpage'.$wp_query->query_vars['cpage'].'.tmp';
       if( !file_exists(WP_CONTENT_DIR.'/cache/') ) {
         mkdir(WP_CONTENT_DIR.'/cache/');
       }
@@ -661,7 +663,20 @@ class fv_tc extends fv_tc_Plugin {
               <?php if( isset($options['comment_cache']) && $options['comment_cache'] ) echo 'checked="checked"'; ?> /></td>                               
               <td><label for="comment_cache"><span><?php _e('Caches the comments section of your posts into HTML files. If your posts have hundreds of comments and you don\'t want to use comment paging, this feature speeds up the PHP processing time considerably. Useful even if you use a WP cache plugin, as users see cached comments if they don\'t have an unapproved comment in the list.', 'fv_tc'); ?></span></label><br />
             </td>
-          </tr>          
+          </tr>
+          <?php if( isset($options['comment_cache']) && $options['comment_cache'] ) : ?>          
+          <tr valign="top">     
+            <th scope="row"></th>            
+            <td style="margin-bottom: 0; width: 11px; padding-right: 2px;">
+            </td>
+            <td>
+              <?php global $blog_id; ?>
+              <p><?php _e('Current cache directory: ', 'fv_tc'); echo WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/'; ?></p>
+              <p><?php _e('Cache files: ', 'fv_tc'); echo count( @glob(WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/*') ); ?></p>
+              <p>Hint: save Settings -> Discussion to purge the cache</p>
+            </td>
+          </tr>
+          <?php endif; ?>          
       </table>
       <p>
           <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
