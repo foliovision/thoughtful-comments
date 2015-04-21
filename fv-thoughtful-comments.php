@@ -3,14 +3,14 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.2.9.1
+Version: 0.3
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
 The users cappable of moderate_comments are getting all of these features and are not blocked 
 */
 
-/*  Copyright 2009 - 2013  Foliovision  (email : programming@foliovision.com)
+/*  Copyright 2009 - 2015  Foliovision  (email : programming@foliovision.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ The users cappable of moderate_comments are getting all of these features and ar
 /**
  * @package foliovision-tc
  * @author Foliovision <programming@foliovision.com>
- * version 0.2.9.1
+ * version 0.3
  */  
  
 include( 'fp-api.php' );
@@ -47,7 +47,7 @@ class fv_tc extends fv_tc_Plugin {
      * Plugin version
      * @var string
      */
-    var $strVersion = '0.2.9.1';
+    var $strVersion = '0.3';
     
     /**
      * Decide if scripts will be loaded on current page
@@ -55,6 +55,30 @@ class fv_tc extends fv_tc_Plugin {
      * @bool
      */
     var $loadScripts = false; 
+    
+    /**
+     * Comment author name obtained from cookie - if it has unapproved comments being shown
+     * @string
+     */
+    var $cache_comment_author;
+    
+    /**
+     * Current comments count
+     * @int
+     */    
+    var $cache_comment_count;
+    
+    /**
+     * Comment cache data
+     * @array
+     */     
+    var $cache_data;
+    
+    /**
+     * Comment cache filename
+     * @string
+     */     
+    var $cache_filename;
      
     
     /**
@@ -161,7 +185,103 @@ class fv_tc extends fv_tc_Plugin {
         } 
         return $actions;
     }
+    
+    
+    
+    
+    function cache_purge() {
+      if( !isset($_POST['action']) || !isset($_POST['option_page'])  || $_POST['action'] != 'update' || $_POST['option_page'] != 'discussion' ) {
+        return;
+      }
+      
+      global $blog_id;
+      if( !file_exists(WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/') ) {
+        return;
+      }
+      
+      $files = @glob(WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/*'); //
+      foreach($files as $file){ // iterate files
+        if(is_file($file))
+          unlink($file); // delete file
+      }
 
+    }
+    
+    
+    
+    
+    function cache_start( $args ) {
+      
+      $options = get_option('thoughtful_comments');
+      if( empty($options['comment_cache']) ) {
+        return $args;
+      }
+      
+      require_once( dirname(__FILE__).'/walkers.php' );
+      
+      global $wp_query, $post, $blog_id, $wptouch_pro;
+      
+      $this->cache_comment_count = get_comments_number();
+      $this->cache_comment_author = false;
+      
+      foreach ($_COOKIE as $n => $v) {
+        if (substr($n, 0, 20) == 'comment_author_email') {
+          $this->cache_comment_author = $v;    
+        }
+      }
+      
+      $bCommenterUnapproved = false;
+      if( $this->cache_comment_author && $wp_query->comments ) {
+        foreach( $wp_query->comments as $objComment ) {
+          if( $objComment->comment_author_email == $this->cache_comment_author && $objComment->comment_approved == 0 ) {
+            $bCommenterUnapproved = true;
+          }
+        }
+      }
+      
+      
+      if( !$bCommenterUnapproved ) {
+        $this->cache_comment_author = false;        
+      } else {
+        echo "<!--fv comments cache - unapproved comments for $this->cache_comment_author - not serving cached data -->\n";
+      }
+            
+      $sMobile = ( !empty($wptouch_pro->is_mobile_device) && $wptouch_pro->is_mobile_device ) ? '-wptouch' : '';
+          
+      $this->cache_data = false;
+      $this->cache_filename = $post->ID.'-'.$post->post_name.$sMobile.'-cpage'.$wp_query->query_vars['cpage'].'.tmp';
+      if( !file_exists(WP_CONTENT_DIR.'/cache/') ) {
+        mkdir(WP_CONTENT_DIR.'/cache/');
+      }
+      if( !file_exists(WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/') ) {
+        mkdir(WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/');
+      }
+      $this->cache_filename = WP_CONTENT_DIR . '/cache/thoughtful-comments-'.$blog_id.'/'.$this->cache_filename;  //  check if exists!
+
+      if( file_exists( $this->cache_filename ) ) {
+        $this->cache_data = unserialize( file_get_contents( $this->cache_filename ) );
+      }
+      
+      if ( !is_array($this->cache_data) ) {
+        $this->cache_data = array();
+      }
+      
+      $aCache = $this->cache_data;
+            
+      if( !is_user_logged_in() && !$this->cache_comment_author && isset($aCache['html']) && ($aCache['date'] + 7200) > date( 'U' ) && isset($aCache['comments']) && $aCache['comments'] == $this->cache_comment_count && !isset( $_COOKIE['fv-debug'] ) ) {
+        echo "<!--fv comments cache from $this->cache_filename @ ".$aCache['date']."-->\n";
+        echo $aCache['html'];        
+
+        //  skip the rest of the output!
+        $args['walker'] = new FV_TC_Walker_Comment_blank;
+      } else {
+        $args['walker'] = new FV_TC_Walker_Comment_capture;        
+      }
+      
+      return $args;
+    }
+
+    
 
     /**
      * Filter for manage_users_columns to add new column into user management table
@@ -536,6 +656,27 @@ class fv_tc extends fv_tc_Plugin {
               </td>
           </tr>
           <?php } ?>
+          <tr valign="top">     
+            <th scope="row"><?php _e('Comment cache (advanced)', 'fv_tc'); ?> </th> 
+            <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Comment cache (advanced)', 'fv_tc'); ?></span></legend>                              
+              <input id="comment_cache" type="checkbox" name="comment_cache" value="1" 
+              <?php if( isset($options['comment_cache']) && $options['comment_cache'] ) echo 'checked="checked"'; ?> /></td>                               
+              <td><label for="comment_cache"><span><?php _e('Caches the comments section of your posts into HTML files. If your posts have hundreds of comments and you don\'t want to use comment paging, this feature speeds up the PHP processing time considerably. Useful even if you use a WP cache plugin, as users see cached comments if they don\'t have an unapproved comment in the list.', 'fv_tc'); ?></span></label><br />
+            </td>
+          </tr>
+          <?php if( isset($options['comment_cache']) && $options['comment_cache'] ) : ?>          
+          <tr valign="top">     
+            <th scope="row"></th>            
+            <td style="margin-bottom: 0; width: 11px; padding-right: 2px;">
+            </td>
+            <td>
+              <?php global $blog_id; ?>
+              <p><?php _e('Current cache directory: ', 'fv_tc'); echo WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/'; ?></p>
+              <p><?php _e('Cache files: ', 'fv_tc'); echo count( @glob(WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/*') ); ?></p>
+              <p>Hint: save Settings -> Discussion to purge the cache</p>
+            </td>
+          </tr>
+          <?php endif; ?>          
       </table>
       <p>
           <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
@@ -588,6 +729,7 @@ class fv_tc extends fv_tc_Plugin {
               'comment_autoapprove_count' => ( isset($_POST['comment_autoapprove_count']) && intval($_POST['comment_autoapprove_count']) > 0 ) ? intval($_POST['comment_autoapprove_count']) : 1,
               'tc_replyKW' => isset( $_POST['tc_replyKW'] ) ? $_POST['tc_replyKW'] : 'comment-',
               'user_nicename_edit' => ( isset($_POST['user_nicename_edit']) && $_POST['user_nicename_edit'] ) ? true : false,
+              'comment_cache' => ( isset($_POST['comment_cache']) && $_POST['comment_cache'] ) ? true : false,
           );
           if( update_option( 'thoughtful_comments', $options ) ) :
           ?>
@@ -1280,6 +1422,9 @@ function fv_tc_x_add_metadata_field( $field_slug, $field, $object_type, $object_
   return $fv_tc->column_content( $field, $field_slug, $object_id );
 }
 
+
+
+
 /* Add extra backend moderation options */
 add_filter( 'comment_row_actions', array( $fv_tc, 'admin' ) );
 
@@ -1346,7 +1491,6 @@ add_action('admin_init', array( $fv_tc, 'fv_tc_user_nicename_change' ) );
 /* Override Wordpress Blacklisting */
 //add_action( 'wp_blacklist_check', array( $fv_tc, 'blacklist' ), 10, 7 );
 
-endif;
 
 add_filter( 'comment_moderation_headers', array( $fv_tc, 'comment_moderation_headers' ) ); 
 
@@ -1368,3 +1512,10 @@ add_action('init', array($fv_tc, 'ap_action_init'));
 add_filter('get_comment_link', array($fv_tc, 'get_comment_link'));
 add_filter('get_comments_pagenum_link', array($fv_tc, 'get_comments_pagenum_link'));  //  todo: test!
 add_filter('paginate_links', array($fv_tc, 'get_comments_pagenum_link'));
+
+//  comments html caching
+add_filter( 'wp_list_comments_args', array($fv_tc, 'cache_start') );
+add_filter( 'admin_init', array($fv_tc, 'cache_purge') );
+
+
+endif;  //  class_exists('fv_tc_Plugin')

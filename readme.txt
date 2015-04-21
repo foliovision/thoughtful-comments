@@ -24,13 +24,10 @@ While Automattic has a horse in the ring (Intense Debate), we'd really like to s
 
 ###Features:
 
-* Front-end comment moderation
-* Unapproved comments shown in front-end
+* Front-end comment moderation - for logged in users with required permission
+* Unapproved comments shown in front-end - for logged in users with required permission
 * Per-user moderation settings
-
-All of these features apply to logged in editors and administrators only!
-
-Upcoming: we have additional invisible caching coming for heavily commented posts (so that if there are hundreds of older comments, they get saved as flat html, lightening PHP load and speeding up busy sites significantly.
+* Comment caching - lightening PHP load and speeding up busy sites significantly - works with any WP cache plugin!
 
 **[Download now!](http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/)**
 
@@ -60,6 +57,9 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 4. Admin screen settings.
 
 == Changelog ==
+
+= 0.3 =
+* comment caching added - enable in plugin settings and gain considerably faster post load times for posts with high number of comments
 
 = 0.2.9.1 =
 * fix for comments going into moderation on websites with moderation disabled - caused by the permission check during the comment validation
