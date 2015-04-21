@@ -10,7 +10,7 @@ Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-commen
 The users cappable of moderate_comments are getting all of these features and are not blocked 
 */
 
-/*  Copyright 2009 - 2013  Foliovision  (email : programming@foliovision.com)
+/*  Copyright 2009 - 2015  Foliovision  (email : programming@foliovision.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
