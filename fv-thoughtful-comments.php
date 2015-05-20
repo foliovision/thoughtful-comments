@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.3
+Version: 0.3.1
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -30,7 +30,7 @@ The users cappable of moderate_comments are getting all of these features and ar
 /**
  * @package foliovision-tc
  * @author Foliovision <programming@foliovision.com>
- * version 0.3
+ * version 0.3.1
  */  
  
 include( 'fp-api.php' );
@@ -47,7 +47,7 @@ class fv_tc extends fv_tc_Plugin {
      * Plugin version
      * @var string
      */
-    var $strVersion = '0.3';
+    var $strVersion = '0.3.1';
     
     /**
      * Decide if scripts will be loaded on current page
@@ -415,11 +415,19 @@ class fv_tc extends fv_tc_Plugin {
         }
         
         global  $user_ID, $comment, $post;
-
-        //if($user_ID && current_user_can('edit_post', $post->ID) && !is_admin()) { 
-        if( current_user_can('edit_posts') && current_user_can( 'edit_comment', $comment->comment_ID ) ) {
+        
+        if( !isset($this->can_edit) ) { // for performance reasons only check once!
+          if( current_user_can('edit_posts') && current_user_can( 'edit_comment', $comment->comment_ID ) ) {
+            $this->can_edit = true;
+          } else {
+            $this->can_edit = false;
+          }
+        }
+                
+        if( $this->can_edit ) {
+        
           $this->loadScripts = true;
-          $child = $this->comment_has_child($comment->comment_ID, $comment->comment_post_ID);
+          //$child = $this->comment_has_child($comment->comment_ID, $comment->comment_post_ID);
           /*  Container   */
           $out = '<p class="tc-frontend">';
           /* Approve comment */
@@ -429,22 +437,22 @@ class fv_tc extends fv_tc_Plugin {
           /*  Delete comment  */
           $out .= $this->get_t_delete($comment).' ';
           /*  Delete thread   */
-          if($child>0) {
+          //if($child>0) {
             $out .= $this->get_t_delete_thread($comment).' ';
-          }
+          //}
           /*  If IP isn't banned  */
           if(stripos(trim(get_option('blacklist_keys')),$comment->comment_author_IP)===FALSE) {
               /*  Delete and ban  */
               $out .= $this->get_t_delete_ban($comment);//.' | ';
               /*  Delete thread and ban   */
-              if($child>0)
+              //if($child>0)
                   $out .= ' | '.$this->get_t_delete_thread_ban($comment);
           } else {
               $out .= 'IP '.$comment->comment_author_IP.' ';
                             $out .= __('already banned!', 'fv_tc' );
           }
           /*  Moderation status   */
-          $user_info = ( isset($comment->user_id) ) ? get_userdata($comment->user_id) : false;
+          $user_info = ( isset($comment->user_id) && $comment->user_id > 0 ) ? get_userdata($comment->user_id) : false;
           if( $user_info && $user_info->user_level < 3) {
               $out .= '<br />'.$this->get_t_moderated($comment->user_id);
           } else if( $user_info && $user_info->user_level >= 3 ) {
