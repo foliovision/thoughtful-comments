@@ -632,7 +632,7 @@ class fv_tc extends fv_tc_Plugin {
             <tr valign="top">
                 <th scope="row"><?php _e('Comments before auto-approval', 'fv_tc'); ?> </th> 
                 <td colspan="2"><fieldset><legend class="screen-reader-text"><span><?php _e('Comments before auto-approval', 'fv_tc'); ?></span></legend>                              
-                <input id="comment_autoapprove_count" type="text" name="comment_autoapprove_count" value="<?php echo ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : 1; ?>" />                               
+                <input id="comment_autoapprove_count" type="text" size="2" name="comment_autoapprove_count" value="<?php echo ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : 1; ?>" />                               
                 <label for="reply_link"><span><?php _e('Number of approved comments before auto-approval', 'fv_tc'); ?></span></label><br />
                 </td>
             </tr>
