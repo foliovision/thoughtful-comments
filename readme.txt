@@ -58,6 +58,9 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 
 == Changelog ==
 
+= 0.3.1 =
+* performance improvements - fv_tc::comment_has_child() not used for front end, the thread buttons visibility is instead handled by JavaScript
+
 = 0.3 =
 * comment caching added - enable in plugin settings and gain considerably faster post load times for posts with high number of comments
 

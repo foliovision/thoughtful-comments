@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.3
+Version: 0.3.2
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -30,7 +30,7 @@ The users cappable of moderate_comments are getting all of these features and ar
 /**
  * @package foliovision-tc
  * @author Foliovision <programming@foliovision.com>
- * version 0.3
+ * version 0.3.1
  */  
  
 include( 'fp-api.php' );
@@ -47,7 +47,7 @@ class fv_tc extends fv_tc_Plugin {
      * Plugin version
      * @var string
      */
-    var $strVersion = '0.3';
+    var $strVersion = '0.3.1';
     
     /**
      * Decide if scripts will be loaded on current page
@@ -415,11 +415,19 @@ class fv_tc extends fv_tc_Plugin {
         }
         
         global  $user_ID, $comment, $post;
-
-        //if($user_ID && current_user_can('edit_post', $post->ID) && !is_admin()) { 
-        if( current_user_can('edit_posts') && current_user_can( 'edit_comment', $comment->comment_ID ) ) {
+        
+        if( !isset($this->can_edit) ) { // for performance reasons only check once!
+          if( current_user_can('edit_posts') && current_user_can( 'edit_comment', $comment->comment_ID ) ) {
+            $this->can_edit = true;
+          } else {
+            $this->can_edit = false;
+          }
+        }
+                
+        if( $this->can_edit ) {
+        
           $this->loadScripts = true;
-          $child = $this->comment_has_child($comment->comment_ID, $comment->comment_post_ID);
+          //$child = $this->comment_has_child($comment->comment_ID, $comment->comment_post_ID);
           /*  Container   */
           $out = '<p class="tc-frontend">';
           /* Approve comment */
@@ -429,22 +437,22 @@ class fv_tc extends fv_tc_Plugin {
           /*  Delete comment  */
           $out .= $this->get_t_delete($comment).' ';
           /*  Delete thread   */
-          if($child>0) {
+          //if($child>0) {
             $out .= $this->get_t_delete_thread($comment).' ';
-          }
+          //}
           /*  If IP isn't banned  */
           if(stripos(trim(get_option('blacklist_keys')),$comment->comment_author_IP)===FALSE) {
               /*  Delete and ban  */
               $out .= $this->get_t_delete_ban($comment);//.' | ';
               /*  Delete thread and ban   */
-              if($child>0)
+              //if($child>0)
                   $out .= ' | '.$this->get_t_delete_thread_ban($comment);
           } else {
               $out .= 'IP '.$comment->comment_author_IP.' ';
                             $out .= __('already banned!', 'fv_tc' );
           }
           /*  Moderation status   */
-          $user_info = ( isset($comment->user_id) ) ? get_userdata($comment->user_id) : false;
+          $user_info = ( isset($comment->user_id) && $comment->user_id > 0 ) ? get_userdata($comment->user_id) : false;
           if( $user_info && $user_info->user_level < 3) {
               $out .= '<br />'.$this->get_t_moderated($comment->user_id);
           } else if( $user_info && $user_info->user_level >= 3 ) {
@@ -612,13 +620,21 @@ class fv_tc extends fv_tc_Plugin {
     
     function fv_tc_admin_comment_tweaks(){
       $options = get_option('thoughtful_comments');
+
       ?>
       <table class="optiontable form-table">
           <tr valign="top">
-              <th scope="row"><?php _e('Automatic link shortening', 'fv_tc'); ?> </th>  
+              <th scope="row"><?php _e('Automatic link shortening', 'fv_tc'); ?>: 
+              <br/>
+              <select type="select" id="shorten_urls" name="shorten_urls">
+                <option value="0" <?php if($options['shorten_urls'] === true) echo "selected"; ?> >link to domain.com</option>
+                <option value="50" <?php if($options['shorten_urls'] === 50) echo "selected"; ?> >Shorten to 50 characters</option>
+                <option value="100" <?php if($options['shorten_urls'] === false) echo "selected"; ?> >Shorten to 100 characters</option>
+              </select>
+              </th>  
               <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Link shortening', 'fv_tc'); ?></span></legend>                                  
-              <input id="shorten_urls" type="checkbox" name="shorten_urls" value="1" <?php if( $options['shorten_urls'] ) echo 'checked="checked"'; ?> /></td>
-              <td><label for="shorten_urls"><span><?php _e('Shortens the plain URL link text in comments to "link to: domain.com". Hides long ugly URLs', 'fv_tc'); ?></span></label><br />
+              
+              <td><label for="shorten_urls"><span><?php _e('Shortens the plain URL link text in comments to "link to: domain.com" or strip URL after N characters and add &hellip; at the end. Hides long ugly URLs', 'fv_tc'); ?></span></label><br />
               </td>
           </tr>
           <tr valign="top">
@@ -723,8 +739,22 @@ class fv_tc extends fv_tc_Plugin {
       
       if (!empty($_POST)) :
           check_admin_referer('thoughtful_comments');
+          
+          $shorten_urls = false;
+          switch( $_POST['shorten_urls'] ){
+            case '0':
+              $shorten_urls = true;
+              break;
+            case '50':
+              $shorten_urls = 50;
+              break;
+            case '100':
+              $shorten_urls = false;
+              break;
+          }
+          
           $options = array(
-              'shorten_urls' => ( isset($_POST['shorten_urls']) && $_POST['shorten_urls'] ) ? true : false,            
+              'shorten_urls' => $shorten_urls,            
               'reply_link' => ( isset($_POST['reply_link']) && $_POST['reply_link'] ) ? true : false,
               'comment_autoapprove_count' => ( isset($_POST['comment_autoapprove_count']) && intval($_POST['comment_autoapprove_count']) > 0 ) ? intval($_POST['comment_autoapprove_count']) : 1,
               'tc_replyKW' => isset( $_POST['tc_replyKW'] ) ? $_POST['tc_replyKW'] : 'comment-',
@@ -1020,14 +1050,35 @@ class fv_tc extends fv_tc_Plugin {
      * @return string New link
      */     
     function comment_links_replace_2( $link ) {
-
       preg_match( '~href=["\'](.*?)["\']~', $link[0], $href );
       preg_match( '~>(.*?)</a>~', $link[0], $text );
       if( $href[1] == $text[1] ) {
         preg_match( '!//(.+?)/!', $text[1], $domain );
         if( $domain[1] ) {
-          $domain[1] = preg_replace( '~^www\.~', '', $domain[1] );
-          $link[0] = str_replace( $text[1].'</a>', __('link to', 'fv_tc') . ' '.$domain[1].'</a>', $link[0] );
+          
+          $options = get_option('thoughtful_comments');
+          if( $options['shorten_urls'] === true ){
+              $domain[1] = preg_replace( '~^www\.~', '', $domain[1] );
+              $link[0] = str_replace( $text[1].'</a>', __('link to', 'fv_tc') . ' '.$domain[1].'</a>', $link[0] );
+          }
+          else{
+          
+            if( $options['shorten_urls'] === 50 ){
+              $length = 50;
+            }
+            else{
+              $length = 100;
+            }
+            
+            preg_match( '!//(.+?)$!', $text[1], $striped_link );
+            $striped_link[1] = preg_replace( '~^www\.~', '', $striped_link[1] );
+            $sub_str_link = substr( $striped_link[1], 0, $length );
+            if( $sub_str_link != $striped_link[1] ){
+              $sub_str_link .= "&hellip;";
+            }
+            
+            $link[0] = str_replace( $text[1].'</a>', $sub_str_link.'</a>', $link[0] );
+          }
         }
       }
       return $link[0];
@@ -1042,10 +1093,7 @@ class fv_tc extends fv_tc_Plugin {
      * @return string New comments text
      */         
     function comment_links( $content ) {
-        $options = get_option('thoughtful_comments');
-        if( $options['shorten_urls'] == false && isset( $options['shorten_urls'] ) ) return $content;      
-        $content = ' ' . $content;        
-
+        $content = ' ' . $content;
         $content = preg_replace_callback( '!<a[\s\S]*?</a>!', array(get_class($this), 'comment_links_replace_2' ), $content );
 
         return $content; 
