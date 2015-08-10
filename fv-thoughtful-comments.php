@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.3.2
+Version: 0.3.3
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -434,6 +434,9 @@ class fv_tc extends fv_tc_Plugin {
           if($comment->comment_approved == '0') {
             $out .= '<span id="comment-'.$comment->comment_ID.'-approve">'.$this->get_t_approve($comment).' </span>';
           }
+          if($comment->comment_approved == 'spam') {
+            $out .= '<span id="comment-'.$comment->comment_ID.'-approve">'.$this->get_t_unspam($comment).' </span>';
+          }
           /*  Delete comment  */
           $out .= $this->get_t_delete($comment).' ';
           /*  Delete thread   */
@@ -495,6 +498,11 @@ class fv_tc extends fv_tc_Plugin {
         return '<a href="#" onclick="fv_tc_approve('.$comment->comment_ID.'); return false">' . __('Approve', 'fv_tc') . '</a>';
         //return '<a href="#" onclick="fv_tc_approve('.$comment->comment_ID.',\''.$this->esc_url( wp_nonce_url($this->url.'/ajax.php','fv-tc-approve_' . $comment->comment_ID)).'\', \''. __('Wait...', 'fv_tc').'\'); return false">' . __('Approve', 'fv_tc') . '</a>';
     }
+    
+    function get_t_unspam($comment) {
+        return '<a href="#" onclick="fv_tc_approve('.$comment->comment_ID.'); return false">' . __('Unspam', 'fv_tc') . '</a>';
+        //return '<a href="#" onclick="fv_tc_approve('.$comment->comment_ID.',\''.$this->esc_url( wp_nonce_url($this->url.'/ajax.php','fv-tc-approve_' . $comment->comment_ID)).'\', \''. __('Wait...', 'fv_tc').'\'); return false">' . __('Approve', 'fv_tc') . '</a>';
+    }    
     
     
     /**
@@ -618,6 +626,24 @@ class fv_tc extends fv_tc_Plugin {
       _e('Thoughtful Comments supercharges comment moderation by moving it into the front end (i.e. in context). It also allows banning by IP, email address or domain.', 'fv_tc');
     }
     
+    function fv_tc_admin_comment_moderation(){
+      $options = get_option('thoughtful_comments');
+      ?>
+      <table class="optiontable form-table">
+          <tr valign="top">
+              <th scope="row"><?php _e('Show spam comments in front-end', 'fv_tc'); ?> </th>  
+              <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Show spam comments', 'fv_tc'); ?></span></legend>                                  
+              <input id="frontend_spam" type="checkbox" name="frontend_spam" value="1" <?php if( $options['frontend_spam'] ) echo 'checked="checked"'; ?> /></td>
+              <td><label for="frontend_spam"><span><?php _e('Reveal spam comments in front-end comment list for moderators.', 'fv_tc'); ?></span></label><br />
+              </td>
+          </tr>        
+      </table>
+      <p>
+          <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
+      </p>
+      <?php
+    }    
+    
     function fv_tc_admin_comment_tweaks(){
       $options = get_option('thoughtful_comments');
 
@@ -734,6 +760,7 @@ class fv_tc extends fv_tc_Plugin {
     
     function options_panel() {
       add_meta_box( 'fv_tc_description', 'Description', array( $this, 'fv_tc_admin_description' ), 'fv_tc_settings', 'normal' );
+      add_meta_box( 'fv_tc_comment_moderation', 'Comment Moderation', array( $this,'fv_tc_admin_comment_moderation' ), 'fv_tc_settings', 'normal' );
       add_meta_box( 'fv_tc_comment_tweaks', 'Comment Tweaks', array( $this,'fv_tc_admin_comment_tweaks' ), 'fv_tc_settings', 'normal' );
       add_meta_box( 'fv_tc_comment_instructions', 'Instructions', array( $this,'fv_tc_admin_comment_instructions' ), 'fv_tc_settings', 'normal' );
       
@@ -760,6 +787,7 @@ class fv_tc extends fv_tc_Plugin {
               'tc_replyKW' => isset( $_POST['tc_replyKW'] ) ? $_POST['tc_replyKW'] : 'comment-',
               'user_nicename_edit' => ( isset($_POST['user_nicename_edit']) && $_POST['user_nicename_edit'] ) ? true : false,
               'comment_cache' => ( isset($_POST['comment_cache']) && $_POST['comment_cache'] ) ? true : false,
+              'frontend_spam' => ( isset($_POST['frontend_spam']) && $_POST['frontend_spam'] ) ? true : false,
           );
           if( update_option( 'thoughtful_comments', $options ) ) :
           ?>
@@ -938,6 +966,8 @@ class fv_tc extends fv_tc_Plugin {
     function unapproved($comments) {
         global  $user_ID;
         global  $post;
+        
+        $options = get_option('thoughtful_comments');
             
         /*if( count($comments) > 200 ) {
           remove_filter( 'comment_text', 'wptexturize'            );
@@ -950,19 +980,25 @@ class fv_tc extends fv_tc_Plugin {
         if($user_ID && current_user_can('edit_post', $post->ID)) { 
             /*  Use the standard WP function to get the comments  */
             if(function_exists('get_comments'))
-                $comments = get_comments( array('post_id' => $post->ID, 'order' => 'ASC') );
+                $comments = get_comments( array('post_id' => $post->ID, 'order' => 'ASC', 'status' => 'any' ) );
             /*  Use DB query for older WP versions  */
             else {
                 global  $wpdb;
-                $comments = $wpdb->get_results("SELECT * FROM {$wpdb->comments} WHERE comment_post_ID = {$post->ID} AND comment_approved != 'spam' ORDER BY comment_date ASC");
+                $comments = $wpdb->get_results("SELECT * FROM {$wpdb->comments} WHERE comment_post_ID = {$post->ID} ORDER BY comment_date ASC");
             }
             
             /*  Target array where both approved and unapproved comments are added  */
             $new_comments = array();
             foreach($comments AS $comment) {
-                /*  Don't display the spam comments */ 
-                if($comment->comment_approved == 'spam')
+                
+                if($comment->comment_approved == 'spam') {
+                  if( isset($options['frontend_spam']) && $options['frontend_spam'] ) {
+                    $comment->comment_author = '<span id="comment-'.$comment->comment_ID.'-unapproved" class="tc_highlight_spam">'.$comment->comment_author.'</span>';
+                  } else {
+                    /*  Don't display the spam comments */ 
                     continue;
+                  }
+                }
                 /*  Highlight the comment author in case the comment isn't approved yet */    
                 if($comment->comment_approved == '0') {
                     /*  Alternative - highlight the comment content */

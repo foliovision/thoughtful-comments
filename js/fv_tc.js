@@ -9,6 +9,7 @@ function fv_tc_approve(id) {
             jQuery("#comment-body-"+id).children(":first").text('');
             jQuery("#comment-"+id+"-approve").remove();
             jQuery("#comment-"+id+"-unapproved").removeClass("tc_highlight");
+            jQuery("#comment-"+id+"-unapproved").removeClass("tc_highlight_spam");
         }
     });
     return false;  

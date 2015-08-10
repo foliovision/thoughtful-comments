@@ -2,6 +2,10 @@
 .tc_highlight {	background: red;
 	color: white;
 	padding: 3px;
+}.tc_highlight_spam {
+	background: brown;
+	color: white;
+	padding: 3px;
 }.tc-frontend {	font-size: 80%;
 }
 .tc-frontend a {
