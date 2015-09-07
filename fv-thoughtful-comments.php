@@ -978,18 +978,18 @@ class fv_tc extends fv_tc_Plugin {
         
         /*  Check user permissions */
         if($user_ID && current_user_can('edit_post', $post->ID)) { 
-            /*  Use the standard WP function to get the comments  */
-            if(function_exists('get_comments'))
-                $comments = get_comments( array('post_id' => $post->ID, 'order' => 'ASC', 'status' => 'any' ) );
-            /*  Use DB query for older WP versions  */
-            else {
-                global  $wpdb;
-                $comments = $wpdb->get_results("SELECT * FROM {$wpdb->comments} WHERE comment_post_ID = {$post->ID} ORDER BY comment_date ASC");
+            if( isset($options['frontend_spam']) && $options['frontend_spam'] ) {
+              $comments = get_comments( array('post_id' => $post->ID, 'order' => 'ASC', 'status' => 'any' ) );
+            } else {
+              $comments = get_comments( array('post_id' => $post->ID, 'order' => 'ASC' ) );
             }
             
             /*  Target array where both approved and unapproved comments are added  */
             $new_comments = array();
             foreach($comments AS $comment) {
+                if($comment->comment_approved == 'trash') {
+                  continue;
+                }
                 
                 if($comment->comment_approved == 'spam') {
                   if( isset($options['frontend_spam']) && $options['frontend_spam'] ) {
