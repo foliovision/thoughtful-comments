@@ -163,25 +163,26 @@ jQuery( function($) {
     setInterval( function() {
       $.ajax({
         type: 'POST',
-        url: fv_tc_ajaxurl,
-        data: {"action": "fv_tc_count", 'id': fv_tc_count.id},
+        url: fv_tc_count_json+'?rnd='+Math.random(),
         success: function(data){
-          if( parseInt(data) > fv_tc_count.count ){
-            var count = parseInt(data) - fv_tc_count.count;
+          //$('.fv_tc_loading').remove();
+          
+          if( typeof(data[fv_tc_count.id]) != "undefined" && parseInt(data[fv_tc_count.id]) > fv_tc_count.count ){
+            var count = parseInt(data[fv_tc_count.id]) - fv_tc_count.count;
             if( count > 1 ){
               var message = count+' new comments!'
             } else {
               var message = count+' new comment!'
             }
-            $('#fv_tc_ticker a').text(message)
-            $('#fv_tc_ticker').show();            
+            $('#fv_tc_reload').text(message).show();
+            $('#fv_tc_ticker').show();
           } else {
-            $('#fv_tc_ticker').hide(); 
+            //$('#fv_tc_reload').hide(); 
           }
         }
       });
-      $('#fv_tc_ticker a').text('Checking for new comments...');
-      $('#fv_tc_ticker').show();
+      //$('#fv_tc_reload').after('<img class="fv_tc_loading" src="/wp-includes/images/wpspin.gif" />');
+      //$('#fv_tc_reload').show();
     }, 5000 );
   }
 
@@ -205,7 +206,7 @@ var fv_comments_pink_hidden = true;
 
 function fv_comments_pink_process() {
   var fv_cp_top_element;
-  jQuery("#comments .commentlist li").each(function(){      
+  jQuery("#comments li").each(function(){      
     if (jQuery(this).offset().top >= jQuery(window).scrollTop()) {
       fv_cp_top_element = jQuery(this);
       return false; 
@@ -255,12 +256,12 @@ jQuery(document).ready(function($) {
   
   jQuery('#fv-comments-pink-toggle').show();
   
-  var fv_cp_id_prefix = '#li-comment-';
+  var fv_cp_id_prefix = '#comment-';
   var response = fv_tc_new_comments;
   if (response != -1) {	//	user has visited the post before
     jQuery('#fv-comments-pink-toggle').show();
     jQuery('#sharebox').addClass('with_comments');
-    jQuery("#comments .commentlist li").each(function(){
+    jQuery("#comments li").each(function(){
       var found = false;
       var exploded = jQuery(this).attr("id").split(fv_cp_id_prefix.substr(1));
       var id = exploded[1]; 
@@ -320,8 +321,8 @@ setInterval( function() {
   if( fv_tc_ticker_scroll_prime ) {
     jQuery('#fv_tc_ticker').each( function() {
       if(
-         !jQuery(this).data('fv_ad_position') && jQuery(this).offset().top < jQuery(window).scrollTop() ||
-         jQuery(this).data('fv_ad_position') < jQuery(window).scrollTop()
+         !jQuery(this).data('fv_ad_position') && jQuery(this).offset().top < ( jQuery(window).scrollTop() + 40 ) ||
+         jQuery(this).data('fv_ad_position') < ( jQuery(window).scrollTop() + 40 )
          ) {
         
         if( !jQuery(this).data('fv_ad_position') ) {                
