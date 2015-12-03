@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.3.4
+Version: 0.3.4.1
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -47,7 +47,7 @@ class fv_tc extends fv_tc_Plugin {
      * Plugin version
      * @var string
      */
-    var $strVersion = '0.3.1';
+    var $strVersion = '0.3.4.1';
     
     /**
      * Decide if scripts will be loaded on current page
@@ -122,6 +122,8 @@ class fv_tc extends fv_tc_Plugin {
     {
         // Localization
         load_plugin_textdomain('fv_tc', false, dirname(plugin_basename(__FILE__)) . "/languages");
+                
+        if( is_user_logged_in() ) $this->loadScripts = true;    
     }
 
     
@@ -423,9 +425,7 @@ class fv_tc extends fv_tc_Plugin {
           } else {
             $this->can_edit = false;
           }
-        }
-        
-        if( is_user_logged_in() ) $this->loadScripts = true;        
+        }    
                 
         if( $this->can_edit ) {
                   
@@ -870,8 +870,13 @@ class fv_tc extends fv_tc_Plugin {
             wp_localize_script('fv_tc', 'fv_tc_translations', $this->get_js_translations());
             wp_localize_script('fv_tc', 'fv_tc_ajaxurl', admin_url('admin-ajax.php'));
             
-            global $post;
-            wp_localize_script('fv_tc', 'fv_tc_count', array( 'id' => $post->ID, 'count' => $this->get_wp_count_comments($post->ID) ) );
+            if( !is_admin() ) {
+              global $blog_id;
+              wp_localize_script('fv_tc', 'fv_tc_count_json', content_url('cache/thoughtful-comments-'.$blog_id.'/count.json'));
+              
+              global $post;
+              wp_localize_script('fv_tc', 'fv_tc_count', array( 'id' => $post->ID, 'count' => $this->get_wp_count_comments($post->ID) ) );
+            }
         }        
         
     }
@@ -966,6 +971,12 @@ class fv_tc extends fv_tc_Plugin {
         var_dump( $new_status );  //  approved
         die();*/
       }
+            
+      if( $new_status == 'approved' ) {
+        $this->write_count_json( $comment->comment_post_ID );
+        
+      }
+      
     }
     
     
@@ -1512,10 +1523,13 @@ class fv_tc extends fv_tc_Plugin {
     }
 
     function ticker() {
-      echo '<div id="fv_tc_ticker" style="display: none"><a href="#" onclick="window.location.reload(); return false"></a></div>'."\n";    
+      $sStyle = !have_comments() ? ' style="display: none;"' : '';
+      echo '<div id="fv_tc_ticker"'.$sStyle.'><a style="display: none; " id="fv-comments-pink-toggle" href="#">Show only new comments</a> <a id="fv_tc_reload" style="display: none" href="#" onclick="window.location.reload(); return false"></a></div>'."\n";    
     }
     
     function fv_tc_comment_sorting() {
+      if( !have_comments() ) return;
+      
       $order = get_option('comment_order');
       
       if( !empty($_GET['fvtc_order']) && ( $_GET['fvtc_order'] == 'desc' || $_GET['fvtc_order'] == 'asc' ) ) {
@@ -1552,6 +1566,40 @@ class fv_tc extends fv_tc_Plugin {
       if( !empty($_GET['fvtc_order']) && ( $_GET['fvtc_order'] == 'desc' || $_GET['fvtc_order'] == 'asc' ) ) $value = $_GET['fvtc_order'];
       
       return $value;
+    }
+    
+    function write_count_json( $post_id ) {
+      global $blog_id;
+      
+      if( !file_exists(WP_CONTENT_DIR.'/cache/') ) {
+        mkdir(WP_CONTENT_DIR.'/cache/');
+      }
+      
+      if( !file_exists(WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/') ) {
+        mkdir(WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/');
+      }
+      
+      $cache_file = WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/count.json';        
+      $aCommentInfo = wp_count_comments($post_id);
+      
+      if( file_exists( $cache_file ) ) {
+        $cache_data = json_decode( file_get_contents( $cache_file ) );
+      } else {
+        $cache_data = new stdClass;
+      }        
+      if( !is_object($cache_data) ) {
+        $cache_data = new stdClass;
+      }
+      
+      $cache_data->{$post_id} = $aCommentInfo->approved;
+      file_put_contents( $cache_file, json_encode($cache_data) );      
+    }
+    
+    function comment_post_to_count_json( $comment_ID, $comment_approved ) {
+      if( 1 === $comment_approved ){
+        $comment = get_comment( $comment_ID );
+        $this->write_count_json( $comment->comment_post_ID );
+      }
     }
 
 }
@@ -1673,6 +1721,7 @@ add_action( 'fv_tc_controls', array( $fv_tc, 'ticker' ) );
 
 add_filter( 'pre_option_comment_order', array( $fv_tc, 'comment_order' ) );
 add_action( 'fv_tc_controls', array( $fv_tc, 'fv_tc_comment_sorting' ) );
+add_action( 'comment_post', array( $fv_tc, 'comment_post_to_count_json' ), 10, 2 );
 
 
 endif;  //  class_exists('fv_tc_Plugin')
