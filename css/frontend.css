@@ -32,3 +32,10 @@
 .tc-frontend a.fv-tc-banthread:before {
 	content: "\f335";
 }
+
+#fv_tc_ticker.floating {
+  background: white;
+  margin: 20px;
+  padding: 20px;
+  z-index: 100;
+}

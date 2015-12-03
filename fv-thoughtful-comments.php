@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.3.3
+Version: 0.3.4
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -247,9 +247,10 @@ class fv_tc extends fv_tc_Plugin {
       }
             
       $sMobile = ( !empty($wptouch_pro->is_mobile_device) && $wptouch_pro->is_mobile_device ) ? '-wptouch' : '';
+      $sOrder = ( !empty($_GET['fvtc_order']) && ( $_GET['fvtc_order'] == 'desc' || $_GET['fvtc_order'] == 'asc' ) ) ? '-'.$_GET['fvtc_order'] : '';
           
       $this->cache_data = false;
-      $this->cache_filename = $post->ID.'-'.$post->post_name.$sMobile.'-cpage'.$wp_query->query_vars['cpage'].'.tmp';
+      $this->cache_filename = $post->ID.'-'.$post->post_name.$sMobile.$sOrder.'-cpage'.$wp_query->query_vars['cpage'].'.tmp';
       if( !file_exists(WP_CONTENT_DIR.'/cache/') ) {
         mkdir(WP_CONTENT_DIR.'/cache/');
       }
@@ -423,10 +424,11 @@ class fv_tc extends fv_tc_Plugin {
             $this->can_edit = false;
           }
         }
+        
+        if( is_user_logged_in() ) $this->loadScripts = true;        
                 
         if( $this->can_edit ) {
-        
-          $this->loadScripts = true;
+                  
           //$child = $this->comment_has_child($comment->comment_ID, $comment->comment_post_ID);
           /*  Container   */
           $out = '<p class="tc-frontend">';
@@ -579,7 +581,16 @@ class fv_tc extends fv_tc_Plugin {
             else
                 $out .= __('Unmoderated', 'fv_tc') . '</a>';
         return  $out;
-    }    
+    }
+    
+    
+    function get_wp_count_comments($post_id) {
+      $aCommentInfo = wp_count_comments($post_id);
+      if( current_user_can('moderate_comments') ) {
+        return $aCommentInfo->approved + $aCommentInfo->moderated;
+      }
+      return $aCommentInfo->approved;
+    }
 
     
     /**
@@ -854,11 +865,15 @@ class fv_tc extends fv_tc_Plugin {
     * @global int Current user ID        
     */
     function scripts() {
-        if( $this->loadScripts ) {
+        if( $this->loadScripts ) {  //  todo: only when needed
             wp_enqueue_script('fv_tc',$this->url. '/js/fv_tc.js',array('jquery'), $this->strVersion, true);
             wp_localize_script('fv_tc', 'fv_tc_translations', $this->get_js_translations());
             wp_localize_script('fv_tc', 'fv_tc_ajaxurl', admin_url('admin-ajax.php'));
-        }
+            
+            global $post;
+            wp_localize_script('fv_tc', 'fv_tc_count', array( 'id' => $post->ID, 'count' => $this->get_wp_count_comments($post->ID) ) );
+        }        
+        
     }
     
     
@@ -902,9 +917,9 @@ class fv_tc extends fv_tc_Plugin {
     function styles() {
         global $post;
         //  this is executed in the header, so we can't do the check for every post on index/archive pages, so we better load styles if there are any unapproved comments to show. it's loaded even for contributors which don't need it.
-        if(!is_admin() && current_user_can('edit_posts')) {
+        //if(!is_admin() && current_user_can('edit_posts')) { //todo: only when needed!
           echo '<link rel="stylesheet" href="'.$this->url.'/css/frontend.css?ver='.$this->strVersion.'" type="text/css" media="screen" />'; 
-        }
+        //}
     }        
     
 
@@ -1283,6 +1298,13 @@ class fv_tc extends fv_tc_Plugin {
             die('db error');
     }
     
+    function fv_tc_count() {
+      $post_id = !empty($_REQUEST['id']) ? intval($_REQUEST['id']) : false;
+      if( $post_id ) {
+        echo $this->get_wp_count_comments($post_id);
+      }
+      die();
+    }    
 
     function fv_tc_delete() {
         global $wpdb;
@@ -1489,6 +1511,48 @@ class fv_tc extends fv_tc_Plugin {
       }
     }
 
+    function ticker() {
+      echo '<div id="fv_tc_ticker" style="display: none"><a href="#" onclick="window.location.reload(); return false"></a></div>'."\n";    
+    }
+    
+    function fv_tc_comment_sorting() {
+      $order = get_option('comment_order');
+      
+      if( !empty($_GET['fvtc_order']) && ( $_GET['fvtc_order'] == 'desc' || $_GET['fvtc_order'] == 'asc' ) ) {
+        if( $_GET['fvtc_order'] == 'desc' ) {
+          $newest = 'newest';
+          $oldest = '<a href="'.get_comments_link().'">oldest</a>';
+        }
+        
+        if( $_GET['fvtc_order'] == 'asc' ) {
+          $newest = '<a href="'.get_comments_link().'">newest</a>';
+          $oldest = 'oldest';
+        }
+        
+      } else {
+        if( $order == 'asc' ) {
+          $newest = '<a href="'.add_query_arg( array('fvtc_order' => 'desc'), get_comments_link() ).'">newest</a>';
+          $oldest = 'oldest';
+        }
+        
+        if( $order == 'desc' ) {
+          $newest = 'newest';
+          $oldest = '<a href="'.add_query_arg( array('fvtc_order' => 'asc'), get_comments_link() ).'">oldest</a>';
+        }
+        
+      }
+      
+
+      
+      echo "<div class='fv_tc_comment_sorting'>Sort by: $newest | $oldest</div>";
+    }
+    
+    function comment_order( $value ) {
+      
+      if( !empty($_GET['fvtc_order']) && ( $_GET['fvtc_order'] == 'desc' || $_GET['fvtc_order'] == 'asc' ) ) $value = $_GET['fvtc_order'];
+      
+      return $value;
+    }
 
 }
 $fv_tc = new fv_tc;
@@ -1496,6 +1560,9 @@ $fv_tc = new fv_tc;
 add_action( 'wp_ajax_fv_tc_approve', array( $fv_tc,'fv_tc_approve'));
 add_action( 'wp_ajax_fv_tc_delete', array( $fv_tc,'fv_tc_delete'));
 add_action( 'wp_ajax_fv_tc_moderated', array( $fv_tc,'fv_tc_moderated'));
+
+add_action( 'wp_ajax_fv_tc_count', array( $fv_tc,'fv_tc_count'));
+//add_action( 'wp_ajax_nopriv_fv_tc_count', array( $fv_tc,'fv_tc_count'));
 
 
 /*
@@ -1600,6 +1667,12 @@ add_filter('paginate_links', array($fv_tc, 'get_comments_pagenum_link'));
 //  comments html caching
 add_filter( 'wp_list_comments_args', array($fv_tc, 'cache_start') );
 add_filter( 'admin_init', array($fv_tc, 'cache_purge') );
+
+
+add_action( 'fv_tc_controls', array( $fv_tc, 'ticker' ) );
+
+add_filter( 'pre_option_comment_order', array( $fv_tc, 'comment_order' ) );
+add_action( 'fv_tc_controls', array( $fv_tc, 'fv_tc_comment_sorting' ) );
 
 
 endif;  //  class_exists('fv_tc_Plugin')
