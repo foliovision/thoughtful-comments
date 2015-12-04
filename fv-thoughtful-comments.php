@@ -27,6 +27,15 @@ The users cappable of moderate_comments are getting all of these features and ar
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+/*
+ *
+ *
+ * Limitations of comment caching - guest users must see the same HTML as subscribers! Actually not anymore, I cache these two groups separately.
+ *
+ * Limitations of sorting and live updates - the controls have to be added by hand - put <?php do_action('fv_comments_pink_show'); ?> into your comments template, as a sibling to div.comment_text
+ *
+ */
+
 /**
  * @package foliovision-tc
  * @author Foliovision <programming@foliovision.com>
@@ -250,11 +259,12 @@ class fv_tc extends fv_tc_Plugin {
         echo "<!--fv comments cache - unapproved comments for $this->cache_comment_author - not serving cached data -->\n";
       }
             
-      $sMobile = ( !empty($wptouch_pro->is_mobile_device) && $wptouch_pro->is_mobile_device ) ? '-wptouch' : '';
-      $sOrder = ( !empty($_GET['fvtc_order']) && ( $_GET['fvtc_order'] == 'desc' || $_GET['fvtc_order'] == 'asc' ) ) ? '-'.$_GET['fvtc_order'] : '';
-          
+      $sType = ( !empty($wptouch_pro->is_mobile_device) && $wptouch_pro->is_mobile_device ) ? '-wptouch' : '-desktop';
+      $sType .= ( !empty($_GET['fvtc_order']) && ( $_GET['fvtc_order'] == 'desc' || $_GET['fvtc_order'] == 'asc' ) ) ? '-'.$_GET['fvtc_order'] : '-noorder';      
+      $sType .= ( current_user_can('read') ) ? '-subscriber' : '-guest';  //  todo: this is not the best way of doing this but the other check for edit_published_posts takes care of it
+      
       $this->cache_data = false;
-      $this->cache_filename = $post->ID.'-'.$post->post_name.$sMobile.$sOrder.'-cpage'.$wp_query->query_vars['cpage'].'.tmp';
+      $this->cache_filename = $post->ID.'-'.$post->post_name.$sType.'-cpage'.$wp_query->query_vars['cpage'].'.tmp';
       if( !file_exists(WP_CONTENT_DIR.'/cache/') ) {
         mkdir(WP_CONTENT_DIR.'/cache/');
       }
@@ -273,7 +283,7 @@ class fv_tc extends fv_tc_Plugin {
       
       $aCache = $this->cache_data;
             
-      if( !is_user_logged_in() && !$this->cache_comment_author && isset($aCache['html']) && ($aCache['date'] + 7200) > date( 'U' ) && isset($aCache['comments']) && $aCache['comments'] == $this->cache_comment_count && !isset( $_COOKIE['fv-debug'] ) ) {
+      if( !current_user_can('edit_published_posts') && !$this->cache_comment_author && isset($aCache['html']) && ($aCache['date'] + 7200) > date( 'U' ) && isset($aCache['comments']) && $aCache['comments'] == $this->cache_comment_count && !isset( $_COOKIE['fv-debug'] ) ) {
         echo "<!--fv comments cache from $this->cache_filename @ ".$aCache['date']."-->\n";
         echo $aCache['html'];        
 

@@ -85,7 +85,7 @@ class FV_TC_Walker_Comment_capture extends Walker_Comment {
       $aCache['date'] = date( 'U' );
       $aCache['comments'] = $fv_tc->cache_comment_count;
         
-      if( !is_user_logged_in() && !$fv_tc->cache_comment_author && !isset( $_COOKIE['fv-debug'] ) ) {        
+      if( !current_user_can('edit_published_posts') && !$fv_tc->cache_comment_author && !isset( $_COOKIE['fv-debug'] ) ) {        
         $res = file_put_contents( $fv_tc->cache_filename, serialize( $aCache ) );
         if( !$res ) {
           echo "<!--fv comments error writing into $fv_tc->cache_filename -->\n";
@@ -93,7 +93,7 @@ class FV_TC_Walker_Comment_capture extends Walker_Comment {
           echo "<!--fv comments cache - stored $fv_tc->cache_filename @ ".$aCache['date']."-->\n";
         }
       } else {
-        echo "<!--fv comments do not cache into $fv_tc->cache_filename @ ".$aCache['date']." - user logged in or comment author-->\n";
+        echo "<!--fv comments do not cache into $fv_tc->cache_filename @ ".$aCache['date']." - user at least contributor or comment author with unapproved comments-->\n";
       }         
     }
      

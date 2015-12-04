@@ -196,7 +196,7 @@ var fv_cp_classes = ".comment-body, .reply";
 jQuery('.fv-cp-comment-show').click( function(e) {
   e.preventDefault();
   jQuery(this).parents('li.comment').eq(0).toggleClass('fv_cp_hidden').toggleClass('fv_cp_hidden_previously');
-  jQuery('li.comment', jQuery(this).parents('li.comment').eq(0) ).toggleClass('fv_cp_hidden').toggleClass('fv_cp_hidden_previously');
+  jQuery('li.comment', jQuery(this).parents('li.comment').eq(0) ).removeClass('fv_cp_hidden').addClass('fv_cp_hidden_previously');
   
 });
 jQuery('.fv-cp-comment-hide').click( function(e) {

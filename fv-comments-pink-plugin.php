@@ -1,10 +1,6 @@
 <?php
 
-/*
-Installation:
-1. put <?php do_action('fv_comments_pink_show'); ?> into your comments template, as a sibling to div.comment_text
 
-*/
 
 class FV_Comments_Pink {
 
@@ -63,29 +59,31 @@ class FV_Comments_Pink {
     else {                
       // id#id#id#
       $unaproved = explode('#', get_user_meta($user_id, 'fv_comments_pink_unapproved', true));
-      unset($unaproved[count($unaproved) - 1]);                                                      
+      unset($unaproved[count($unaproved) - 1]);
       
-      foreach ($unaproved as $index => $id) {                                    
+      $comments_to_approve = '';
+      foreach ($unaproved as $index => $id) { //  todo: single SQL with PHP parsing
+        if( intval($id) < 1 ) continue;
+        
         $comment = $wpdb->get_row("SELECT comment_ID FROM {$wpdb->comments} WHERE comment_ID = {$id} AND comment_post_ID = {$post_id} AND (comment_approved = '1' OR comment_approved = 'trash' OR comment_approved = 'spam') LIMIT 1");
         if (isset($comment->comment_ID)) {
           $comments_to_show[] = $id;
           unset($unaproved[$index]);
-        }                                                            
+        }
+        
+        $comments_to_approve .= $id . '#'; 
       }                
-      
-      $comments_to_approve = '';
-      foreach ($unaproved as $id) {
-        $comments_to_approve .= $id . '#';  
+                 
+      if( $comments_to_approve ) { 
+        //  add new unaproved comments
+        foreach ($unapproved_comments as $comment) {                  
+          if (strpos($comments_to_approve, $comment->comment_ID) === false) {            
+            $comments_to_approve .= $comment->comment_ID . '#';
+          }                               
+        }
+        
+        update_user_meta($user_id, 'fv_comments_pink_unapproved', $comments_to_approve);
       }
-            
-      //  add new unaproved comments
-      foreach ($unapproved_comments as $comment) {                  
-        if (strpos($comments_to_approve, $comment->comment_ID) === false) {            
-          $comments_to_approve .= $comment->comment_ID . '#';
-        }                               
-      }
-      
-      update_user_meta($user_id, 'fv_comments_pink_unapproved', $comments_to_approve);                     
     }
     
     /*if all comments are new*/
@@ -95,7 +93,7 @@ class FV_Comments_Pink {
     }                                                                                                                                                                                                  
     
     /*update last time on the post*/
-    $meta_records = $wpdb->get_results("SELECT user_id, meta_key FROM {$wpdb->usermeta} WHERE user_id = {$user_id} AND meta_key LIKE 'fv_comments_pink_last_%' ORDER BY umeta_id ASC");
+    $meta_records = $wpdb->get_results("SELECT user_id, meta_key FROM {$wpdb->usermeta} WHERE user_id = {$user_id} AND meta_key LIKE 'fv_comments_pink_last_%' ORDER BY umeta_id ASC"); //  todo: what is this??
     $found = false;
     foreach($meta_records as $meta) {      
       if ($meta->meta_key == 'fv_comments_pink_last_' . $post_id) {
