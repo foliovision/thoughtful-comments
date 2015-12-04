@@ -283,7 +283,7 @@ jQuery(document).ready(function($) {
           //unapproved comments
         }
         else {
-          jQuery(this).addClass("fv_cp_hidden");
+          jQuery(this).addClass("fv_cp_hidden_previously");
           ///jQuery(this).children("div").children(".comment-body").before("<a href='#' class='comment-show' onclick='toggleCommentContent(this, 1); return false;'><small>+ Show content</small></a>");
           /*if (document.location.hash == '') {                                              
             jQuery(this).children("div").children(fv_cp_classes).hide();                              
@@ -297,13 +297,20 @@ jQuery(document).ready(function($) {
       }        
     })
     jQuery('#fv-comments-pink-toggle').attr('rel', 'show-new');
-    jQuery('#fv-comments-pink-toggle').addClass('new');
-    jQuery('#fv-comments-pink-toggle').html('No new comments, show all');
     
-    if ( fv_tc_new_comments.length > 1 ) {
-      jQuery('#fv-comments-pink-toggle').html( fv_tc_new_comments.length+' new comments, show all' );
-    } else if ( fv_tc_new_comments.length > 0 ) {
-      jQuery('#fv-comments-pink-toggle').html( fv_tc_new_comments.length+' new comment, show all' );
+    if ( fv_tc_new_comments.length > 0 ) {
+      if ( fv_tc_new_comments.length > 1 ) {
+        jQuery('#fv-comments-pink-toggle').html( fv_tc_new_comments.length+' new comments, show all' );
+      } else {
+        jQuery('#fv-comments-pink-toggle').html( fv_tc_new_comments.length+' new comment, show all' );
+      }
+      jQuery('#fv-comments-pink-toggle').addClass('new');
+      fv_comments_pink_hidden = true;
+      fv_comments_pink_process();
+    } else {
+      jQuery('#fv-comments-pink-toggle').addClass('disabled');
+      jQuery('#fv-comments-pink-toggle').html('No new comments');
+      
     }
     
   } else {	//	user if visiting the post for the first time
@@ -315,8 +322,8 @@ jQuery(document).ready(function($) {
     jQuery('#fv-comments-pink-toggle').addClass('disabled');
   }
   
-  fv_comments_pink_hidden = (document.cookie.match(/fv_comments_pink_hidden-DISABLED/)) ? false : true;
-  fv_comments_pink_process();    
+  //fv_comments_pink_hidden = (document.cookie.match(/fv_comments_pink_hidden-DISABLED/)) ? false : true;
+  //fv_comments_pink_process();    
   
   
 });
@@ -354,4 +361,4 @@ setInterval( function() {
     });
   }
   fv_tc_ticker_scroll_prime = false;
-}, 100 );
+}, 100 );  

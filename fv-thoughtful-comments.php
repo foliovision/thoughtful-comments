@@ -217,6 +217,8 @@ class fv_tc extends fv_tc_Plugin {
         if(is_file($file))
           unlink($file); // delete file
       }
+      
+      file_put_contents( WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/count.json','{}');
 
     }
     
