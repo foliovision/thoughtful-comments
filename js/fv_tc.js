@@ -196,6 +196,8 @@ var fv_cp_classes = ".comment-body, .reply";
 jQuery('.fv-cp-comment-show').click( function(e) {
   e.preventDefault();
   jQuery(this).parents('li.comment').eq(0).toggleClass('fv_cp_hidden').toggleClass('fv_cp_hidden_previously');
+  jQuery('li.comment', jQuery(this).parents('li.comment').eq(0) ).toggleClass('fv_cp_hidden').toggleClass('fv_cp_hidden_previously');
+  
 });
 jQuery('.fv-cp-comment-hide').click( function(e) {
   e.preventDefault();
@@ -229,20 +231,23 @@ function fv_comments_pink_process() {
     
   }
   
-  if( typeof(fv_cp_top_element) !== 'undefined' ) {
+  if( jQuery('#fv-comments-pink-toggle').hasClass('floating') && typeof(fv_cp_top_element) !== 'undefined' ) {
     jQuery(window).scrollTop(Math.round(fv_cp_top_element.offset().top) - jQuery("#wpadminbar").height());
   }
   return false;
 }
 
 jQuery('#fv-comments-pink-toggle').click( function(e) {
+  e.preventDefault();
+  
+  if( jQuery(this).hasClass('disabled') ) return;
+  
   if( fv_comments_pink_hidden ) {
     document.cookie="fv_comments_pink_hidden=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
   } else {
     document.cookie="fv_comments_pink_hidden=no";
   }
-        
-  e.preventDefault();
+  
   fv_comments_pink_process();
 } );
 
@@ -297,7 +302,8 @@ jQuery(document).ready(function($) {
     jQuery('#fv-comments-pink-toggle').attr('onclick', '');
     jQuery('#fv-comments-pink-toggle').attr('href', '#comments');      	
     jQuery('#fv-comments-pink-toggle').attr('title', 'First visit. When you return, you can use this button to see just new comments.');
-    jQuery('#fv-comments-pink-toggle').show();      	
+    jQuery('#fv-comments-pink-toggle').show();
+    jQuery('#fv-comments-pink-toggle').addClass('disabled');
   }
   
   fv_comments_pink_hidden = (document.cookie.match(/fv_comments_pink_hidden-DISABLED/)) ? false : true;

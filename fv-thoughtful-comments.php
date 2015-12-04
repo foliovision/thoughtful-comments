@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.3.4.1
+Version: 0.3.4.2
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -34,6 +34,8 @@ The users cappable of moderate_comments are getting all of these features and ar
  */  
  
 include( 'fp-api.php' );
+include( 'fv-comments-pink-plugin.php' );
+
 if( class_exists('fv_tc_Plugin') ) :
 
 class fv_tc extends fv_tc_Plugin {
@@ -1534,23 +1536,23 @@ class fv_tc extends fv_tc_Plugin {
       
       if( !empty($_GET['fvtc_order']) && ( $_GET['fvtc_order'] == 'desc' || $_GET['fvtc_order'] == 'asc' ) ) {
         if( $_GET['fvtc_order'] == 'desc' ) {
-          $newest = 'newest';
+          $newest = '<span>newest</span>';
           $oldest = '<a href="'.get_comments_link().'">oldest</a>';
         }
         
         if( $_GET['fvtc_order'] == 'asc' ) {
           $newest = '<a href="'.get_comments_link().'">newest</a>';
-          $oldest = 'oldest';
+          $oldest = '<span>oldest</span>';
         }
         
       } else {
         if( $order == 'asc' ) {
           $newest = '<a href="'.add_query_arg( array('fvtc_order' => 'desc'), get_comments_link() ).'">newest</a>';
-          $oldest = 'oldest';
+          $oldest = '<span>oldest</span>';
         }
         
         if( $order == 'desc' ) {
-          $newest = 'newest';
+          $newest = '<span>newest</span>';
           $oldest = '<a href="'.add_query_arg( array('fvtc_order' => 'asc'), get_comments_link() ).'">oldest</a>';
         }
         
@@ -1558,7 +1560,7 @@ class fv_tc extends fv_tc_Plugin {
       
 
       
-      echo "<div class='fv_tc_comment_sorting'>Sort by: $newest | $oldest</div>";
+      echo "<div class='fv_tc_comment_sorting'>$newest $oldest</div>";
     }
     
     function comment_order( $value ) {
