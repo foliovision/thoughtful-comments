@@ -176,6 +176,7 @@ jQuery( function($) {
             }
             $('#fv_tc_reload').text(message).show();
             $('#fv_tc_ticker').show();
+            $('#fv-comments-pink-toggle').hide();
           } else {
             //$('#fv_tc_reload').hide(); 
           }
@@ -206,7 +207,7 @@ jQuery('.fv-cp-comment-hide').click( function(e) {
 
 var fv_comments_pink_hidden = true;
 
-function fv_comments_pink_process() {
+function fv_comments_pink_process( live ) {
   var fv_cp_top_element;
   jQuery("#comments li").each(function(){      
     if (jQuery(this).offset().top >= jQuery(window).scrollTop()) {
@@ -216,7 +217,7 @@ function fv_comments_pink_process() {
   })
       
   if( fv_comments_pink_hidden ) {
-    jQuery('#fv-comments-pink-toggle').html('Show all comments');
+    if( live ) jQuery('#fv-comments-pink-toggle').html('No new comments, show all');
     fv_comments_pink_hidden = false;
     jQuery(".fv_cp_hidden_previously").each(function() {
       jQuery(this).toggleClass('fv_cp_hidden').toggleClass('fv_cp_hidden_previously');
@@ -248,7 +249,7 @@ jQuery('#fv-comments-pink-toggle').click( function(e) {
     document.cookie="fv_comments_pink_hidden=no";
   }
   
-  fv_comments_pink_process();
+  fv_comments_pink_process( true );
 } );
 
 
@@ -297,11 +298,19 @@ jQuery(document).ready(function($) {
     })
     jQuery('#fv-comments-pink-toggle').attr('rel', 'show-new');
     jQuery('#fv-comments-pink-toggle').addClass('new');
-    jQuery('#fv-comments-pink-toggle').html('Show all comments');        
+    jQuery('#fv-comments-pink-toggle').html('No new comments, show all');
+    
+    if ( fv_tc_new_comments.length > 1 ) {
+      jQuery('#fv-comments-pink-toggle').html( fv_tc_new_comments.length+' new comments, show all' );
+    } else if ( fv_tc_new_comments.length > 0 ) {
+      jQuery('#fv-comments-pink-toggle').html( fv_tc_new_comments.length+' new comment, show all' );
+    }
+    
   } else {	//	user if visiting the post for the first time
     jQuery('#fv-comments-pink-toggle').attr('onclick', '');
-    jQuery('#fv-comments-pink-toggle').attr('href', '#comments');      	
-    jQuery('#fv-comments-pink-toggle').attr('title', 'First visit. When you return, you can use this button to see just new comments.');
+    jQuery('#fv-comments-pink-toggle').attr('href', '#comments');
+    jQuery('#fv-comments-pink-toggle').html('No new comments yet');
+    jQuery('#fv-comments-pink-toggle').attr('title', 'When you return, you can use this button to see just new comments.');
     jQuery('#fv-comments-pink-toggle').show();
     jQuery('#fv-comments-pink-toggle').addClass('disabled');
   }
@@ -327,15 +336,15 @@ setInterval( function() {
   if( fv_tc_ticker_scroll_prime ) {
     jQuery('#fv_tc_ticker').each( function() {
       if(
-         !jQuery(this).data('fv_ad_position') && jQuery(this).offset().top < ( jQuery(window).scrollTop() + 40 ) ||
-         jQuery(this).data('fv_ad_position') < ( jQuery(window).scrollTop() + 40 )
+         !jQuery(this).data('fv_ad_position') && jQuery(this).offset().top < ( jQuery(window).scrollTop() + jQuery(window).height() ) ||
+         jQuery(this).data('fv_ad_position') < ( jQuery(window).scrollTop() + jQuery(window).height() )
          ) {
         
         if( !jQuery(this).data('fv_ad_position') ) {                
           jQuery(this).data('fv_ad_position',jQuery(this).offset().top );
         }
         jQuery(this).css('position','fixed');
-        jQuery(this).css('top','0');
+        jQuery(this).css('bottom','0');
         jQuery(this).addClass('floating');
       } else {
         jQuery(this).removeData('fv_ad_position');

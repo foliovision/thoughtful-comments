@@ -32,7 +32,7 @@ The users cappable of moderate_comments are getting all of these features and ar
  *
  * Limitations of comment caching - guest users must see the same HTML as subscribers! Actually not anymore, I cache these two groups separately.
  *
- * Limitations of sorting and live updates - the controls have to be added by hand - put <?php do_action('fv_comments_pink_show'); ?> into your comments template, as a sibling to div.comment_text
+ * Limitations of sorting and live updates - the controls have to be added by hand - put <?php do_action('fv_comments_pink_show'); ?> into your comments template, as a sibling to div.comment_text and also do_action('fv_tc_controls'); before comments list
  *
  */
 
@@ -391,7 +391,7 @@ class fv_tc extends fv_tc_Plugin {
 
       if ($options['reply_link']) {        
          $noscript = '<noscript>' . __('Reply link does not work in your browser because JavaScript is disabled.', 'fv_tc') . '<br /></noscript>';
-         $link_script = preg_replace( '~href.*onclick~' , 'href="#" onclick' , $strLink );
+         $link_script = preg_replace( '~href.*onclick~' , 'href="#respond" onclick' , $strLink );
          return $noscript .  $link_script;
       }
       return $strLink;
@@ -1536,7 +1536,7 @@ class fv_tc extends fv_tc_Plugin {
 
     function ticker() {
       $sStyle = !have_comments() ? ' style="display: none;"' : '';
-      echo '<div id="fv_tc_ticker"'.$sStyle.'><a style="display: none; " id="fv-comments-pink-toggle" href="#">Show only new comments</a> <a id="fv_tc_reload" style="display: none" href="#" onclick="window.location.reload(); return false"></a></div>'."\n";    
+      echo '<div id="fv_tc_ticker"'.$sStyle.'><a style="display: none; " id="fv-comments-pink-toggle" href="#">Show only new comments</a> <a id="fv_tc_reload" style="display: none" href="#" onclick="window.location = \'#comments\'; window.location.reload(); return false"></a></div>'."\n";    
     }
     
     function fv_tc_comment_sorting() {

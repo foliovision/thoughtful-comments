@@ -118,6 +118,10 @@ class FV_Comments_Pink {
   display: none;
 }
 
+.fv_cp_hidden > .comment-body, .fv_cp_hidden > article > .reply {
+  display: none;
+}
+
 .fv-cp-comment-show {
   display: none;
 }
@@ -134,6 +138,12 @@ body.logged-in .fv_cp_hidden > article > .fv-cp-comment-show {
   display: block;
 }
 body.logged-in .fv_cp_hidden > article > .fv-cp-comment-hide {
+  display: none;
+}
+body.logged-in .fv_cp_hidden > .fv-cp-comment-show {
+  display: block;
+}
+body.logged-in .fv_cp_hidden > .fv-cp-comment-hide {
   display: none;
 }
 </style>
