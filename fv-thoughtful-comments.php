@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.3.4.4
+Version: 0.3.4.5
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -32,7 +32,10 @@ The users cappable of moderate_comments are getting all of these features and ar
  *
  * Limitations of comment caching - guest users must see the same HTML as subscribers! Actually not anymore, I cache these two groups separately.
  *
- * Limitations of sorting and live updates - the controls have to be added by hand - put <?php do_action('fv_comments_pink_show'); ?> into your comments template, as a sibling to div.comment_text and also do_action('fv_tc_controls'); before comments list
+ * Limitations of sorting and live updates
+ * 
+ *  * the controls have to be added by hand - put <?php do_action('fv_comments_pink_show'); ?> into your comments template, as a sibling to div.comment_text and also do_action('fv_tc_controls'); before comments list
+ *  * the present styling doesn't work with all themes for sure, only some work ok
  *
  */
 
@@ -58,7 +61,7 @@ class fv_tc extends fv_tc_Plugin {
      * Plugin version
      * @var string
      */
-    var $strVersion = '0.3.4.4';
+    var $strVersion = '0.3.4.5';
     
     /**
      * Decide if scripts will be loaded on current page

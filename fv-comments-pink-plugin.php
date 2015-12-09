@@ -32,14 +32,23 @@ class FV_Comments_Pink {
     
     /*array of comments' IDs*/
     $comments_to_show = array();
+    $comments_to_show_user = array();
     
     /*all approved comments will be shown*/
-    $approved_comments = $wpdb->get_results("SELECT comment_ID FROM {$wpdb->comments} WHERE comment_post_ID = {$post_id} AND comment_date_gmt > '{$last_time}' AND comment_approved = '1' ORDER BY comment_date ASC");      
+    $approved_comments = $wpdb->get_results("SELECT comment_ID, user_id FROM {$wpdb->comments} WHERE comment_post_ID = {$post_id} AND comment_date_gmt > '{$last_time}' AND comment_approved = '1' ORDER BY comment_date ASC");      
     if (isset($approved_comments)) {
-      foreach ($approved_comments as $comment) {          
-        $comments_to_show[] = $comment->comment_ID;      
+      foreach ($approved_comments as $comment) {
+        if( $comment->user_id == $user_id ) { 
+          $comments_to_show_user[] = $comment->comment_ID;
+        } else {
+          $comments_to_show[] = $comment->comment_ID;
+        }
       } 
-    }                
+    }
+    
+    if( count($comments_to_show) > 0 && count($comments_to_show_user) > 0 ) { //  this stops comment from hiding if there is only new comment by the user himself
+      $comments_to_show = array_merge( $comments_to_show, $comments_to_show_user );
+    }
     
     //  unapproved comments
     $unapproved_comments = $wpdb->get_col("SELECT comment_ID FROM {$wpdb->comments} WHERE comment_post_ID = {$post_id} AND comment_approved = '0' ORDER BY comment_date ASC");
@@ -85,7 +94,7 @@ class FV_Comments_Pink {
         update_user_meta($user_id, 'fv_comments_pink_unapproved', $comments_to_approve);
       }
     }
-    
+        
     /*if all comments are new*/
     $all_comments = $wpdb->get_var("SELECT count(comment_ID) FROM {$wpdb->comments} WHERE comment_post_ID = {$post_id} AND comment_approved = '1'");    
     if (count($comments_to_show) == $all_comments) {          

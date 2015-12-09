@@ -313,6 +313,10 @@ jQuery(document).ready(function($) {
       
     }
     
+    jQuery('.fv_cp_new_comment').each( function() {
+      jQuery(this).parents('li.comment').removeClass('fv_cp_hidden').toggleClass('fv_cp_hidden_previously');
+    });
+    
   } else {	//	user if visiting the post for the first time
     jQuery('#fv-comments-pink-toggle').attr('onclick', '');
     jQuery('#fv-comments-pink-toggle').attr('href', '#comments');
