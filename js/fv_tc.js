@@ -300,9 +300,9 @@ jQuery(document).ready(function($) {
     
     if ( fv_tc_new_comments.length > 0 ) {
       if ( fv_tc_new_comments.length > 1 ) {
-        jQuery('#fv-comments-pink-toggle').html( fv_tc_new_comments.length+' new comments, show all' );
+        jQuery('#fv-comments-pink-toggle').html( 'Showing '+fv_tc_new_comments.length+' new comments, show all' );
       } else {
-        jQuery('#fv-comments-pink-toggle').html( fv_tc_new_comments.length+' new comment, show all' );
+        jQuery('#fv-comments-pink-toggle').html( 'Showing '+fv_tc_new_comments.length+' new comment, show all' );
       }
       jQuery('#fv-comments-pink-toggle').addClass('new');
       fv_comments_pink_hidden = true;
