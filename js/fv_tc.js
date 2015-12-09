@@ -184,7 +184,7 @@ jQuery( function($) {
       });
       //$('#fv_tc_reload').after('<img class="fv_tc_loading" src="/wp-includes/images/wpspin.gif" />');
       //$('#fv_tc_reload').show();
-    }, 5000 );
+    }, 10000 );
   }
 
 });

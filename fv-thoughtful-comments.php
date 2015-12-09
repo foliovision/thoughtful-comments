@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.3.4.2
+Version: 0.3.4.4
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -58,7 +58,7 @@ class fv_tc extends fv_tc_Plugin {
      * Plugin version
      * @var string
      */
-    var $strVersion = '0.3.4.1';
+    var $strVersion = '0.3.4.4';
     
     /**
      * Decide if scripts will be loaded on current page
@@ -886,7 +886,7 @@ class fv_tc extends fv_tc_Plugin {
             
             if( !is_admin() ) {
               global $blog_id;
-              wp_localize_script('fv_tc', 'fv_tc_count_json', content_url('cache/thoughtful-comments-'.$blog_id.'/count.json'));
+              wp_localize_script('fv_tc', 'fv_tc_count_json', site_url('wp-content/cache/thoughtful-comments-'.$blog_id.'/count.json'));
               
               global $post;
               wp_localize_script('fv_tc', 'fv_tc_count', array( 'id' => $post->ID, 'count' => $this->get_wp_count_comments($post->ID) ) );
@@ -1538,7 +1538,7 @@ class fv_tc extends fv_tc_Plugin {
 
     function ticker() {
       $sStyle = !have_comments() ? ' style="display: none;"' : '';
-      echo '<div id="fv_tc_ticker"'.$sStyle.'><a style="display: none; " id="fv-comments-pink-toggle" href="#">Show only new comments</a> <a id="fv_tc_reload" style="display: none" href="#" onclick="window.location = \'#comments\'; window.location.reload(); return false"></a></div>'."\n";    
+      echo '<div id="fv_tc_ticker"'.$sStyle.'><a style="display: none; " id="fv-comments-pink-toggle" href="#">Show only new comments</a> <a id="fv_tc_reload" style="display: none" href="#" onclick="window.location.reload(); return false"></a></div>'."\n";    
     }
     
     function fv_tc_comment_sorting() {
