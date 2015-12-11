@@ -382,6 +382,7 @@ jQuery( function($) {
       $('html, body').animate({
           scrollTop: $('#'+match[1]).offset().top - 100
       }, 1000);
+      $('#'+match[1]+'.fv_cp_hidden').find('.fv-cp-comment-show').click();
       document.cookie="fv_tc_reply=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
     }
   });
