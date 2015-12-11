@@ -62,7 +62,7 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 * spam moderation - added option to show spam in front-end for admins. Useful mainly if your spambot spam is in trash (thanks to FV Antispam)
 
 = 0.3.2 =
-* Added option to short URL in comment to 50 or 100 characters
+* Link shortening improvements - shorten to "link to domains.com", 50 or 100 characters
 
 = 0.3.1 =
 * performance improvements - fv_tc::comment_has_child() not used for front end, the thread buttons visibility is instead handled by JavaScript
