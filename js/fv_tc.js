@@ -365,4 +365,24 @@ setInterval( function() {
     });
   }
   fv_tc_ticker_scroll_prime = false;
-}, 100 );  
+}, 100 );
+
+
+
+
+jQuery( function($) {
+  $(document).on('click','.comment-reply-login', function() {
+    var id = $(this).parents('li.comment').attr('id');
+    document.cookie="fv_tc_reply="+id;
+  });
+  
+  $(document).ready( function() {
+    var match = document.cookie.match(/fv_tc_reply=(comment-\d+)/);
+    if( match[1] && $('#'+match[1]).length ) {
+      $('html, body').animate({
+          scrollTop: $('#'+match[1]).offset().top - 100
+      }, 1000);
+      document.cookie="fv_tc_reply=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+    }
+  });
+});

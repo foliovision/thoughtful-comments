@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.3.4.5
+Version: 0.3.4.6
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -42,7 +42,7 @@ The users cappable of moderate_comments are getting all of these features and ar
 /**
  * @package foliovision-tc
  * @author Foliovision <programming@foliovision.com>
- * version 0.3.1
+ * version 0.3.6
  */  
  
 include( 'fp-api.php' );
@@ -61,7 +61,7 @@ class fv_tc extends fv_tc_Plugin {
      * Plugin version
      * @var string
      */
-    var $strVersion = '0.3.4.5';
+    var $strVersion = '0.3.4.6';
     
     /**
      * Decide if scripts will be loaded on current page
@@ -882,19 +882,17 @@ class fv_tc extends fv_tc_Plugin {
     * @global int Current user ID        
     */
     function scripts() {
-        if( $this->loadScripts ) {  //  todo: only when needed
-            wp_enqueue_script('fv_tc',$this->url. '/js/fv_tc.js',array('jquery'), $this->strVersion, true);
-            wp_localize_script('fv_tc', 'fv_tc_translations', $this->get_js_translations());
-            wp_localize_script('fv_tc', 'fv_tc_ajaxurl', admin_url('admin-ajax.php'));
-            
-            if( !is_admin() ) {
-              global $blog_id;
-              wp_localize_script('fv_tc', 'fv_tc_count_json', site_url('wp-content/cache/thoughtful-comments-'.$blog_id.'/count.json'));
-              
-              global $post;
-              wp_localize_script('fv_tc', 'fv_tc_count', array( 'id' => $post->ID, 'count' => $this->get_wp_count_comments($post->ID) ) );
-            }
-        }        
+      wp_enqueue_script('fv_tc',$this->url. '/js/fv_tc.js',array('jquery'), $this->strVersion, true);
+      if( $this->loadScripts ) {  //  todo: only when needed            
+        wp_localize_script('fv_tc', 'fv_tc_translations', $this->get_js_translations());
+        wp_localize_script('fv_tc', 'fv_tc_ajaxurl', admin_url('admin-ajax.php'));
+        
+        if( !is_admin() ) {
+          global $blog_id, $post;
+          wp_localize_script('fv_tc', 'fv_tc_count_json', site_url('wp-content/cache/thoughtful-comments-'.$blog_id.'/count.json'));
+          wp_localize_script('fv_tc', 'fv_tc_count', array( 'id' => $post->ID, 'count' => $this->get_wp_count_comments($post->ID) ) );
+        }
+      }        
         
     }
     
