@@ -378,7 +378,7 @@ jQuery( function($) {
   
   $(document).ready( function() {
     var match = document.cookie.match(/fv_tc_reply=(comment-\d+)/);
-    if( match[1] && $('#'+match[1]).length ) {
+    if( match && match[1] && $('#'+match[1]).length ) {
       $('html, body').animate({
           scrollTop: $('#'+match[1]).offset().top - 100
       }, 1000);
