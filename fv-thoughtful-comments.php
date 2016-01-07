@@ -269,7 +269,8 @@ class fv_tc extends fv_tc_Plugin {
       $sType .= ( current_user_can('read') ) ? '-subscriber' : '-guest';  //  todo: this is not the best way of doing this but the other check for edit_published_posts takes care of it
       
       $this->cache_data = false;
-      $this->cache_filename = $post->ID.'-'.$post->post_name.$sType.'-cpage'.$wp_query->query_vars['cpage'].'.tmp';
+      $cpage = ( isset($wp_query->query_vars) && !empty($wp_query->query_vars['cpage']) ) ? $wp_query->query_vars['cpage'] : '-1';
+      $this->cache_filename = $post->ID.'-'.$post->post_name.$sType.'-cpage'.$cpage.'.tmp';
       if( !file_exists(WP_CONTENT_DIR.'/cache/') ) {
         mkdir(WP_CONTENT_DIR.'/cache/');
       }
