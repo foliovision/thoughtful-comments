@@ -289,7 +289,7 @@ class fv_tc extends fv_tc_Plugin {
       
       $aCache = $this->cache_data;
             
-      if( !current_user_can('edit_published_posts') && !$this->cache_comment_author && isset($aCache['html']) && ($aCache['date'] + 7200) > date( 'U' ) && isset($aCache['comments']) && $aCache['comments'] == $this->cache_comment_count && !isset( $_COOKIE['fv-debug'] ) ) {
+      if( !current_user_can('edit_published_posts') && !$this->cache_comment_author && isset($aCache['html']) && ($aCache['date'] + 300) > date( 'U' ) && isset($aCache['comments']) && $aCache['comments'] == $this->cache_comment_count && !isset( $_COOKIE['fv-debug'] ) ) {
         echo "<!--fv comments cache from $this->cache_filename @ ".$aCache['date']."-->\n";
         echo $aCache['html'];        
 
