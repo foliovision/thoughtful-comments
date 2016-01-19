@@ -16,24 +16,26 @@ class FV_Comments_Voting {
   }
   
   
-  function ajax() {
+  function ajax() { //  todo: nonce security! 
     global $wpdb;
     $table_name = FV_Comments_Voting::get_table_name();
     
     // Dati controllo
-    $postid = intval( $_POST['postid'] );
+    $comment_id = intval( $_POST['postid'] );
     $ratetype = $_POST['ratetype'];
     $user_id = get_current_user_id();
     $identifier = $user_id ? $user_id : $_SERVER['REMOTE_ADDR'];
     
     // Controllo presenza record nel db
-    self::checkRow($postid);
+    self::checkRow($comment_id);
     
     // Dati db
-    $likes = self::getLikeCount($postid);
-    $dislikes = self::getDislikeCount($postid);
-    $likes_ov = self::getLikeIpList($postid);
-    $dislikes_ov = self::getDislikeIpList($postid);
+    $likes = self::getLikeCount($comment_id);
+    $dislikes = self::getDislikeCount($comment_id);
+    $likes_ov = self::getLikeIpList($comment_id);
+    $dislikes_ov = self::getDislikeIpList($comment_id);
+    
+    $bDidUpdate = false;
     
     switch( $ratetype ) :
       case 'like' :
@@ -53,13 +55,15 @@ class FV_Comments_Voting {
               'rate_like_ip' => json_encode($likes_ov),
               'rate_dislike_ip' => json_encode($dislikes_ov)
             ), 
-            array( 'comment_id' => $postid )
+            array( 'comment_id' => $comment_id )
           );
+          $bDidUpdate = true;
         endif;
+        
         if( isset($options['voting_display_type']) && $options['voting_display_type'] == 'compact' ) { echo $likes - $dislikes; } else { echo $likes.'#'.$dislikes; }
         break;
       
-      case 'dislike' :
+      case 'dislike' :  //  todo: multiple downvotes possible, fix!
         if( !in_array($identifier,$dislikes_ov) ) :
           $dislikes++;
           $dislikes_ov[] = $identifier;
@@ -77,13 +81,34 @@ class FV_Comments_Voting {
               'rate_like_ip' => json_encode($likes_ov),
               'rate_dislike_ip' => json_encode($dislikes_ov)
             ), 
-            array( 'comment_id' => $postid )
+            array( 'comment_id' => $comment_id )
           );
+          $bDidUpdate = true;
         endif;
+        
         if( isset($options['voting_display_type']) && $options['voting_display_type'] == 'compact' ) { echo $likes - $dislikes; } else { echo $likes.'#'.$dislikes; }
         break;
       
     endswitch;
+    
+    if( $bDidUpdate ) {
+      $objComment = get_comment($comment_id);
+      if( $objComment ) {
+        $objPost = get_post($objComment->comment_post_ID);
+        
+        if( $objPost ) {
+          global $blog_id;
+          $files = @glob(WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/*');
+          if( $files ) {
+            foreach($files as $file){
+              if( is_file($file) && stripos( $file, $objPost->ID.'-'.$objPost->post_name) !== false ) {
+                unlink($file);              
+              }
+            }
+          }
+        }
+      }
+    }
   
     die();    
   }
