@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.3.4.6
+Version: 0.3.4.7
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -46,7 +46,8 @@ The users cappable of moderate_comments are getting all of these features and ar
  */  
  
 include( 'fp-api.php' );
-include( 'fv-comments-pink-plugin.php' );
+include( 'fv-comments-pink-plugin.php' ); //  todo: option
+include( 'fv-comments-voting.php' );  //  todo: option
 
 if( class_exists('fv_tc_Plugin') ) :
 
@@ -755,6 +756,34 @@ class fv_tc extends fv_tc_Plugin {
       <?php
     }
     
+    function fv_tc_admin_comment_voting(){
+      $options = get_option('thoughtful_comments');
+
+      ?>
+      <table class="optiontable form-table">
+        <tr valign="top">
+          <th scope="row"><?php _e('Display mode', 'fv_tc'); ?></th>  
+          <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Link shortening', 'fv_tc'); ?></span></legend>                                  
+          
+          <td>
+            <select name="zaki_like_dislike_options[display_type]">
+              <option value="compact" <?php if($options['voting_display_type']=='compact') echo 'selected="selected"'; ?>><?=__('Compact mode','zaki')?></option>
+              <option value="splitted" <?php if($options['voting_display_type']=='splitted') echo 'selected="selected"'; ?>><?=__('Splitted mode','zaki')?></option>
+            </select>
+            <p class="description">
+                <?php echo __('Campact mode: Like and Dislike results will be grouped and displayed as a difference','fv_tc'); ?>
+                <br />
+                <?php echo  __('Splitted mode: Like and Dislike results will not be grouped and displayed with their counter','fv_tc'); ?>
+            </p>                
+          </td>
+        </tr>
+      </table>
+      <p>
+          <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
+      </p>
+      <?php
+    }    
+    
     function fv_tc_admin_comment_instructions(){
       ?>
       <table class="optiontable form-table">
@@ -790,6 +819,7 @@ class fv_tc extends fv_tc_Plugin {
     function options_panel() {
       add_meta_box( 'fv_tc_description', 'Description', array( $this, 'fv_tc_admin_description' ), 'fv_tc_settings', 'normal' );
       add_meta_box( 'fv_tc_comment_moderation', 'Comment Moderation', array( $this,'fv_tc_admin_comment_moderation' ), 'fv_tc_settings', 'normal' );
+      add_meta_box( 'fv_tc_comment_voting', 'Comment Voting', array( $this,'fv_tc_admin_comment_voting' ), 'fv_tc_settings', 'normal' );
       add_meta_box( 'fv_tc_comment_tweaks', 'Comment Tweaks', array( $this,'fv_tc_admin_comment_tweaks' ), 'fv_tc_settings', 'normal' );
       add_meta_box( 'fv_tc_comment_instructions', 'Instructions', array( $this,'fv_tc_admin_comment_instructions' ), 'fv_tc_settings', 'normal' );
       
@@ -817,6 +847,7 @@ class fv_tc extends fv_tc_Plugin {
               'user_nicename_edit' => ( isset($_POST['user_nicename_edit']) && $_POST['user_nicename_edit'] ) ? true : false,
               'comment_cache' => ( isset($_POST['comment_cache']) && $_POST['comment_cache'] ) ? true : false,
               'frontend_spam' => ( isset($_POST['frontend_spam']) && $_POST['frontend_spam'] ) ? true : false,
+              'voting_display_type' => ( !empty($_POST['voting_display_type']) ) ? $_POST['voting_display_type'] : 'splitted',
           );
           if( update_option( 'thoughtful_comments', $options ) ) :
           ?>

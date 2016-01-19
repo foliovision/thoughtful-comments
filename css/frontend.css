@@ -39,3 +39,30 @@
   padding: 20px;
   z-index: 100;
 }
+
+
+
+
+div.fv_tc_voting_box {
+  margin: 0 0 10px 0;
+  border: 1px solid #ccc;
+  padding: 5px;
+  width: 120px;
+}
+div.fv_tc_voting_box > div.fv_tc_voting,
+div.fv_tc_voting_box > div.fv_tc_voting_count {
+  float:left;
+  margin:0 5px 0 5px;
+}
+
+div.fv_tc_voting_box > div.fv_tc_voting > span {
+  margin: 0 0 0 5px;
+}
+
+div.fv_tc_voting_box > div.fv_tc_voting_count {
+  line-height: 25px;
+}
+
+div.fv_tc_voting_box > div.fv_tc_voting {
+  cursor: pointer;
+}
