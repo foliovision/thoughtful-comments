@@ -7,7 +7,7 @@ class FV_Comments_Voting {
   function __construct() {
     add_filter( 'comments_array', array($this,'prefetch') );
     
-    add_action( 'comment_text', array($this,'buttons') );
+    add_filter( 'comment_text', array($this,'buttons') );
     
     add_action( 'wp_head', array($this,'javascript') );
     
@@ -114,11 +114,13 @@ class FV_Comments_Voting {
   }
   
   
-  function buttons() {
+  function buttons( $comment_text ) {
     $options = get_option('thoughtful_comments');
     
     global $comment;
 	  $comment_id = get_comment_ID();
+    
+    ob_start();
     ?>
     <div class="fv_tc_voting_box">
       <div class="fv_tc_voting fv_tc_voting_like" data-postid="<?php echo $comment_id; ?>" data-ratetype="like">
@@ -140,7 +142,10 @@ class FV_Comments_Voting {
       ?>
       <div style="clear:left;"></div>
     </div>
-    <?php
+    <?php    
+    $comment_text .= ob_get_clean();
+    
+    return $comment_text;
   }
   
   
@@ -254,7 +259,7 @@ class FV_Comments_Voting {
             if(!thisBtn.hasClass('in_action')) {
               jQuery('div.fv_tc_voting').addClass('in_action');
               jQuery.post(
-                "<?php bloginfo('url'); ?>/wp-admin/admin-ajax.php",
+                "<?php echo site_url(); ?>/wp-admin/admin-ajax.php",
                 { 
                   'action' : 'fv_tc_voting',
                   'postid' : parseInt(thisBtn.data('postid')),
