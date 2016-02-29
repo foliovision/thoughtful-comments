@@ -1,15 +1,24 @@
 /* FV - Thoughtful Comments */
-.tc_highlight {	background: red;
+.tc_highlight {
+	background: red;
 	color: white;
 	padding: 3px;
-}.tc_highlight_spam {
+}
+.tc_highlight_spam {
 	background: brown;
 	color: white;
 	padding: 3px;
-}.tc-frontend {	font-size: 80%;
+}
+.tc-frontend {
+	font-size: 80%;
 }
 .tc-frontend a {
 	margin-right: 6px;
+	-webkit-box-shadow: none !important;
+	-moz-box-shadow: 	none !important;
+	box-shadow: 		none !important;
+	text-decoration: none !important;
+	border-bottom: none !important;
 }
 .tc-frontend a:before {
 	-webkit-font-smoothing: antialiased;
