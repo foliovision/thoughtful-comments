@@ -58,6 +58,12 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 
 == Changelog ==
 
+= 0.3.5 =
+
+* Comment voting added
+* Live comment updates - without excessive Ajax
+* Simple Comment Editing compatilibity with Thoughtful Comments cache
+
 = 0.3.3 =
 * spam moderation - added option to show spam in front-end for admins. Useful mainly if your spambot spam is in trash (thanks to FV Antispam)
 

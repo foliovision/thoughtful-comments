@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.3.4.7
+Version: 0.3.4.8
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -206,8 +206,8 @@ class fv_tc extends fv_tc_Plugin {
     
     
     
-    function cache_purge() {
-      if( !isset($_POST['action']) || !isset($_POST['option_page'])  || $_POST['action'] != 'update' || $_POST['option_page'] != 'discussion' ) {
+    function cache_purge( $comment = false, $post_id = false, $comment_id = false ) {
+      if( !$post_id && ( !isset($_POST['action']) || !isset($_POST['option_page'])  || $_POST['action'] != 'update' || $_POST['option_page'] != 'discussion' ) ) {
         return;
       }
       
@@ -216,7 +216,12 @@ class fv_tc extends fv_tc_Plugin {
         return;
       }
       
-      $files = @glob(WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/*'); //
+      if( $post_id ) {
+        $files = @glob(WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/'.$post_id.'-*'); //
+      } else {
+        $files = @glob(WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/*'); //
+      }
+
       foreach($files as $file){ // iterate files
         if(is_file($file))
           unlink($file); // delete file
@@ -1762,6 +1767,7 @@ add_filter('paginate_links', array($fv_tc, 'get_comments_pagenum_link'));
 //  comments html caching
 add_filter( 'wp_list_comments_args', array($fv_tc, 'cache_start') );
 add_filter( 'admin_init', array($fv_tc, 'cache_purge') );
+add_filter( 'sce_save_after', array($fv_tc, 'cache_purge'), 10 , 3 );
 
 
 add_action( 'fv_tc_controls', array( $fv_tc, 'ticker' ) );
