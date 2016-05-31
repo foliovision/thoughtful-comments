@@ -441,12 +441,16 @@ class fv_tc extends fv_tc_Plugin {
             $out .= $this->get_t_delete_thread($comment).' ';
           //}
           /*  If IP isn't banned  */
-          if(stripos(trim(get_option('blacklist_keys')),$comment->comment_author_IP)===FALSE) {
-              /*  Delete and ban  */
-              $out .= $this->get_t_delete_ban($comment);//.' | ';
-              /*  Delete thread and ban   */
-              //if($child>0)
-                  $out .= ' | '.$this->get_t_delete_thread_ban($comment);
+          if( stripos( trim( get_option( 'blacklist_keys' ) ), $comment->comment_author_IP ) === FALSE ) {
+		// Only show ban link if allowed.
+		if ( true === (bool) apply_filters( 'fv_show_trash_and_ban_link', true ) ) {
+			/*  Delete and ban  */
+			$out .= $this->get_t_delete_ban($comment);//.' | ';
+
+			/*  Delete thread and ban   */
+			//if($child>0)
+			$out .= ' | '.$this->get_t_delete_thread_ban($comment);
+		}
           } else {
               $out .= 'IP '.$comment->comment_author_IP.' ';
                             $out .= __('already banned!', 'fv_tc' );
