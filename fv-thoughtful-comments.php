@@ -482,7 +482,7 @@ class fv_tc extends fv_tc_Plugin {
           }
           /*  Moderation status   */
           $user_info = ( isset($comment->user_id) && $comment->user_id > 0 ) ? get_userdata($comment->user_id) : false;
-          if( $user_info && $user_info->user_level < 3) {
+          if( current_user_can("moderate_comments") && $user_info && $user_info->user_level < 3) {
               $out .= '<br />'.$this->get_t_moderated($comment->user_id);
           } else if( $user_info && $user_info->user_level >= 3 ) {
               $out .= '<br /><abbr title="' . __('Comments from this user level are automatically approved', 'fv_tc') . '">' . __('Power user', 'fv_tc') . '</a>';
