@@ -2,7 +2,7 @@
 function fv_tc_approve(id) { 
     jQuery("#comment-"+id+"-approve").text(fv_tc_translations.wait + ' | '); 
     jQuery.ajax({
-        type: 'POST',
+        type: 'GET',
         url: fv_tc_ajaxurl,
         data: {"action": "fv_tc_approve", 'id': id},
         success: function(data){
