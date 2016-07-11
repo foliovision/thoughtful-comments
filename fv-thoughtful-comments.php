@@ -675,13 +675,13 @@ class fv_tc extends fv_tc_Plugin {
           <tr valign="top">
               <th scope="row"><?php _e('Show spam comments in front-end', 'fv_tc'); ?> </th>  
               <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Show spam comments', 'fv_tc'); ?></span></legend>                                  
-              <input id="frontend_spam" type="checkbox" name="frontend_spam" value="1" <?php if( $options['frontend_spam'] ) echo 'checked="checked"'; ?> /></td>
+              <input id="frontend_spam" type="checkbox" name="frontend_spam" value="1" <?php if( isset($options['frontend_spam']) && $options['frontend_spam'] ) echo 'checked="checked"'; ?> /></td>
               <td><label for="frontend_spam"><span><?php _e('Reveal spam comments in front-end comment list for moderators.', 'fv_tc'); ?></span></label><br />
               </td>
           </tr>        
       </table>
       <p>
-          <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
+          <input type="submit" name="fv_thoughtful_comments_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
       </p>
       <?php
     }    
@@ -763,10 +763,32 @@ class fv_tc extends fv_tc_Plugin {
           <?php endif; ?>
       </table>
       <p>
-          <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
+          <input type="submit" name="fv_thoughtful_comments_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
       </p>
       <?php
     }
+    
+    function fv_tc_admin_live(){
+      $options = get_option('thoughtful_comments');
+
+      ?>
+      <table class="optiontable form-table">
+        <tr valign="top">
+          <th scope="row"><?php _e('Live Comment Updates', 'fv_tc'); ?></th>  
+          <td>
+            <select name="live_updates">
+              <option value="off" <?php if( !isset($options['live_updates']) || $options['live_updates']=='off' ) echo 'selected="selected"'; ?>>Off</option>
+              <option value="on" <?php if( isset($options['live_updates']) && $options['live_updates']=='on' ) echo 'selected="selected"'; ?>>On</option>
+            </select>
+            <p class="description">Works for logged in users only.</p>
+          </td>
+        </tr>
+      </table>
+      <p>
+          <input type="submit" name="fv_thoughtful_comments_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
+      </p>
+      <?php
+    }        
     
     function fv_tc_admin_comment_voting(){
       $options = get_option('thoughtful_comments');
@@ -774,13 +796,12 @@ class fv_tc extends fv_tc_Plugin {
       ?>
       <table class="optiontable form-table">
         <tr valign="top">
-          <th scope="row"><?php _e('Display mode', 'fv_tc'); ?></th>  
-          <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Link shortening', 'fv_tc'); ?></span></legend>                                  
-          
+          <th scope="row"><?php _e('Display mode', 'fv_tc'); ?></th>   
           <td>
-            <select name="zaki_like_dislike_options[display_type]">
-              <option value="compact" <?php if($options['voting_display_type']=='compact') echo 'selected="selected"'; ?>><?=__('Compact mode','zaki')?></option>
-              <option value="splitted" <?php if($options['voting_display_type']=='splitted') echo 'selected="selected"'; ?>><?=__('Splitted mode','zaki')?></option>
+            <select name="voting_display_type">
+              <option value="off" <?php if( !isset($options['voting_display_type']) || $options['voting_display_type']=='off' ) echo 'selected="selected"'; ?>>Off</option>
+              <option value="compact" <?php if( isset($options['voting_display_type']) && $options['voting_display_type']=='compact' ) echo 'selected="selected"'; ?>>Compact mode</option>
+              <option value="splitted" <?php if( isset($options['voting_display_type']) && $options['voting_display_type']=='splitted' ) echo 'selected="selected"'; ?>>Splitted mode</option>
             </select>
             <p class="description">
                 <?php echo __('Campact mode: Like and Dislike results will be grouped and displayed as a difference','fv_tc'); ?>
@@ -791,7 +812,7 @@ class fv_tc extends fv_tc_Plugin {
         </tr>
       </table>
       <p>
-          <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
+          <input type="submit" name="fv_thoughtful_comments_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
       </p>
       <?php
     }    
@@ -835,7 +856,7 @@ class fv_tc extends fv_tc_Plugin {
           </tr>
       </table>
       <p>
-          <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
+          <input type="submit" name="fv_thoughtful_comments_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
       </p>
       <?php
     }
@@ -852,8 +873,9 @@ class fv_tc extends fv_tc_Plugin {
     function options_panel() {
       add_meta_box( 'fv_tc_description', 'Description', array( $this, 'fv_tc_admin_description' ), 'fv_tc_settings', 'normal' );
       add_meta_box( 'fv_tc_comment_moderation', 'Comment Moderation', array( $this,'fv_tc_admin_comment_moderation' ), 'fv_tc_settings', 'normal' );
-      add_meta_box( 'fv_tc_comment_voting', 'Comment Voting', array( $this,'fv_tc_admin_comment_voting' ), 'fv_tc_settings', 'normal' );
       add_meta_box( 'fv_tc_comment_tweaks', 'Comment Tweaks', array( $this,'fv_tc_admin_comment_tweaks' ), 'fv_tc_settings', 'normal' );
+      add_meta_box( 'fv_tc_comment_live', 'Live Updates (Beta)', array( $this,'fv_tc_admin_live' ), 'fv_tc_settings', 'normal' );
+      add_meta_box( 'fv_tc_comment_voting', 'Comment Voting (Beta)', array( $this,'fv_tc_admin_comment_voting' ), 'fv_tc_settings', 'normal' );      
       add_meta_box( 'fv_tc_comment_instructions', 'Instructions', array( $this,'fv_tc_admin_comment_instructions' ), 'fv_tc_settings', 'normal' );
       
       if (!empty($_POST)) :
@@ -871,8 +893,6 @@ class fv_tc extends fv_tc_Plugin {
               $shorten_urls = false;
               break;
           }
-
-          update_option( 'blacklist_keys', trim( $_POST['blacklist_keys'] ) );
           
           $options = array(
               'shorten_urls' => $shorten_urls,            
@@ -882,7 +902,8 @@ class fv_tc extends fv_tc_Plugin {
               'user_nicename_edit' => ( isset($_POST['user_nicename_edit']) && $_POST['user_nicename_edit'] ) ? true : false,
               'comment_cache' => ( isset($_POST['comment_cache']) && $_POST['comment_cache'] ) ? true : false,
               'frontend_spam' => ( isset($_POST['frontend_spam']) && $_POST['frontend_spam'] ) ? true : false,
-              'voting_display_type' => ( !empty($_POST['voting_display_type']) ) ? $_POST['voting_display_type'] : 'splitted',
+              'voting_display_type' => $_POST['voting_display_type'],
+              'live_updates' => $_POST['live_updates']
           );
           if( update_option( 'thoughtful_comments', $options ) ) :
           ?>
@@ -1017,7 +1038,8 @@ class fv_tc extends fv_tc_Plugin {
         wp_localize_script('fv_tc', 'fv_tc_translations', $this->get_js_translations());
         wp_localize_script('fv_tc', 'fv_tc_ajaxurl', admin_url('admin-ajax.php'));
         
-        if( !is_admin() ) {
+        $options = get_option('thoughtful_comments');
+        if( !is_admin() && isset($options['live_updates']) && $options['live_updates']=='on' ) {
           global $blog_id, $post;
           wp_localize_script('fv_tc', 'fv_tc_count_json', site_url('wp-content/cache/thoughtful-comments-'.$blog_id.'/count.json'));
           wp_localize_script('fv_tc', 'fv_tc_count', array( 'id' => $post->ID, 'count' => $this->get_wp_count_comments($post->ID) ) );
