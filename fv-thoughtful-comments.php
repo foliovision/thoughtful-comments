@@ -483,7 +483,7 @@ class fv_tc extends fv_tc_Plugin {
                 $out .= ' | '.$this->get_t_delete_thread_ban($comment);
             } else {
                 $out .= 'IP '.$comment->comment_author_IP.' ';
-                $out .= __('already banned!', 'fv_tc' );
+                $out .= "<a href='" . admin_url( 'tools.php?page=fv_thoughtful_comments' ) . "'>" . __('already banned!', 'fv_tc' ) . "</a>";
             }
           }
 
@@ -971,6 +971,13 @@ class fv_tc extends fv_tc_Plugin {
               <div id="icon-options-general" class="icon32"><br /></div>
               <h2>FV Thoughtful Comments</h2>
           </div>
+
+          <?php if( current_user_can('manage_options') ): ?>
+          <div class="notice notice-info">
+            <p><?php _e( 'Note: This screen is a copy of the Settings -> Discussion -> Comment Blacklist box to allow Editors to unban commenters.', 'fv_tc' ); ?></p>
+          </div>
+          <?php endif; ?>
+
           <form method="post" action="">
               <?php wp_nonce_field('thoughtful_comments') ?>
               <div id="poststuff" class="ui-sortable">
