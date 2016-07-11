@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.3.4.8
+Version: 0.3.4.9
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -158,6 +158,7 @@ class fv_tc extends fv_tc_Plugin {
     
     function admin_menu(){
         add_options_page( 'FV Thoughtful Comments', 'FV Thoughtful Comments', 'manage_options', 'manage_fv_thoughtful_comments', array($this, 'options_panel') );
+        add_management_page( 'FV Thoughtful Comments', 'FV Thoughtful Comments', 'moderate_comments', 'fv_thoughtful_comments', array($this, 'tools_panel') );
     } 
   
      
@@ -449,7 +450,9 @@ class fv_tc extends fv_tc_Plugin {
           } else {
             $this->can_edit = false;
           }
-        }    
+        }
+
+        $this->can_ban = current_user_can('moderate_comments');
                 
         if( $this->can_edit ) {
                   
@@ -469,17 +472,21 @@ class fv_tc extends fv_tc_Plugin {
           //if($child>0) {
             $out .= $this->get_t_delete_thread($comment).' ';
           //}
-          /*  If IP isn't banned  */
-          if(stripos(trim(get_option('blacklist_keys')),$comment->comment_author_IP)===FALSE) {
-              /*  Delete and ban  */
-              $out .= $this->get_t_delete_ban($comment);//.' | ';
-              /*  Delete thread and ban   */
-              //if($child>0)
-                  $out .= ' | '.$this->get_t_delete_thread_ban($comment);
-          } else {
-              $out .= 'IP '.$comment->comment_author_IP.' ';
-                            $out .= __('already banned!', 'fv_tc' );
+          
+          if( $this->can_ban ) {
+            /*  If IP isn't banned  */
+            if(stripos(trim(get_option('blacklist_keys')),$comment->comment_author_IP)===FALSE) {
+                /*  Delete and ban  */
+                $out .= $this->get_t_delete_ban($comment);//.' | ';
+                /*  Delete thread and ban   */
+                //if($child>0)
+                $out .= ' | '.$this->get_t_delete_thread_ban($comment);
+            } else {
+                $out .= 'IP '.$comment->comment_author_IP.' ';
+                $out .= __('already banned!', 'fv_tc' );
+            }
           }
+
           /*  Moderation status   */
           $user_info = ( isset($comment->user_id) && $comment->user_id > 0 ) ? get_userdata($comment->user_id) : false;
           if( current_user_can("moderate_comments") && $user_info && $user_info->user_level < 3) {
@@ -753,7 +760,7 @@ class fv_tc extends fv_tc_Plugin {
               <p>Hint: save Settings -> Discussion to purge the cache</p>
             </td>
           </tr>
-          <?php endif; ?>          
+          <?php endif; ?>
       </table>
       <p>
           <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
@@ -811,6 +818,27 @@ class fv_tc extends fv_tc_Plugin {
       </table>
       <?php
     }
+
+    function fv_tc_admin_blacklist() {
+      ?>
+      <table class="optiontable form-table">
+          <tr>
+            <th scope="row"><?php _e('Comment Blacklist'); ?></th>
+            <td style="margin-bottom: 0; width: 11px; padding-right: 2px;" colspan="2">
+              <fieldset><legend class="screen-reader-text"><span><?php _e('Comment Blacklist'); ?></span></legend>
+                <p><label for="blacklist_keys"><?php _e('When a comment contains any of these words in its content, name, URL, email, or IP, it will be put in the trash. One word or IP per line. It will match inside words, so &#8220;press&#8221; will match &#8220;WordPress&#8221;.'); ?></label></p>
+                <p>
+                  <textarea name="blacklist_keys" rows="10" cols="50" id="blacklist_keys" class="large-text code"><?php echo esc_textarea( get_option( 'blacklist_keys' ) ); ?></textarea>
+                </p>
+              </fieldset>
+            </td>
+          </tr>
+      </table>
+      <p>
+          <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
+      </p>
+      <?php
+    }
     
     function fv_tc_admin_enqueue_scripts(){
       if( !isset($_GET['page']) || $_GET['page'] != 'manage_fv_thoughtful_comments' ) {
@@ -843,6 +871,8 @@ class fv_tc extends fv_tc_Plugin {
               $shorten_urls = false;
               break;
           }
+
+          update_option( 'blacklist_keys', trim( $_POST['blacklist_keys'] ) );
           
           $options = array(
               'shorten_urls' => $shorten_urls,            
@@ -910,6 +940,62 @@ class fv_tc extends fv_tc_Plugin {
         </script>
         
         <?php
+    }
+
+
+    function tools_panel() {
+      add_meta_box( 'fv_tc_description', 'Blacklist', array( $this, 'fv_tc_admin_blacklist' ), 'fv_tc_tools', 'normal' );
+
+      if (!empty($_POST)) :
+          check_admin_referer('thoughtful_comments');
+
+          if( update_option( 'blacklist_keys', trim( $_POST['blacklist_keys'] ) ) ) :
+          ?>
+          <div id="message" class="updated fade">
+              <p>
+                  <strong>
+                      <?php _e('Blacklist saved', 'fv_tc'); ?>
+                  </strong>
+              </p>
+          </div>
+          <?php
+          endif;  //  update_option
+      endif;  //  $_POST
+      ?>
+
+      <div class="wrap">
+          <div style="position: absolute; right: 20px; margin-top: 5px">
+              <a href="http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments" target="_blank" title="Documentation"><img alt="visit foliovision" src="http://foliovision.com/shared/fv-logo.png" /></a>
+          </div>
+          <div>
+              <div id="icon-options-general" class="icon32"><br /></div>
+              <h2>FV Thoughtful Comments</h2>
+          </div>
+          <form method="post" action="">
+              <?php wp_nonce_field('thoughtful_comments') ?>
+              <div id="poststuff" class="ui-sortable">
+                <?php
+                  do_meta_boxes('fv_tc_tools', 'normal', false );
+                  wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
+                  wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false );
+                ?>
+              </div>
+          </form>
+      </div>
+      
+      <script type="text/javascript">
+        //<![CDATA[
+        jQuery(document).ready( function($) {
+          // close postboxes that should be closed
+          $('.if-js-closed').removeClass('if-js-closed').addClass('closed');
+          // postboxes setup
+          postboxes.add_postbox_toggles('fv_tc_settings');
+        });
+
+      //]]>
+      </script>
+      
+      <?php
     }
     
         
