@@ -10,6 +10,7 @@ function fv_tc_approve(id) {
             jQuery("#comment-"+id+"-approve").remove();
             jQuery("#comment-"+id+"-unapproved").removeClass("tc_highlight");
             jQuery("#comment-"+id+"-unapproved").removeClass("tc_highlight_spam");
+            jQuery("#comment-"+id).find("p.comment-awaiting-moderation").remove();
         }
     });
     return false;  
