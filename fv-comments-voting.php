@@ -5,6 +5,11 @@ class FV_Comments_Voting {
   var $aCache = array();
        
   function __construct() {
+    $options = get_option('thoughtful_comments');
+    if( !isset($options['voting_display_type']) || $options['voting_display_type']=='off') {
+      return;
+    }
+    
     add_filter( 'comments_array', array($this,'prefetch') );
     
     add_filter( 'comment_text', array($this,'buttons') );
@@ -19,6 +24,7 @@ class FV_Comments_Voting {
   function ajax() { //  todo: nonce security! 
     global $wpdb;
     $table_name = FV_Comments_Voting::get_table_name();
+    $options = get_option('thoughtful_comments');
     
     // Dati controllo
     $comment_id = intval( $_POST['postid'] );
@@ -137,7 +143,7 @@ class FV_Comments_Voting {
       </div>
       <?php
       if( isset($options['voting_display_type']) && $options['voting_display_type'] == 'compact' ) {
-        $this->getLikeDislikeCountDiffHtml();
+        $this->getLikeDislikeCountDiffHtml($comment_id);
       }
       ?>
       <div style="clear:left;"></div>
@@ -166,10 +172,10 @@ class FV_Comments_Voting {
   }
 
   
-  public static function getLikeCount( $comment_id ) {      
+  public static function getLikeCount( $comment_id ) {  
     global $fvcr;
     if( isset($fvcr->aCache) && isset($fvcr->aCache[$comment_id]) ) {
-      return $fvcr->aCache[$comment_id]->rate_like_value;
+      return isset($fvcr->aCache[$comment_id]->rate_like_value) ? $fvcr->aCache[$comment_id]->rate_like_value : 0;
     }   
           
     global $wpdb;
@@ -181,7 +187,7 @@ class FV_Comments_Voting {
   public static function getDislikeCount( $comment_id ) {
     global $fvcr;
     if( isset($fvcr->aCache) && isset($fvcr->aCache[$comment_id]) ) {
-      return $fvcr->aCache[$comment_id]->rate_dislike_value;
+      return isset($fvcr->aCache[$comment_id]->rate_dislike_value) ? $fvcr->aCache[$comment_id]->rate_dislike_value : 0;
     }    
           
     global $wpdb;
@@ -190,8 +196,8 @@ class FV_Comments_Voting {
   }
   
   
-  public static function getLikeDislikeCountDiffHtml() {
-    $diff = intval(self::getLikeCount() - self::getDislikeCount());
+  public static function getLikeDislikeCountDiffHtml($comment_id) {
+    $diff = intval(self::getLikeCount($comment_id) - self::getDislikeCount($comment_id));
     if($diff > 0) : ?>
       <div class="fv_tc_voting_count fv_tc_voting_count_positive">
         <?php echo $diff; ?>

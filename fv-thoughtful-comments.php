@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.3.4.8
+Version: 0.3.4.9
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -158,6 +158,7 @@ class fv_tc extends fv_tc_Plugin {
     
     function admin_menu(){
         add_options_page( 'FV Thoughtful Comments', 'FV Thoughtful Comments', 'manage_options', 'manage_fv_thoughtful_comments', array($this, 'options_panel') );
+        add_management_page( 'FV Thoughtful Comments', 'FV Thoughtful Comments', 'moderate_comments', 'fv_thoughtful_comments', array($this, 'tools_panel') );
     } 
   
      
@@ -449,7 +450,9 @@ class fv_tc extends fv_tc_Plugin {
           } else {
             $this->can_edit = false;
           }
-        }    
+        }
+
+        $this->can_ban = current_user_can('moderate_comments');
                 
         if( $this->can_edit ) {
                   
@@ -469,17 +472,21 @@ class fv_tc extends fv_tc_Plugin {
           //if($child>0) {
             $out .= $this->get_t_delete_thread($comment).' ';
           //}
-          /*  If IP isn't banned  */
-          if(stripos(trim(get_option('blacklist_keys')),$comment->comment_author_IP)===FALSE) {
-              /*  Delete and ban  */
-              $out .= $this->get_t_delete_ban($comment);//.' | ';
-              /*  Delete thread and ban   */
-              //if($child>0)
-                  $out .= ' | '.$this->get_t_delete_thread_ban($comment);
-          } else {
-              $out .= 'IP '.$comment->comment_author_IP.' ';
-                            $out .= __('already banned!', 'fv_tc' );
+          
+          if( $this->can_ban ) {
+            /*  If IP isn't banned  */
+            if(stripos(trim(get_option('blacklist_keys')),$comment->comment_author_IP)===FALSE) {
+                /*  Delete and ban  */
+                $out .= $this->get_t_delete_ban($comment);//.' | ';
+                /*  Delete thread and ban   */
+                //if($child>0)
+                $out .= ' | '.$this->get_t_delete_thread_ban($comment);
+            } else {
+                $out .= 'IP '.$comment->comment_author_IP.' ';
+                $out .= "<a href='" . admin_url( 'tools.php?page=fv_thoughtful_comments' ) . "'>" . __('already banned!', 'fv_tc' ) . "</a>";
+            }
           }
+
           /*  Moderation status   */
           $user_info = ( isset($comment->user_id) && $comment->user_id > 0 ) ? get_userdata($comment->user_id) : false;
           if( current_user_can("moderate_comments") && $user_info && $user_info->user_level < 3) {
@@ -668,13 +675,13 @@ class fv_tc extends fv_tc_Plugin {
           <tr valign="top">
               <th scope="row"><?php _e('Show spam comments in front-end', 'fv_tc'); ?> </th>  
               <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Show spam comments', 'fv_tc'); ?></span></legend>                                  
-              <input id="frontend_spam" type="checkbox" name="frontend_spam" value="1" <?php if( $options['frontend_spam'] ) echo 'checked="checked"'; ?> /></td>
+              <input id="frontend_spam" type="checkbox" name="frontend_spam" value="1" <?php if( isset($options['frontend_spam']) && $options['frontend_spam'] ) echo 'checked="checked"'; ?> /></td>
               <td><label for="frontend_spam"><span><?php _e('Reveal spam comments in front-end comment list for moderators.', 'fv_tc'); ?></span></label><br />
               </td>
           </tr>        
       </table>
       <p>
-          <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
+          <input type="submit" name="fv_thoughtful_comments_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
       </p>
       <?php
     }    
@@ -753,13 +760,35 @@ class fv_tc extends fv_tc_Plugin {
               <p>Hint: save Settings -> Discussion to purge the cache</p>
             </td>
           </tr>
-          <?php endif; ?>          
+          <?php endif; ?>
       </table>
       <p>
-          <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
+          <input type="submit" name="fv_thoughtful_comments_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
       </p>
       <?php
     }
+    
+    function fv_tc_admin_live(){
+      $options = get_option('thoughtful_comments');
+
+      ?>
+      <table class="optiontable form-table">
+        <tr valign="top">
+          <th scope="row"><?php _e('Live Comment Updates', 'fv_tc'); ?></th>  
+          <td>
+            <select name="live_updates">
+              <option value="off" <?php if( !isset($options['live_updates']) || $options['live_updates']=='off' ) echo 'selected="selected"'; ?>>Off</option>
+              <option value="on" <?php if( isset($options['live_updates']) && $options['live_updates']=='on' ) echo 'selected="selected"'; ?>>On</option>
+            </select>
+            <p class="description">Works for logged in users only.</p>
+          </td>
+        </tr>
+      </table>
+      <p>
+          <input type="submit" name="fv_thoughtful_comments_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
+      </p>
+      <?php
+    }        
     
     function fv_tc_admin_comment_voting(){
       $options = get_option('thoughtful_comments');
@@ -767,13 +796,12 @@ class fv_tc extends fv_tc_Plugin {
       ?>
       <table class="optiontable form-table">
         <tr valign="top">
-          <th scope="row"><?php _e('Display mode', 'fv_tc'); ?></th>  
-          <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Link shortening', 'fv_tc'); ?></span></legend>                                  
-          
+          <th scope="row"><?php _e('Display mode', 'fv_tc'); ?></th>   
           <td>
-            <select name="zaki_like_dislike_options[display_type]">
-              <option value="compact" <?php if($options['voting_display_type']=='compact') echo 'selected="selected"'; ?>><?=__('Compact mode','zaki')?></option>
-              <option value="splitted" <?php if($options['voting_display_type']=='splitted') echo 'selected="selected"'; ?>><?=__('Splitted mode','zaki')?></option>
+            <select name="voting_display_type">
+              <option value="off" <?php if( !isset($options['voting_display_type']) || $options['voting_display_type']=='off' ) echo 'selected="selected"'; ?>>Off</option>
+              <option value="compact" <?php if( isset($options['voting_display_type']) && $options['voting_display_type']=='compact' ) echo 'selected="selected"'; ?>>Compact mode</option>
+              <option value="splitted" <?php if( isset($options['voting_display_type']) && $options['voting_display_type']=='splitted' ) echo 'selected="selected"'; ?>>Splitted mode</option>
             </select>
             <p class="description">
                 <?php echo __('Campact mode: Like and Dislike results will be grouped and displayed as a difference','fv_tc'); ?>
@@ -784,7 +812,7 @@ class fv_tc extends fv_tc_Plugin {
         </tr>
       </table>
       <p>
-          <input type="submit" name="fv_feedburner_replacement_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
+          <input type="submit" name="fv_thoughtful_comments_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
       </p>
       <?php
     }    
@@ -811,6 +839,27 @@ class fv_tc extends fv_tc_Plugin {
       </table>
       <?php
     }
+
+    function fv_tc_admin_blacklist() {
+      ?>
+      <table class="optiontable form-table">
+          <tr>
+            <th scope="row"><?php _e('Comment Blacklist'); ?></th>
+            <td style="margin-bottom: 0; width: 11px; padding-right: 2px;" colspan="2">
+              <fieldset><legend class="screen-reader-text"><span><?php _e('Comment Blacklist'); ?></span></legend>
+                <p><label for="blacklist_keys"><?php _e('When a comment contains any of these words in its content, name, URL, email, or IP, it will be put in the trash. One word or IP per line. It will match inside words, so &#8220;press&#8221; will match &#8220;WordPress&#8221;.'); ?></label></p>
+                <p>
+                  <textarea name="blacklist_keys" rows="10" cols="50" id="blacklist_keys" class="large-text code"><?php echo esc_textarea( get_option( 'blacklist_keys' ) ); ?></textarea>
+                </p>
+              </fieldset>
+            </td>
+          </tr>
+      </table>
+      <p>
+          <input type="submit" name="fv_thoughtful_comments_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
+      </p>
+      <?php
+    }
     
     function fv_tc_admin_enqueue_scripts(){
       if( !isset($_GET['page']) || $_GET['page'] != 'manage_fv_thoughtful_comments' ) {
@@ -824,8 +873,9 @@ class fv_tc extends fv_tc_Plugin {
     function options_panel() {
       add_meta_box( 'fv_tc_description', 'Description', array( $this, 'fv_tc_admin_description' ), 'fv_tc_settings', 'normal' );
       add_meta_box( 'fv_tc_comment_moderation', 'Comment Moderation', array( $this,'fv_tc_admin_comment_moderation' ), 'fv_tc_settings', 'normal' );
-      add_meta_box( 'fv_tc_comment_voting', 'Comment Voting', array( $this,'fv_tc_admin_comment_voting' ), 'fv_tc_settings', 'normal' );
       add_meta_box( 'fv_tc_comment_tweaks', 'Comment Tweaks', array( $this,'fv_tc_admin_comment_tweaks' ), 'fv_tc_settings', 'normal' );
+      add_meta_box( 'fv_tc_comment_live', 'Live Updates (Beta)', array( $this,'fv_tc_admin_live' ), 'fv_tc_settings', 'normal' );
+      add_meta_box( 'fv_tc_comment_voting', 'Comment Voting (Beta)', array( $this,'fv_tc_admin_comment_voting' ), 'fv_tc_settings', 'normal' );      
       add_meta_box( 'fv_tc_comment_instructions', 'Instructions', array( $this,'fv_tc_admin_comment_instructions' ), 'fv_tc_settings', 'normal' );
       
       if (!empty($_POST)) :
@@ -852,7 +902,8 @@ class fv_tc extends fv_tc_Plugin {
               'user_nicename_edit' => ( isset($_POST['user_nicename_edit']) && $_POST['user_nicename_edit'] ) ? true : false,
               'comment_cache' => ( isset($_POST['comment_cache']) && $_POST['comment_cache'] ) ? true : false,
               'frontend_spam' => ( isset($_POST['frontend_spam']) && $_POST['frontend_spam'] ) ? true : false,
-              'voting_display_type' => ( !empty($_POST['voting_display_type']) ) ? $_POST['voting_display_type'] : 'splitted',
+              'voting_display_type' => $_POST['voting_display_type'],
+              'live_updates' => $_POST['live_updates']
           );
           if( update_option( 'thoughtful_comments', $options ) ) :
           ?>
@@ -911,6 +962,69 @@ class fv_tc extends fv_tc_Plugin {
         
         <?php
     }
+
+
+    function tools_panel() {
+      add_meta_box( 'fv_tc_description', 'Blacklist', array( $this, 'fv_tc_admin_blacklist' ), 'fv_tc_tools', 'normal' );
+
+      if (!empty($_POST)) :
+          check_admin_referer('thoughtful_comments');
+
+          if( update_option( 'blacklist_keys', trim( $_POST['blacklist_keys'] ) ) ) :
+          ?>
+          <div id="message" class="updated fade">
+              <p>
+                  <strong>
+                      <?php _e('Blacklist saved', 'fv_tc'); ?>
+                  </strong>
+              </p>
+          </div>
+          <?php
+          endif;  //  update_option
+      endif;  //  $_POST
+      ?>
+
+      <div class="wrap">
+          <div style="position: absolute; right: 20px; margin-top: 5px">
+              <a href="http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments" target="_blank" title="Documentation"><img alt="visit foliovision" src="http://foliovision.com/shared/fv-logo.png" /></a>
+          </div>
+          <div>
+              <div id="icon-options-general" class="icon32"><br /></div>
+              <h2>FV Thoughtful Comments</h2>
+          </div>
+
+          <?php if( current_user_can('manage_options') ): ?>
+          <div class="notice notice-info">
+            <p><?php _e( 'Note: This screen is a copy of the Settings -> Discussion -> Comment Blacklist box to allow Editors to unban commenters.', 'fv_tc' ); ?></p>
+          </div>
+          <?php endif; ?>
+
+          <form method="post" action="">
+              <?php wp_nonce_field('thoughtful_comments') ?>
+              <div id="poststuff" class="ui-sortable">
+                <?php
+                  do_meta_boxes('fv_tc_tools', 'normal', false );
+                  wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false );
+                  wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false );
+                ?>
+              </div>
+          </form>
+      </div>
+      
+      <script type="text/javascript">
+        //<![CDATA[
+        jQuery(document).ready( function($) {
+          // close postboxes that should be closed
+          $('.if-js-closed').removeClass('if-js-closed').addClass('closed');
+          // postboxes setup
+          postboxes.add_postbox_toggles('fv_tc_settings');
+        });
+
+      //]]>
+      </script>
+      
+      <?php
+    }
     
         
     /**
@@ -924,7 +1038,8 @@ class fv_tc extends fv_tc_Plugin {
         wp_localize_script('fv_tc', 'fv_tc_translations', $this->get_js_translations());
         wp_localize_script('fv_tc', 'fv_tc_ajaxurl', admin_url('admin-ajax.php'));
         
-        if( !is_admin() ) {
+        $options = get_option('thoughtful_comments');
+        if( !is_admin() && isset($options['live_updates']) && $options['live_updates']=='on' ) {
           global $blog_id, $post;
           wp_localize_script('fv_tc', 'fv_tc_count_json', site_url('wp-content/cache/thoughtful-comments-'.$blog_id.'/count.json'));
           wp_localize_script('fv_tc', 'fv_tc_count', array( 'id' => $post->ID, 'count' => $this->get_wp_count_comments($post->ID) ) );
