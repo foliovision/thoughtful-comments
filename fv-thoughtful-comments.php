@@ -775,12 +775,21 @@ class fv_tc extends fv_tc_Plugin {
       <table class="optiontable form-table">
         <tr valign="top">
           <th scope="row"><?php _e('Live Comment Updates', 'fv_tc'); ?></th>  
-          <td>
+          <td colspan="2">
             <select name="live_updates">
               <option value="off" <?php if( !isset($options['live_updates']) || $options['live_updates']=='off' ) echo 'selected="selected"'; ?>>Off</option>
               <option value="on" <?php if( isset($options['live_updates']) && $options['live_updates']=='on' ) echo 'selected="selected"'; ?>>On</option>
             </select>
             <p class="description">Works for logged in users only.</p>
+          </td>
+        </tr>
+        <tr valign="top">     
+          <th scope="row"><?php _e('Manual insert', 'fv_tc'); ?></th>
+          <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Allow nicename editing', 'fv_tc'); ?></span></legend>
+            <input type="checkbox" id="live_updates_manual_insert" name="live_updates_manual_insert" value="1" <?php if( isset($options['live_updates_manual_insert']) && $options['live_updates_manual_insert'] ) echo 'checked="checked"'; ?> />
+            <td><label for="live_updates_manual_insert"><span><?php _e('Disable automatic inserting action hooks required for live updating to your theme.', 'fv_tc'); ?></span></label><br/>
+            <code>fv_tc_controls</code>
+            <code>fv_tc_show_new_comments</code><br />
           </td>
         </tr>
       </table>
@@ -893,6 +902,9 @@ class fv_tc extends fv_tc_Plugin {
               $shorten_urls = false;
               break;
           }
+
+          if( $_POST['voting_display_type'] !== 'off' )
+            FV_Comments_Voting::install();
           
           $options = array(
               'shorten_urls' => $shorten_urls,            
@@ -903,9 +915,11 @@ class fv_tc extends fv_tc_Plugin {
               'comment_cache' => ( isset($_POST['comment_cache']) && $_POST['comment_cache'] ) ? true : false,
               'frontend_spam' => ( isset($_POST['frontend_spam']) && $_POST['frontend_spam'] ) ? true : false,
               'voting_display_type' => $_POST['voting_display_type'],
-              'live_updates' => $_POST['live_updates']
+              'live_updates' => $_POST['live_updates'],
+              'live_updates_manual_insert' => ( isset($_POST['live_updates_manual_insert']) ) ? true : false
           );
           if( update_option( 'thoughtful_comments', $options ) ) :
+
           ?>
           <div id="message" class="updated fade">
               <p>

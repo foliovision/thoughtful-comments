@@ -223,7 +223,7 @@ class FV_Comments_Voting {
     return $ips ? (array) json_decode($ips,true) : array();
   }
   
-  public static function getDislikeIpList($post_id = NULL ) {
+  public static function getDislikeIpList($comment_id = NULL ) {
     global $wpdb;
     if(empty($comment_id))	$comment_id = get_comment_ID();
     
@@ -319,6 +319,3 @@ class FV_Comments_Voting {
   
 }
 $fvcr = new FV_Comments_Voting;
-
-register_activation_hook( __FILE__, array( 'FV_Comments_Voting', 'install' ) ); //  todo: will this ever trigger?
-
