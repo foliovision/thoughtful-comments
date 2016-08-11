@@ -389,7 +389,7 @@ class fv_tc extends fv_tc_Plugin {
      * Replace url of reply link only with #
      * functionality is done only by JavaScript
      */
-    function comment_reply_links ($strLink = null) {
+    function comment_reply_js( $strLink = null ) {
       $options = get_option('thoughtful_comments');
       $strReplyKeyWord = 'comment-';
       if( isset( $options['tc_replyKW'] ) && !empty( $options[ 'tc_replyKW' ] ) ) {
@@ -407,7 +407,49 @@ class fv_tc extends fv_tc_Plugin {
          $link_script = preg_replace( '~href.*onclick~' , 'href="#respond" onclick' , $strLink );
          return $noscript .  $link_script;
       }
-      return $strLink;
+    }
+
+    /**
+     * Ads report buttons into comments
+     */
+    function comment_reply_report( $args, $comment ) {
+      //TODO: link could be inside paretns div, we need to preg_replace original content
+      $link = "<a rel='nofollow' class='comment-reply-link' href='#comment_report_{$comment->comment_ID}' onclick='fv_tc_report_display( {$comment->comment_ID} ); return false;'>Report</a>";
+      $content = $args['before'] . $link . $args['after'];
+
+      //var_dump( $comment );
+
+      $report_box  = "<div class='comment_report_wrap' id='comment_report_{$comment->comment_ID}' style='display:none'>\n";
+      $report_box .= "<label for='report_reason_{$comment->comment_ID}'>Reason:</label>\n";
+      $report_box .= "<input type='text' id='report_reason_{$comment->comment_ID}' name='report_reason_{$comment->comment_ID}' />\n";
+      $report_box .= "<button class='report_button' onclick='fv_tc_report_comment( {$comment->comment_ID} )'>Submit report</button>\n";
+      $report_box .= "<p id='report_response_{$comment->comment_ID}'></p>\n";
+      $report_box .= "</div>\n";
+
+      return $content . $report_box;
+    }
+
+
+    /**
+     * Replaces reply links in comments
+     */
+    function comment_reply_links ( $strLink = null, $args, $comment, $post ) {
+
+      $options = get_option('thoughtful_comments');
+
+      $output  = "";
+      $output .= $this->comment_reply_js( $strLink );
+
+      if( isset($options['comments_reporting']) && $options['comments_reporting'] ) {
+        // TODO show different interface for admin
+        // TODO display for guest
+        $output .= $this->comment_reply_report( $args, $comment );
+
+        $this->loadScripts = true;
+      }
+      
+
+      return $output;
     }
 
 
@@ -679,6 +721,13 @@ class fv_tc extends fv_tc_Plugin {
               <td><label for="frontend_spam"><span><?php _e('Reveal spam comments in front-end comment list for moderators.', 'fv_tc'); ?></span></label><br />
               </td>
           </tr>
+          <tr valign="top">
+              <th scope="row"><?php _e('Enable comments reporting', 'fv_tc'); ?> </th>
+              <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Enable comments reporting', 'fv_tc'); ?></span></legend>
+              <input id="comments_reporting" type="checkbox" name="comments_reporting" value="1" <?php if( isset($options['comments_reporting']) && $options['comments_reporting'] ) echo 'checked="checked"'; ?> /></td>
+              <td><label for="comments_reporting"><span><?php _e('Enable reporting of abusive comments.', 'fv_tc'); ?></span></label><br />
+              </td>
+          </tr>
       </table>
       <p>
           <input type="submit" name="fv_thoughtful_comments_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
@@ -914,6 +963,7 @@ class fv_tc extends fv_tc_Plugin {
               'user_nicename_edit' => ( isset($_POST['user_nicename_edit']) && $_POST['user_nicename_edit'] ) ? true : false,
               'comment_cache' => ( isset($_POST['comment_cache']) && $_POST['comment_cache'] ) ? true : false,
               'frontend_spam' => ( isset($_POST['frontend_spam']) && $_POST['frontend_spam'] ) ? true : false,
+              'comments_reporting' => ( isset($_POST['comments_reporting']) && $_POST['comments_reporting'] ) ? true : false,
               'voting_display_type' => $_POST['voting_display_type'],
               'live_updates' => $_POST['live_updates'],
               'live_updates_manual_insert' => ( isset($_POST['live_updates_manual_insert']) ) ? true : false
@@ -1059,7 +1109,6 @@ class fv_tc extends fv_tc_Plugin {
           wp_localize_script('fv_tc', 'fv_tc_count', array( 'id' => $post->ID, 'count' => $this->get_wp_count_comments($post->ID) ) );
         }
       }
-
     }
 
 
@@ -1556,6 +1605,22 @@ class fv_tc extends fv_tc_Plugin {
         }
     }
 
+    function fv_tc_report() {
+      //TODO check permissions for reports
+
+      $current_user = wp_get_current_user();
+
+      $aReport = array(
+        'uid' => $current_user->ID,
+        'ip'  => $_SERVER['SERVER_ADDR'],
+        'reason' => $_REQUEST['reason']
+      );
+
+      add_comment_meta( $_REQUEST['id'], 'fv_tc_report', $aReport );
+
+      die();
+    }
+
     function get_comment_link( $link ) {
         $link = preg_replace( '~/comment-page-1[$/]~', '', $link );  //  todo: make this an option, I guess!
         return $link;
@@ -1790,6 +1855,9 @@ add_action( 'wp_ajax_fv_tc_approve', array( $fv_tc,'fv_tc_approve'));
 add_action( 'wp_ajax_fv_tc_delete', array( $fv_tc,'fv_tc_delete'));
 add_action( 'wp_ajax_fv_tc_moderated', array( $fv_tc,'fv_tc_moderated'));
 
+add_action( 'wp_ajax_fv_tc_report', array( $fv_tc,'fv_tc_report'));
+add_action( 'wp_ajax_nopriv_fv_tc_report', array( $fv_tc,'fv_tc_report'));
+
 add_action( 'wp_ajax_fv_tc_count', array( $fv_tc,'fv_tc_count'));
 //add_action( 'wp_ajax_nopriv_fv_tc_count', array( $fv_tc,'fv_tc_count'));
 
@@ -1885,7 +1953,7 @@ add_action( 'admin_head', array($fv_tc, 'admin_css' )) ;
 add_action( 'admin_menu', array($fv_tc, 'admin_menu') );
 add_action( 'admin_enqueue_scripts', array( $fv_tc, 'fv_tc_admin_enqueue_scripts' ) );
 
-add_filter('comment_reply_link', array($fv_tc, 'comment_reply_links'));
+add_filter('comment_reply_link', array($fv_tc, 'comment_reply_links'), 10, 4 );
 
 add_action('init', array($fv_tc, 'ap_action_init'));
 
