@@ -159,6 +159,11 @@ class fv_tc extends fv_tc_Plugin {
     function admin_menu(){
         add_options_page( 'FV Thoughtful Comments', 'FV Thoughtful Comments', 'manage_options', 'manage_fv_thoughtful_comments', array($this, 'options_panel') );
         add_management_page( 'FV Thoughtful Comments', 'FV Thoughtful Comments', 'moderate_comments', 'fv_thoughtful_comments', array($this, 'tools_panel') );
+
+        $options = get_option('thoughtful_comments');
+        if( isset($options['comments_reporting']) && $options['comments_reporting'] ) {
+          add_menu_page( "Comment Reports", "Comment Reports", 'moderate_comments', 'comment_reports', array($this, 'comment_reports_panel'), false, 26 );
+        }
     }
 
 
@@ -434,7 +439,6 @@ class fv_tc extends fv_tc_Plugin {
      * Replaces reply links in comments
      */
     function comment_reply_links ( $strLink = null, $args, $comment, $post ) {
-
       $options = get_option('thoughtful_comments');
 
       $output  = "";
@@ -1086,6 +1090,59 @@ class fv_tc extends fv_tc_Plugin {
 
       //]]>
       </script>
+
+      <?php
+    }
+
+
+    function comment_reports_panel() {
+      // TODO database select
+
+      ?>
+        <div class="wrap">
+          <div style="position: absolute; right: 20px; margin-top: 5px">
+              <a href="http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments" target="_blank" title="Documentation"><img alt="visit foliovision" src="http://foliovision.com/shared/fv-logo.png" /></a>
+          </div>
+          <div>
+              <div id="icon-options-general" class="icon32"><br /></div>
+              <h2>Commment Reports</h2>
+          </div>
+          <div id="poststuff" class="ui-sortable">
+          
+          <table class="wp-list-table widefat">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Comment text</th>
+                <th>Reason</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tr>
+            <tbody id="the-list">
+              <?php
+              /*foreach( $ as $ ) {
+                echo "<tr>";
+                echo "<td>ID</td>t<td>Comment text</td><td>Reason</td><td></td>\n";
+                echo "</tr>";
+              }*/
+              ?>
+              
+            </tbody>
+          </table>
+
+          </div>
+      </div>
+
+      <?php /*
+      <style>
+
+      </style>
+
+      <script type="text/javascript">
+
+      </script>
+      */ ?>
 
       <?php
     }
