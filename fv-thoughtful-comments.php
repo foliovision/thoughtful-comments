@@ -121,6 +121,25 @@ class fv_tc extends fv_tc_Plugin {
       }
     }
 	
+  static function install() {
+    global $wpdb;
+    $table_name = FV_Comments_Voting::get_table_name();
+    $wpdb->query(
+      "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}commentreports_fvtc (
+        `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        `comment_id` BIGINT(20) UNSIGNED NOT NULL,
+        `rep_uid` BIGINT(20) UNSIGNED NOT NULL,
+        `rep_ip` VARCHAR(45) NULL,
+        `rep_date` DATETIME NULL,
+        `reason` TEXT NULL,
+        `status` ENUM('open','closed','deleted') NULL,
+        `mod_uid` BIGINT(20) UNSIGNED NULL,
+        `mod_date` DATETIME NULL,
+        `notes` TEXT NULL
+      );"
+    );
+  }
+
 	
 	function admin_css(){
 		
@@ -439,12 +458,13 @@ class fv_tc extends fv_tc_Plugin {
      * Replaces reply links in comments
      */
     function comment_reply_links ( $strLink = null, $args, $comment, $post ) {
-      $options = get_option('thoughtful_comments');
-
       $output  = "";
       $output .= $this->comment_reply_js( $strLink );
 
-      if( isset($options['comments_reporting']) && $options['comments_reporting'] ) {
+      $bCommentReg = get_option( 'comment_registration' );
+      $options = get_option( 'thoughtful_comments' );
+
+      if( ( !$bCommentReg || is_user_logged_in() ) && $options['comments_reporting'] ) {
         // TODO show different interface for admin
         // TODO display for guest
         $output .= $this->comment_reply_report( $args, $comment );
@@ -956,6 +976,9 @@ class fv_tc extends fv_tc_Plugin {
               break;
           }
 
+          if( isset($_POST['comments_reporting']) && $_POST['comments_reporting'] )
+            self::install();
+
           if( $_POST['voting_display_type'] !== 'off' )
             FV_Comments_Voting::install();
 
@@ -1096,7 +1119,32 @@ class fv_tc extends fv_tc_Plugin {
 
 
     function comment_reports_panel() {
-      // TODO database select
+      global $wpdb;
+
+      $reports = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}commentreports_fvtc WHERE `status` = 'open'" );
+      
+      $comment_ids = array();
+      foreach ( $reports as $rep ) {
+        if( ! in_array( $rep->comment_id, $comment_ids) ) {
+          $comment_ids[] = $rep->comment_id;
+        }
+      }
+
+      $args = array(
+        'comment__in' => $comment_ids,
+      );
+
+      $comments_data = get_comments( $args );
+      $comments = array();
+      // Sort comments:
+      foreach( $comments_data as $comment ) {
+        $comments[ $comment->comment_ID ] = $comment;
+      }
+      unset( $comments_data );
+
+      //var_dump( $comments ); die();
+
+      // TODO filters + sort
 
       ?>
         <div class="wrap">
@@ -1112,20 +1160,54 @@ class fv_tc extends fv_tc_Plugin {
           <table class="wp-list-table widefat">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Comment text</th>
+                <th>Date</th>
+                <th>Comment</th>
+                <th>Reporter</th>
                 <th>Reason</th>
+                <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tr>
             <tbody id="the-list">
               <?php
-              /*foreach( $ as $ ) {
-                echo "<tr>";
-                echo "<td>ID</td>t<td>Comment text</td><td>Reason</td><td></td>\n";
-                echo "</tr>";
-              }*/
+              foreach( $reports as $report ) {
+                
+                // Comment data
+                // TODO: set up defaults
+                $comment = $comments[ $report->comment_id ];
+                $comment_id = $report->comment_id;
+                $link = get_comment_link( $comment );
+
+                $text = $comment->comment_content;
+                if( strlen( $text ) > 127 ){
+                  $text = substr( $comment->comment_content, 0, 127 ) . "...";
+                }
+                
+                // Reporter data
+                if( $report->rep_uid ) {
+                  $user_data = get_userdata( $report->rep_uid );
+                  $user_link = get_edit_user_link( $report->rep_uid );
+                  $reporter = "<a href='$user_link'>" . $user_data->user_login . '</a>';
+                }
+                else{
+                  $reporter = "guest";
+                }
+                $reporter .= "<br/>{$report->rep_ip}";
+
+                // Reason
+                // TODO javascript hiding long text
+                $reason = $report->reason;
+
+                echo "<tr id='report_row_{$report->id}'>\n";
+                echo "\t<td>{$report->rep_date}</td>\n";
+                echo "\t<td><a href='$link'>[$comment_id] $text</a></td>\n";
+                echo "\t<td>$reporter</td>\n";
+                echo "\t<td>$reason</td>\n";
+                echo "\t<td>{$report->status}</td>\n";
+                echo "\t<td><a href='#' onclick='fv_tc_report_close( $report->id ); return false'>Close</a></td>\n"; // add action buttons here
+                echo "</tr>\n";
+              }
               ?>
               
             </tbody>
@@ -1138,10 +1220,6 @@ class fv_tc extends fv_tc_Plugin {
       <style>
 
       </style>
-
-      <script type="text/javascript">
-
-      </script>
       */ ?>
 
       <?php
@@ -1663,7 +1741,14 @@ class fv_tc extends fv_tc_Plugin {
     }
 
     function fv_tc_report() {
-      //TODO check permissions for reports
+      global $wpdb;
+
+      $options = get_option( 'thoughtful_comments' );
+      $bCommentReg = get_option( 'comment_registration' );
+
+      if( ( $bCommentReg && !is_user_logged_in() ) || !$options['comments_reporting'] ) {
+        die( "not allowed" );
+      }
 
       $current_user = wp_get_current_user();
 
@@ -1673,9 +1758,79 @@ class fv_tc extends fv_tc_Plugin {
         'reason' => $_REQUEST['reason']
       );
 
-      add_comment_meta( $_REQUEST['id'], 'fv_tc_report', $aReport );
+      $wpdb->insert(
+         $wpdb->prefix.'commentreports_fvtc',
+        array(
+          'comment_id'  => $_REQUEST['id'],
+          'rep_uid'     => $current_user->ID,
+          'rep_ip'      => $_SERVER['SERVER_ADDR'],
+          'rep_date'    => date("Y-m-d H:i:s"),
+          'reason'      => $_REQUEST['reason'],
+          'status'      => 'open'
+        )
+      );
 
       die();
+    }
+
+    function fv_tc_report_close() {
+      global $wpdb;
+
+      $current_user = wp_get_current_user();
+
+      $wpdb->update(
+         $wpdb->prefix.'commentreports_fvtc',
+        array(
+          'status'      => 'closed',
+          'mod_uid'     => $current_user->ID,
+          'mod_date'    => date("Y-m-d H:i:s")
+        ),
+        array(
+          'id'          => $_REQUEST['id']
+        )
+      );
+
+      die();
+    }
+
+    function delete_report ( $comment_id ) {
+      global $wpdb;
+
+      $current_user = wp_get_current_user();
+
+      $wpdb->update(
+         $wpdb->prefix.'commentreports_fvtc',
+        array(
+          'status'      => 'deleted',
+          'mod_uid'     => $current_user->ID,
+          'mod_date'    => date("Y-m-d H:i:s")
+        ),
+        array(
+          'comment_id'  => $comment_id
+        )
+      );
+    }
+
+    function update_report_status( $comment_id, $status ) {
+      global $wpdb;
+
+      $current_user = wp_get_current_user();
+
+      if( $status != 'spam' && $status != 'trash' ) {
+        return;
+      }
+
+      $wpdb->update(
+         $wpdb->prefix.'commentreports_fvtc',
+        array(
+          'status'      => 'deleted',
+          'mod_uid'     => $current_user->ID,
+          'mod_date'    => date("Y-m-d H:i:s")
+        ),
+        array(
+          'comment_id'  => $comment_id
+        )
+      );
     }
 
     function get_comment_link( $link ) {
@@ -1911,6 +2066,7 @@ $fv_tc = new fv_tc;
 add_action( 'wp_ajax_fv_tc_approve', array( $fv_tc,'fv_tc_approve'));
 add_action( 'wp_ajax_fv_tc_delete', array( $fv_tc,'fv_tc_delete'));
 add_action( 'wp_ajax_fv_tc_moderated', array( $fv_tc,'fv_tc_moderated'));
+add_action( 'wp_ajax_fv_tc_report_close', array( $fv_tc,'fv_tc_report_close'));
 
 add_action( 'wp_ajax_fv_tc_report', array( $fv_tc,'fv_tc_report'));
 add_action( 'wp_ajax_nopriv_fv_tc_report', array( $fv_tc,'fv_tc_report'));
@@ -1958,6 +2114,10 @@ add_filter( 'thesis_comment_text', array( $fv_tc, 'comment_links' ), 100 );
 /* Approve comment if user is set out of moderation queue */
 add_filter( 'pre_comment_approved', array( $fv_tc, 'moderate' ) );
 
+/* Update reports database */
+add_action( 'deleted_comment', array( $fv_tc, 'delete_report' ) );
+add_action( 'wp_set_comment_status', array( $fv_tc, 'update_report_status' ), 10, 2 );
+
 /* Load js */
 add_action( 'wp_footer', array( $fv_tc, 'scripts' ) );
 add_action( 'admin_footer', array( $fv_tc, 'scripts' ) );
@@ -1998,7 +2158,6 @@ add_action('admin_init', array( $fv_tc, 'fv_tc_user_nicename_change' ) );
 
 
 add_filter( 'comment_moderation_headers', array( $fv_tc, 'comment_moderation_headers' ) );
-
 add_filter( 'comment_moderation_text', array( $fv_tc, 'comment_moderation_text' ) );
 
 

@@ -169,9 +169,30 @@ function fv_tc_report_comment( id ) {
       success: function(data){
         jQuery( "#report_response_"+id ).html( "Your report has been submitted." );
         //TODO: check for response
+        //TODO: do not allow multiple reports from same user
       }
     });
   }
+
+}
+
+
+/**
+ * close report
+ * @param  int id report id number
+ */
+function fv_tc_report_close ( id ) {
+
+  jQuery.ajax({
+      type: 'POST',
+      url: fv_tc_ajaxurl,
+      data: {"action": "fv_tc_report_close", 'id': id},
+      success: function(data){
+        if( jQuery("#report_row_"+id).length > 0 ) {
+          jQuery("#report_row_"+id).fadeOut(300, function() { $(this).remove(); });
+        }
+      }
+    });
 
 }
 
