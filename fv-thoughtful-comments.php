@@ -232,9 +232,6 @@ class fv_tc extends fv_tc_Plugin {
                 $actions['delete_banned'] = '<a href="#">Already banned!</a>';*/
           }
 
-          // comments reporting
-          $actions['close_report'] = $this->get_t_close_report();
-
           //  blacklist email address
           /*if(stripos(trim(get_option('blacklist_keys')),$comment->comment_author_email)!==FALSE)
               $actions['blacklist_email'] = "Email Already Blacklisted";
@@ -544,13 +541,10 @@ class fv_tc extends fv_tc_Plugin {
     * @return string Comment text with added features.
     */
     function frontend ($content) {
-        if( is_admin() ) {
-          return $content;
-        }
-
         global  $user_ID, $comment, $post;
 
-        if( !isset($this->can_edit) ) { // for performance reasons only check once!
+        // for performance reasons only check once!
+        if( !isset($this->can_edit) ) {
           if( current_user_can('edit_posts') && current_user_can( 'edit_comment', $comment->comment_ID ) ) {
             $this->can_edit = true;
           } else {
@@ -558,10 +552,17 @@ class fv_tc extends fv_tc_Plugin {
           }
         }
 
-        $this->can_ban = current_user_can('moderate_comments');
+        if( !isset($this->can_ban) ) {
+          $this->can_ban = current_user_can('moderate_comments');
+        }
 
-        if( $this->can_edit ) {
+        if( !$this->can_edit ) {
+          return $content;
+        }
 
+        $reports_out = $this->get_t_reports( $comment );
+
+        if( !is_admin() ) {
           //$child = $this->comment_has_child($comment->comment_ID, $comment->comment_post_ID);
           /*  Container   */
           $out = '<p class="tc-frontend">';
@@ -602,12 +603,9 @@ class fv_tc extends fv_tc_Plugin {
           }
           $out .= '</p>';
           $out .= '<span id="fv-tc-comment-'.$comment->comment_ID.'"></span>';
-
-          $out = $this->get_t_reports( $comment );
-
-          return $content . $out;
         }
-        return $content;
+
+        return $content . $reports_out . $out;
     }
 
     function get_js_translations() {
@@ -704,15 +702,19 @@ class fv_tc extends fv_tc_Plugin {
     function get_t_reports($comment) {
       $out = '';
 
-      $reports = $this->get_reports( $comment->comment_ID, 'open' );
-      if( !empty( $reports ) ){
-        $out .= '<div class="fv_tc_reports">';
-        $out .= '<ul>';
-        foreach( $reports as $report ) {
-          $out .= "<li id='report_row_{$report->id}'>{$report->reason} <a href='#'' class='fc-tc-closereport' onclick='fv_tc_report_front_close({$report->id}); return false'>" . __('Close','fv_tc') . "</a></li>";
+      $options = get_option('thoughtful_comments');
+      if( isset($options['comments_reporting']) && $options['comments_reporting'] ) {
+
+        $reports = $this->get_reports( $comment->comment_ID, 'open' );
+        if( !empty( $reports ) ){
+          $out .= '<div class="fv_tc_reports">';
+          $out .= '<ul>';
+          foreach( $reports as $report ) {
+            $out .= "<li id='report_row_{$report->id}'>{$report->reason} <a href='#'' class='fc-tc-closereport' onclick='fv_tc_report_front_close({$report->id}); return false'>" . __('Close','fv_tc') . "</a></li>";
+          }
+          $out .= '</ul>';
+          $out .= '</div>';
         }
-        $out .= '</ul>';
-        $out .= '</div>';
       }
 
       return $out;
