@@ -181,7 +181,7 @@ class fv_tc extends fv_tc_Plugin {
 
         $options = get_option('thoughtful_comments');
         if( isset($options['comments_reporting']) && $options['comments_reporting'] ) {
-          add_menu_page( "Comment Reports", "Comment Reports", 'moderate_comments', 'comment_reports', array($this, 'comment_reports_panel'), false, 26 );
+          add_menu_page( "Comment Reports", "Reports", 'moderate_comments', 'comment_reports', array($this, 'comment_reports_panel'), 'dashicons-admin-comments', 26 );
         }
     }
 
@@ -218,6 +218,9 @@ class fv_tc extends fv_tc_Plugin {
             /*else
                 $actions['delete_banned'] = '<a href="#">Already banned!</a>';*/
           }
+
+          // comments reporting
+          $actions['close_report'] = $this->get_t_close_report();
 
           //  blacklist email address
           /*if(stripos(trim(get_option('blacklist_keys')),$comment->comment_author_email)!==FALSE)
@@ -444,9 +447,10 @@ class fv_tc extends fv_tc_Plugin {
       //var_dump( $comment );
 
       $report_box  = "<div class='comment_report_wrap' id='comment_report_{$comment->comment_ID}' style='display:none'>\n";
+      $report_box .= "<input type='hidden' id='report_nonce_{$comment->comment_ID}' name='report_nonce_{$comment->comment_ID}' value='".wp_create_nonce('report_comment_'.$comment->comment_ID)."'/>\n";
       $report_box .= "<label for='report_reason_{$comment->comment_ID}'>Reason:</label>\n";
       $report_box .= "<input type='text' id='report_reason_{$comment->comment_ID}' name='report_reason_{$comment->comment_ID}' />\n";
-      $report_box .= "<button class='report_button' onclick='fv_tc_report_comment( {$comment->comment_ID} )'>Submit report</button>\n";
+      $report_box .= "<button id='report_button_{$comment->comment_ID}' class='report_button' onclick='fv_tc_report_comment( {$comment->comment_ID} )'>Submit report</button>\n";
       $report_box .= "<p id='report_response_{$comment->comment_ID}'></p>\n";
       $report_box .= "</div>\n";
 
@@ -474,6 +478,29 @@ class fv_tc extends fv_tc_Plugin {
       
 
       return $output;
+    }
+
+    /**
+     * Get reports for specified comment id
+     * @param  int    $comment_id Commment ID. False for all comments. (default = false)
+     * @param  string $status     Status of report. False for all reports. (default = false)
+     * @return array             Array of repots Objects
+     */
+    function get_reports ( $comment_id = false, $status = false ) {
+      global $wpdb;
+
+      $query = "SELECT * FROM {$wpdb->prefix}commentreports_fvtc WHERE 1=1";
+
+      if( $comment_id ) {
+        $query .= " AND comment_id = '{$comment_id}'";
+      }
+
+      if( $status ) {
+        $query .= " AND status = '{$status}'";
+      }
+
+      $reports = $wpdb->get_results( $query );
+      return $reports;
     }
 
 
@@ -563,6 +590,8 @@ class fv_tc extends fv_tc_Plugin {
           $out .= '</p>';
           $out .= '<span id="fv-tc-comment-'.$comment->comment_ID.'"></span>';
 
+          $out = $this->get_t_reports( $comment );
+
           return $content . $out;
         }
         return $content;
@@ -651,6 +680,30 @@ class fv_tc extends fv_tc_Plugin {
         return '<a href="#" class="fc-tc-banthread" onclick="fv_tc_delete_thread_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Trash Thread & Ban IP','fv_tc') . '</a>';
     }
 
+
+    /**
+     * Generate the anchor for close report
+     *
+     * @param int $comment Comment object
+     *
+     * @return string HTML of the anchor
+     */
+    function get_t_reports($comment) {
+      $out = '';
+
+      $reports = $this->get_reports( $comment->comment_ID, 'open' );
+      if( !empty( $reports ) ){
+        $out .= '<div class="fv_tc_reports">';
+        $out .= '<ul>';
+        foreach( $reports as $report ) {
+          $out .= "<li id='report_row_{$report->id}'>{$report->reason} <a href='#'' class='fc-tc-closereport' onclick='fv_tc_report_front_close({$report->id}); return false'>" . __('Close','fv_tc') . "</a></li>";
+        }
+        $out .= '</ul>';
+        $out .= '</div>';
+      }
+
+      return $out;
+    }
 
     /**
      * Generate the anchor for auto approving function
@@ -1121,30 +1174,27 @@ class fv_tc extends fv_tc_Plugin {
     function comment_reports_panel() {
       global $wpdb;
 
-      $reports = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}commentreports_fvtc WHERE `status` = 'open'" );
-      
       $comment_ids = array();
+      $comments = array();
+
+      // TODO: add filters
+      $reports = $this->get_reports();
+
       foreach ( $reports as $rep ) {
         if( ! in_array( $rep->comment_id, $comment_ids) ) {
           $comment_ids[] = $rep->comment_id;
         }
       }
 
-      $args = array(
+      $comments_data = get_comments( array(
         'comment__in' => $comment_ids,
-      );
+      ));
 
-      $comments_data = get_comments( $args );
-      $comments = array();
       // Sort comments:
       foreach( $comments_data as $comment ) {
         $comments[ $comment->comment_ID ] = $comment;
       }
       unset( $comments_data );
-
-      //var_dump( $comments ); die();
-
-      // TODO filters + sort
 
       ?>
         <div class="wrap">
@@ -1165,7 +1215,7 @@ class fv_tc extends fv_tc_Plugin {
                 <th>Reporter</th>
                 <th>Reason</th>
                 <th>Status</th>
-                <th>Actions</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tr>
@@ -1178,12 +1228,14 @@ class fv_tc extends fv_tc_Plugin {
                 $comment = $comments[ $report->comment_id ];
                 $comment_id = $report->comment_id;
                 $link = get_comment_link( $comment );
-
+                
                 $text = $comment->comment_content;
                 if( strlen( $text ) > 127 ){
                   $text = substr( $comment->comment_content, 0, 127 ) . "...";
                 }
                 
+                $comment = ( $report->status != 'deleted' ) ? "<a href='$link'>[$comment_id] $text</a>" : "[$comment_id] <i>deleted</i>";
+
                 // Reporter data
                 if( $report->rep_uid ) {
                   $user_data = get_userdata( $report->rep_uid );
@@ -1199,13 +1251,16 @@ class fv_tc extends fv_tc_Plugin {
                 // TODO javascript hiding long text
                 $reason = $report->reason;
 
-                echo "<tr id='report_row_{$report->id}'>\n";
+                // Close link
+                $action_link = ( $report->status == 'open' ) ? "<a href='#' onclick='fv_tc_report_admin_close( $report->id ); return false'>Close</a>" : "";
+
+                echo "<tr class='{$report->status}' id='report_row_{$report->id}'>\n";
                 echo "\t<td>{$report->rep_date}</td>\n";
-                echo "\t<td><a href='$link'>[$comment_id] $text</a></td>\n";
+                echo "\t<td>$comment</td>\n";
                 echo "\t<td>$reporter</td>\n";
                 echo "\t<td>$reason</td>\n";
-                echo "\t<td>{$report->status}</td>\n";
-                echo "\t<td><a href='#' onclick='fv_tc_report_close( $report->id ); return false'>Close</a></td>\n"; // add action buttons here
+                echo "\t<td class='report_status'>{$report->status}</td>\n";
+                echo "\t<td class='report_action'>$action_link</td>\n";
                 echo "</tr>\n";
               }
               ?>
@@ -1743,11 +1798,24 @@ class fv_tc extends fv_tc_Plugin {
     function fv_tc_report() {
       global $wpdb;
 
+      check_ajax_referer( 'report_comment_'.$_REQUEST['id'] );
+
       $options = get_option( 'thoughtful_comments' );
       $bCommentReg = get_option( 'comment_registration' );
 
       if( ( $bCommentReg && !is_user_logged_in() ) || !$options['comments_reporting'] ) {
-        die( "not allowed" );
+        die( "-2" );
+      }
+
+      $reported_before = $wpdb->get_var(
+        "SELECT count(*) FROM {$wpdb->prefix}commentreports_fvtc
+        WHERE comment_id = ".$_REQUEST['id']."
+        AND rep_ip = '".$_SERVER['SERVER_ADDR']."'
+        AND status = 'open'" // TODO: consider checking of status
+      );
+
+      if( intval( $reported_before ) ) {
+        die( "-3" );
       }
 
       $current_user = wp_get_current_user();
@@ -1758,7 +1826,7 @@ class fv_tc extends fv_tc_Plugin {
         'reason' => $_REQUEST['reason']
       );
 
-      $wpdb->insert(
+      $inserted = $wpdb->insert(
          $wpdb->prefix.'commentreports_fvtc',
         array(
           'comment_id'  => $_REQUEST['id'],
@@ -1770,6 +1838,7 @@ class fv_tc extends fv_tc_Plugin {
         )
       );
 
+      echo $inserted;
       die();
     }
 

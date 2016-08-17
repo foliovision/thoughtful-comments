@@ -157,22 +157,45 @@ function fv_tc_report_display( id ) {
 function fv_tc_report_comment( id ) {
 
   var reason = jQuery( "#report_reason_"+id ).val();
+  var nonce = jQuery( "#report_nonce_"+id ).val();
+  var message = "";
 
   if( reason.length == 0 ) {
-    jQuery( "#report_response_"+id ).html( "<span class='fv_tc_warning'>Your report reason cannot be empty</span>" );
+    message = "<span class='fv_tc_warning'>Your report reason cannot be empty.</span>";
   }
   else {
     jQuery.ajax({
       type: 'POST',
       url: fv_tc_ajaxurl,
-      data: {"action": "fv_tc_report", 'id': id, 'reason': reason},
+      async: false,
+      data: {
+        "action": "fv_tc_report",
+        '_ajax_nonce': nonce,
+        'id': id,
+        'reason': reason
+      },
       success: function(data){
-        jQuery( "#report_response_"+id ).html( "Your report has been submitted." );
-        //TODO: check for response
-        //TODO: do not allow multiple reports from same user
+        var status = parseInt( data );
+
+        if( status > 0 ) {
+          message = "Your report has been submitted.";
+        }
+        else if( status === -1 ) {
+          message = "Comment wasn't reported. Something went wrong.";
+        }
+        else if( status === -2 ) {
+          message = "Comment wasn't reported. You are not allowed to report comments.";
+        }
+        else if( status === -3 ) {
+          message = "You have already reported this comment.";
+        }
+
+        jQuery( "#report_button_"+id ).prop("disabled", true);
       }
     });
   }
+
+  jQuery( "#report_response_"+id ).html( message );
 
 }
 
@@ -182,20 +205,34 @@ function fv_tc_report_comment( id ) {
  * @param  int id report id number
  */
 function fv_tc_report_close ( id ) {
+  var result = false;
 
   jQuery.ajax({
       type: 'POST',
       url: fv_tc_ajaxurl,
+      async: false,
       data: {"action": "fv_tc_report_close", 'id': id},
       success: function(data){
-        if( jQuery("#report_row_"+id).length > 0 ) {
-          jQuery("#report_row_"+id).fadeOut(300, function() { $(this).remove(); });
-        }
+        result = true;
       }
     });
 
+  return result;
 }
 
+function fv_tc_report_admin_close ( id ) {
+  if( fv_tc_report_close( id ) ) {
+    var parent = jQuery("#report_row_"+id);
+    parent.find(".report_status").text('closed');
+    parent.find(".report_action a").remove();
+  }
+}
+
+function fv_tc_report_front_close ( id ) {
+  if( fv_tc_report_close( id ) ) {
+    jQuery("#report_row_"+id).fadeOut(300, function() { jQuery(this).remove(); });
+  }
+}
 
 
 jQuery('.comment').each( function() {
