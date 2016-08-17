@@ -52,75 +52,77 @@ include( 'fv-comments-voting.php' );  //  todo: option
 if( class_exists('fv_tc_Plugin') ) :
 
 class fv_tc extends fv_tc_Plugin {
-    /**
-     * Plugin directory URI
-     * @var string
-     */
-    var $url;
+  /**
+   * Plugin directory URI
+   * @var string
+   */
+  var $url;
 
-    /**
-     * Plugin version
-     * @var string
-     */
-    var $strVersion = '0.3.5';
+  /**
+   * Plugin version
+   * @var string
+   */
+  var $strVersion = '0.3.5';
 
-    /**
-     * Decide if scripts will be loaded on current page
-     * True if array( $fv_tc, 'frontend' ) filter was aplied on current page
-     * @bool
-     */
-    var $loadScripts = false;
+  /**
+   * Decide if scripts will be loaded on current page
+   * True if array( $fv_tc, 'frontend' ) filter was aplied on current page
+   * @bool
+   */
+  var $loadScripts = false;
 
-    /**
-     * Comment author name obtained from cookie - if it has unapproved comments being shown
-     * @string
-     */
-    var $cache_comment_author;
+  /**
+   * Comment author name obtained from cookie - if it has unapproved comments being shown
+   * @string
+   */
+  var $cache_comment_author;
 
-    /**
-     * Current comments count
-     * @int
-     */
-    var $cache_comment_count;
+  /**
+   * Current comments count
+   * @int
+   */
+  var $cache_comment_count;
 
-    /**
-     * Comment cache data
-     * @array
-     */
-    var $cache_data;
+  /**
+   * Comment cache data
+   * @array
+   */
+  var $cache_data;
 
-    /**
-     * Comment cache filename
-     * @string
-     */
-    var $cache_filename;
+  /**
+   * Comment cache filename
+   * @string
+   */
+  var $cache_filename;
 
 
-    /**
-     * Class contructor. Sets all basic variables.
-     */
-    function __construct(){
-        $this->url = trailingslashit( site_url() ).PLUGINDIR.'/'. dirname( plugin_basename(__FILE__) );
-        $this->readme_URL = 'http://plugins.trac.wordpress.org/browser/thoughtful-comments/trunk/readme.txt?format=txt';
-        add_action( 'in_plugin_update_message-thoughtful-comments/fv-thoughtful-comments.php', array( &$this, 'plugin_update_message' ) );
-        add_action( 'admin_init', array( $this, 'option_defaults' ) );
+  /**
+   * Class contructor. Sets all basic variables.
+   */
+  function __construct(){
+      $this->url = trailingslashit( site_url() ).PLUGINDIR.'/'. dirname( plugin_basename(__FILE__) );
+      $this->readme_URL = 'http://plugins.trac.wordpress.org/browser/thoughtful-comments/trunk/readme.txt?format=txt';
+      add_action( 'in_plugin_update_message-thoughtful-comments/fv-thoughtful-comments.php', array( &$this, 'plugin_update_message' ) );
+      add_action( 'admin_init', array( $this, 'option_defaults' ) );
+      add_filter( 'nonce_life', array( $this, 'nonce_life' ) );
+  }
+
+
+  function option_defaults() {
+    $options = get_option('thoughtful_comments');
+    if( !$options ){
+      update_option( 'thoughtful_comments', array( 'shorten_urls' => true, 'reply_link' => true, 'comment_autoapprove_count' => 1 ) );
     }
-
-
-    function option_defaults() {
-      $options = get_option('thoughtful_comments');
-      if( !$options ){
-        update_option( 'thoughtful_comments', array( 'shorten_urls' => true, 'reply_link' => true, 'comment_autoapprove_count' => 1 ) );
-      }
-      else{
-        //make autoapprove count 1 by default
-        if( !isset($options['comment_autoapprove_count']) || (intval($options['comment_autoapprove_count']) < 1) ){
-          $options['comment_autoapprove_count'] = 1;
-          update_option( 'thoughtful_comments', $options );
-        }
+    else{
+      //make autoapprove count 1 by default
+      if( !isset($options['comment_autoapprove_count']) || (intval($options['comment_autoapprove_count']) < 1) ){
+        $options['comment_autoapprove_count'] = 1;
+        update_option( 'thoughtful_comments', $options );
       }
     }
+  }
 	
+
   static function install() {
     global $wpdb;
     $table_name = FV_Comments_Voting::get_table_name();
@@ -138,6 +140,17 @@ class fv_tc extends fv_tc_Plugin {
         `notes` TEXT NULL
       );"
     );
+  }
+
+
+  function nonce_life( $default ) {
+    $options = get_option('thoughtful_comments');
+    if( !isset($options['comments_reporting']) || !$options['comments_reporting'] ){
+      return $default;
+    }
+
+    // 2 days:
+    return 2*24*3600;
   }
 
 	
