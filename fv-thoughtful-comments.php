@@ -120,18 +120,18 @@ class fv_tc extends fv_tc_Plugin {
         }
       }
     }
-	
-	
-	function admin_css(){
-		
-		if( !isset($_GET['page']) || $_GET['page'] != 'manage_fv_thoughtful_comments' ) {
-			return; 
-		}
-		?>
-		<link rel="stylesheet" type="text/css" href="<?php echo plugins_url('css/admin.css',__FILE__); ?>" />
-		<?php 
-	}
-	
+    
+    
+    function admin_css(){
+        
+        if( !isset($_GET['page']) || $_GET['page'] != 'manage_fv_thoughtful_comments' ) {
+            return; 
+        }
+        ?>
+        <link rel="stylesheet" type="text/css" href="<?php echo plugins_url('css/admin.css',__FILE__); ?>" />
+        <?php 
+    }
+    
 
     function ap_action_init()
     {
@@ -501,6 +501,10 @@ class fv_tc extends fv_tc_Plugin {
         }
         return $content;
     }
+    
+    function frontend_start() {
+        add_filter( 'comment_text', array( $this, 'frontend' ) );
+    }
 
     function get_js_translations() {
         $aStrings = Array(
@@ -835,7 +839,7 @@ class fv_tc extends fv_tc_Plugin {
           <th scope="row">User Moderation</th>
           <td>
           <img src="<?php echo $this->url; ?>/screenshot-3.png" alt="FV Thoughtful Comments frontend" style="max-width: 100%; height: auto;"></td>
-        </tr>							
+        </tr>                           
       </table>
       <?php
     }
@@ -1807,7 +1811,7 @@ if( function_exists( 'x_add_metadata_field' ) ) {
 }
 
 /* Add frontend moderation options */
-add_filter( 'comment_text', array( $fv_tc, 'frontend' ) );
+add_action( 'wp_head', array( $fv_tc, 'frontend_start' ) );
 /* Shorten plain links */
 add_filter( 'comment_text', array( $fv_tc, 'comment_links' ), 100 );
 
