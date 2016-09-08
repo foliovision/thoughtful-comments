@@ -109,3 +109,12 @@ body.logged-in .fv_cp_hidden > .fv-cp-comment-show {
 body.logged-in .fv_cp_hidden > .fv-cp-comment-hide {
   display: none;
 }
+
+.fv_tc_reports {
+  background: #eee;
+  padding: 5px;
+}
+.fv_tc_reports ul li {
+  margin: 0;  
+  padding: 5px;
+}

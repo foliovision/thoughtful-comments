@@ -180,6 +180,7 @@ function fv_tc_report_comment( id ) {
 
         if( status > 0 ) {
           message = "Your report has been submitted.";
+          
         }
         else if( status === -1 ) {
           message = "Comment wasn't reported. Something went wrong.";

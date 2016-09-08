@@ -46,8 +46,8 @@ The users cappable of moderate_comments are getting all of these features and ar
  */
 
 include( 'fp-api.php' );
-include( 'fv-comments-pink-plugin.php' ); //  todo: option
-include( 'fv-comments-voting.php' );  //  todo: option
+include( 'fv-comments-pink-plugin.php' );
+include( 'fv-comments-voting.php' );
 
 if( class_exists('fv_tc_Plugin') ) :
 
@@ -62,7 +62,7 @@ class fv_tc extends fv_tc_Plugin {
    * Plugin version
    * @var string
    */
-  var $strVersion = '0.3.5.2';
+  var $strVersion = '0.3.5.4';
 
   /**
    * Decide if scripts will be loaded on current page
@@ -503,7 +503,7 @@ class fv_tc extends fv_tc_Plugin {
     function get_reports ( $comment_id = false, $status = false ) {
       global $wpdb;
 
-      $query = "SELECT * FROM {$wpdb->prefix}commentreports_fvtc WHERE 1=1";
+      $query = "SELECT * FROM {$wpdb->prefix}commentreports_fvtc WHERE 1=1 ";
 
       if( $comment_id ) {
         $query .= " AND comment_id = '{$comment_id}'";
@@ -715,10 +715,10 @@ class fv_tc extends fv_tc_Plugin {
 
         $reports = $this->get_reports( $comment->comment_ID, 'open' );
         if( !empty( $reports ) ){
-          $out .= '<div class="fv_tc_reports">';
+          $out .= '<div class="fv_tc_reports">Reports:';
           $out .= '<ul>';
           foreach( $reports as $report ) {
-            $out .= "<li id='report_row_{$report->id}'>{$report->reason} <a href='#'' class='fc-tc-closereport' onclick='fv_tc_report_front_close({$report->id}); return false'>" . __('Close','fv_tc') . "</a></li>";
+            $out .= "<li id='report_row_{$report->id}'>{$report->reason} <a href='#' class='fc-tc-closereport' onclick='fv_tc_report_front_close({$report->id}); return false'>" . __('Close','fv_tc') . "</a></li>";
           }
           $out .= '</ul>';
           $out .= '</div>';
