@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin.
-Version: 0.3.5
+Version: 0.3.5.2
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -62,7 +62,7 @@ class fv_tc extends fv_tc_Plugin {
    * Plugin version
    * @var string
    */
-  var $strVersion = '0.3.5';
+  var $strVersion = '0.3.5.2';
 
   /**
    * Decide if scripts will be loaded on current page
@@ -198,7 +198,9 @@ class fv_tc extends fv_tc_Plugin {
 
         $options = get_option('thoughtful_comments');
         if( isset($options['comments_reporting']) && $options['comments_reporting'] ) {
-          add_menu_page( "Comment Reports", "Reports", 'moderate_comments', 'comment_reports', array($this, 'comment_reports_panel'), 'dashicons-admin-comments', 26 );
+          $count = count( $this->get_reports( false, 'open' ) );
+          $count_label = $count > 0 ? " <span class='awaiting-mod count-60504'><span class='pending-count'>".$count."</span></span>" : false;
+          add_menu_page( "Comment Reports", "Reports".$count_label, 'moderate_comments', 'comment_reports', array($this, 'comment_reports_panel'), 'dashicons-admin-comments' );
         }
     }
 
@@ -510,6 +512,8 @@ class fv_tc extends fv_tc_Plugin {
       if( $status ) {
         $query .= " AND status = '{$status}'";
       }
+      
+      $query .= " ORDER BY rep_date DESC LIMIT 1000";
 
       $reports = $wpdb->get_results( $query );
       return $reports;
@@ -563,53 +567,51 @@ class fv_tc extends fv_tc_Plugin {
         }
 
         $reports_out = $this->get_t_reports( $comment );
+        
+        //$child = $this->comment_has_child($comment->comment_ID, $comment->comment_post_ID);
+        /*  Container   */
+        $out = '<p class="tc-frontend">';
+        /* Approve comment */
+        if($comment->comment_approved == '0') {
+          $out .= '<span id="comment-'.$comment->comment_ID.'-approve">'.$this->get_t_approve($comment).' </span>';
+        }
+        if($comment->comment_approved == 'spam') {
+          $out .= '<span id="comment-'.$comment->comment_ID.'-approve">'.$this->get_t_unspam($comment).' </span>';
+        }
+        /*  Delete comment  */
+        $out .= $this->get_t_delete($comment).' ';
+        /*  Delete thread   */
+        //if($child>0) {
+          $out .= $this->get_t_delete_thread($comment).' ';
+        //}
 
-        if( !is_admin() ) {
-          //$child = $this->comment_has_child($comment->comment_ID, $comment->comment_post_ID);
-          /*  Container   */
-          $out = '<p class="tc-frontend">';
-          /* Approve comment */
-          if($comment->comment_approved == '0') {
-            $out .= '<span id="comment-'.$comment->comment_ID.'-approve">'.$this->get_t_approve($comment).' </span>';
+        if( $this->can_ban ) {
+          /*  If IP isn't banned  */
+          if(stripos(trim(get_option('blacklist_keys')),$comment->comment_author_IP)===FALSE) {
+              /*  Delete and ban  */
+              $out .= $this->get_t_delete_ban($comment);//.' | ';
+              /*  Delete thread and ban   */
+              //if($child>0)
+              $out .= ' | '.$this->get_t_delete_thread_ban($comment);
+          } else {
+              $out .= 'IP '.$comment->comment_author_IP.' ';
+              $out .= "<a href='" . admin_url( 'tools.php?page=fv_thoughtful_comments' ) . "'>" . __('already banned!', 'fv_tc' ) . "</a>";
           }
-          if($comment->comment_approved == 'spam') {
-            $out .= '<span id="comment-'.$comment->comment_ID.'-approve">'.$this->get_t_unspam($comment).' </span>';
-          }
-          /*  Delete comment  */
-          $out .= $this->get_t_delete($comment).' ';
-          /*  Delete thread   */
-          //if($child>0) {
-            $out .= $this->get_t_delete_thread($comment).' ';
-          //}
-
-          if( $this->can_ban ) {
-            /*  If IP isn't banned  */
-            if(stripos(trim(get_option('blacklist_keys')),$comment->comment_author_IP)===FALSE) {
-                /*  Delete and ban  */
-                $out .= $this->get_t_delete_ban($comment);//.' | ';
-                /*  Delete thread and ban   */
-                //if($child>0)
-                $out .= ' | '.$this->get_t_delete_thread_ban($comment);
-            } else {
-                $out .= 'IP '.$comment->comment_author_IP.' ';
-                $out .= "<a href='" . admin_url( 'tools.php?page=fv_thoughtful_comments' ) . "'>" . __('already banned!', 'fv_tc' ) . "</a>";
-            }
-          }
-
-          /*  Moderation status   */
-          $user_info = ( isset($comment->user_id) && $comment->user_id > 0 ) ? get_userdata($comment->user_id) : false;
-          if( current_user_can("moderate_comments") && $user_info && $user_info->user_level < 3) {
-              $out .= '<br />'.$this->get_t_moderated($comment->user_id);
-          } else if( $user_info && $user_info->user_level >= 3 ) {
-              $out .= '<br /><abbr title="' . __('Comments from this user level are automatically approved', 'fv_tc') . '">' . __('Power user', 'fv_tc') . '</a>';
-          }
-          $out .= '</p>';
-          $out .= '<span id="fv-tc-comment-'.$comment->comment_ID.'"></span>';
         }
 
+        /*  Moderation status   */
+        $user_info = ( isset($comment->user_id) && $comment->user_id > 0 ) ? get_userdata($comment->user_id) : false;
+        if( current_user_can("moderate_comments") && $user_info && $user_info->user_level < 3) {
+            $out .= '<br />'.$this->get_t_moderated($comment->user_id);
+        } else if( $user_info && $user_info->user_level >= 3 ) {
+            $out .= '<br /><abbr title="' . __('Comments from this user level are automatically approved', 'fv_tc') . '">' . __('Power user', 'fv_tc') . '</a>';
+        }
+        $out .= '</p>';
+        $out .= '<span id="fv-tc-comment-'.$comment->comment_ID.'"></span>';
+        
         return $content . $reports_out . $out;
     }
-
+    
     function frontend_start() {
       add_filter( 'comment_text', array( $this, 'frontend' ) );
     }
@@ -1224,7 +1226,7 @@ class fv_tc extends fv_tc_Plugin {
           </div>
           <div>
               <div id="icon-options-general" class="icon32"><br /></div>
-              <h2>Commment Reports</h2>
+              <h2>FV Thoughtful Comments Reports</h2>
           </div>
           <div id="poststuff" class="ui-sortable">
           
@@ -1255,7 +1257,7 @@ class fv_tc extends fv_tc_Plugin {
                   $text = substr( $comment->comment_content, 0, 127 ) . "...";
                 }
                 
-                $comment = ( $report->status != 'deleted' ) ? "<a href='$link'>[$comment_id] $text</a>" : "[$comment_id] <i>deleted</i>";
+                $comment = ( $report->status != 'deleted' ) ? $text." (<a href='$link' target='_blank'>link</a>)" : "[$comment_id] <i>deleted</i>";
 
                 // Reporter data
                 if( $report->rep_uid ) {
@@ -1818,9 +1820,10 @@ class fv_tc extends fv_tc_Plugin {
 
     function fv_tc_report() {
       global $wpdb;
-      $commment_id = intval($_REQUEST['id']);
+      $comment_id = intval($_REQUEST['id']);
+      $reason = strip_tags( stripslashes($_REQUEST['reason']) );
 
-      check_ajax_referer( 'report_comment_'.$commment_id );
+      check_ajax_referer( 'report_comment_'.$comment_id );
 
       $options = get_option( 'thoughtful_comments' );
       $bCommentReg = get_option( 'comment_registration' );
@@ -1831,7 +1834,7 @@ class fv_tc extends fv_tc_Plugin {
 
       $reported_before = $wpdb->get_var(
         "SELECT count(*) FROM {$wpdb->prefix}commentreports_fvtc
-        WHERE comment_id = ".$commment_id."
+        WHERE comment_id = ".$comment_id."
         AND rep_ip = '".$_SERVER['REMOTE_ADDR']."'
         AND status = 'open'" // TODO: consider checking of status
       );
@@ -1845,22 +1848,18 @@ class fv_tc extends fv_tc_Plugin {
       $inserted = $wpdb->insert(
          $wpdb->prefix.'commentreports_fvtc',
         array(
-          'comment_id'  => $commment_id,
+          'comment_id'  => $comment_id,
           'rep_uid'     => $current_user->ID,
           'rep_ip'      => $_SERVER['REMOTE_ADDR'],
           'rep_date'    => date("Y-m-d H:i:s"),
-          'reason'      => $_REQUEST['reason'],
+          'reason'      => $reason,
           'status'      => 'open'
-        ),
-        array(
-          '%d',
-          '%d',
-          '%s',
-          '%s',
-          '%s',
-          '%s',
         )
       );
+
+      $objComment = get_comment($comment_id);
+      $message = "Following comment by ".$objComment->comment_author." (".$objComment->comment_author_email.") has been reported:\n\n".$objComment->comment_content."\n\nReason: ".$reason."\nLink: ".get_comment_link($comment_id);            
+      wp_mail( get_option('admin_email'), 'Comment Report', $message );
 
       echo $inserted;
       die();

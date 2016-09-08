@@ -159,6 +159,7 @@ function fv_tc_report_comment( id ) {
   var reason = jQuery( "#report_reason_"+id ).val();
   var nonce = jQuery( "#report_nonce_"+id ).val();
   var message = "";
+  var button = jQuery( "#report_button_"+id );
 
   if( reason.length == 0 ) {
     message = "<span class='fv_tc_warning'>Your report reason cannot be empty.</span>";
@@ -191,6 +192,7 @@ function fv_tc_report_comment( id ) {
         }
 
         jQuery( "#report_button_"+id ).prop("disabled", true);
+        button.hide();
       }
     });
   }
