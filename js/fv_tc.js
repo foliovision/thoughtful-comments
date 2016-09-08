@@ -2,7 +2,7 @@
 function fv_tc_approve(id) {
     jQuery("#comment-"+id+"-approve").text(fv_tc_translations.wait + ' | ');
     jQuery.ajax({
-        type: 'GET',
+        type: 'POST',
         url: fv_tc_ajaxurl,
         data: {"action": "fv_tc_approve", 'id': id},
         success: function(data){
@@ -249,7 +249,7 @@ jQuery( function($) {
   if( typeof(fv_tc_count) != "undefined" ) {
     setInterval( function() {
       $.ajax({
-        type: 'POST',
+        type: 'GET',
         url: fv_tc_count_json+'?rnd='+Math.random(),
         success: function(data){
           //$('.fv_tc_loading').remove();

@@ -610,6 +610,10 @@ class fv_tc extends fv_tc_Plugin {
         return $content . $reports_out . $out;
     }
 
+    function frontend_start() {
+      add_filter( 'comment_text', array( $this, 'frontend' ) );
+    }
+
     function get_js_translations() {
         $aStrings = Array(
             'comment_delete' => __('Do you really want to trash this comment?', 'fv_tc'),
@@ -2191,7 +2195,7 @@ if( function_exists( 'x_add_metadata_field' ) ) {
 }
 
 /* Add frontend moderation options */
-add_filter( 'comment_text', array( $fv_tc, 'frontend' ) );
+add_action( 'wp_head', array( $fv_tc, 'frontend_start' ) );
 /* Shorten plain links */
 add_filter( 'comment_text', array( $fv_tc, 'comment_links' ), 100 );
 
