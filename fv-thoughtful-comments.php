@@ -169,8 +169,12 @@ class fv_tc extends fv_tc_Plugin {
     {
         // Localization
         load_plugin_textdomain('fv_tc', false, dirname(plugin_basename(__FILE__)) . "/languages");
+        
+        $options = get_option( 'thoughtful_comments' );
 
-        if( is_user_logged_in() ) $this->loadScripts = true;
+        if( is_user_logged_in() || $options['comments_reporting'] ) {
+          $this->loadScripts = true;
+        }
     }
 
 
@@ -482,8 +486,6 @@ class fv_tc extends fv_tc_Plugin {
         // TODO show different interface for admin
         // TODO display for guest
         $output .= $this->comment_reply_report( $args, $comment );
-
-        $this->loadScripts = true;
       }
       
 
@@ -1812,8 +1814,9 @@ class fv_tc extends fv_tc_Plugin {
 
     function fv_tc_report() {
       global $wpdb;
+      $commment_id = intval($_REQUEST['id']);
 
-      check_ajax_referer( 'report_comment_'.$_REQUEST['id'] );
+      check_ajax_referer( 'report_comment_'.$commment_id );
 
       $options = get_option( 'thoughtful_comments' );
       $bCommentReg = get_option( 'comment_registration' );
@@ -1824,8 +1827,8 @@ class fv_tc extends fv_tc_Plugin {
 
       $reported_before = $wpdb->get_var(
         "SELECT count(*) FROM {$wpdb->prefix}commentreports_fvtc
-        WHERE comment_id = ".$_REQUEST['id']."
-        AND rep_ip = '".$_SERVER['SERVER_ADDR']."'
+        WHERE comment_id = ".$commment_id."
+        AND rep_ip = '".$_SERVER['REMOTE_ADDR']."'
         AND status = 'open'" // TODO: consider checking of status
       );
 
@@ -1835,21 +1838,23 @@ class fv_tc extends fv_tc_Plugin {
 
       $current_user = wp_get_current_user();
 
-      $aReport = array(
-        'uid' => $current_user->ID,
-        'ip'  => $_SERVER['SERVER_ADDR'],
-        'reason' => $_REQUEST['reason']
-      );
-
       $inserted = $wpdb->insert(
          $wpdb->prefix.'commentreports_fvtc',
         array(
-          'comment_id'  => $_REQUEST['id'],
+          'comment_id'  => $commment_id,
           'rep_uid'     => $current_user->ID,
-          'rep_ip'      => $_SERVER['SERVER_ADDR'],
+          'rep_ip'      => $_SERVER['REMOTE_ADDR'],
           'rep_date'    => date("Y-m-d H:i:s"),
           'reason'      => $_REQUEST['reason'],
           'status'      => 'open'
+        ),
+        array(
+          '%d',
+          '%d',
+          '%s',
+          '%s',
+          '%s',
+          '%s',
         )
       );
 
