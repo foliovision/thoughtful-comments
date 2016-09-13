@@ -213,8 +213,6 @@ function fv_tc_report_comment( id ) {
  * @param  int id report id number
  */
 function fv_tc_report_close ( id, callback ) {
-  var result = false;
-
   jQuery.ajax({
       type: 'POST',
       url: fv_tc_ajaxurl,
@@ -224,7 +222,6 @@ function fv_tc_report_close ( id, callback ) {
         
       }
     });
-  
 }
 
 function fv_tc_report_admin( id, type ) {
@@ -244,16 +241,15 @@ function fv_tc_report_admin( id, type ) {
 }
 
 function fv_tc_report_front_close ( id ) {
-  if( fv_tc_report_close( id ) ) {
-    jQuery("#report_row_"+id).fadeOut(300, function() {
-      var container = jQuery(this).parents('.fv_tc_reports');
-      jQuery(this).remove();
-      if( container.find('li').length == 0 ) {
-        container.parents('.comment').removeClass('comment-has-report');
-        container.remove();        
-      }
-    });
-  }
+  fv_tc_report_close( id ); //  TODO: check the response
+  jQuery("#report_row_"+id).fadeOut(300, function() {
+    var container = jQuery(this).parents('.fv_tc_reports');
+    jQuery(this).remove();
+    if( container.find('li').length == 0 ) {
+      container.parents('.comment').removeClass('comment-has-report');
+      container.remove();        
+    }
+  });
 }
 
 
