@@ -19,8 +19,10 @@ function fv_tc_approve(id) {
 
 
 /*  delete comment  */
-function fv_tc_delete(id) {
-    if(confirm(fv_tc_translations.comment_delete)) {
+function fv_tc_delete(id,skip_confirmation) {
+    var result = false;
+  
+    if( skip_confirmation || confirm(fv_tc_translations.comment_delete)) {
         jQuery.ajax({
             type: 'POST',
             url: fv_tc_ajaxurl,
@@ -29,13 +31,16 @@ function fv_tc_delete(id) {
                 if(data.search(/db error/)==-1) {
                     var item = jQuery("[id^='comment'][id$='"+id+"']");
                     item.slideUp();
+                    result = true;
                 } else {
                     alert(fv_tc_translations.delete_error);
                 }
             }
         });
-        return false;
+        
     }
+    
+    return result;
 }
 
 
@@ -207,7 +212,7 @@ function fv_tc_report_comment( id ) {
  * close report
  * @param  int id report id number
  */
-function fv_tc_report_close ( id ) {
+function fv_tc_report_close ( id, callback ) {
   var result = false;
 
   jQuery.ajax({
@@ -216,19 +221,26 @@ function fv_tc_report_close ( id ) {
       async: false,
       data: {"action": "fv_tc_report_close", 'id': id},
       success: function(data){
-        result = true;
+        
       }
     });
-
-  return result;
+  
 }
 
-function fv_tc_report_admin_close ( id ) {
-  if( fv_tc_report_close( id ) ) {
-    var parent = jQuery("#report_row_"+id);
-    parent.find(".report_status").text('closed');
-    parent.find(".report_action a").remove();
+function fv_tc_report_admin( id, type ) {
+  var text = '';
+  if( type == 'close' ) {
+    fv_tc_report_close( id );
+    text = 'Closed';
+  } else if( type == 'trash' ) {
+    fv_tc_delete( id, 'true' );
+    text = 'Deleted';
   }
+  
+  var parent = jQuery("#report_row_"+id);
+  parent.find(".report_status").text(text);
+  parent.find(".report_action a").remove();
+  
 }
 
 function fv_tc_report_front_close ( id ) {

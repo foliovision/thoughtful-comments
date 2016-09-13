@@ -119,7 +119,7 @@ class FV_Comments_Reporting {
       $comments[ $comment->comment_ID ] = $comment;
     }
     unset( $comments_data );
-
+    
     ?>
       <div class="wrap">
         <div style="position: absolute; right: 20px; margin-top: 5px">
@@ -147,18 +147,22 @@ class FV_Comments_Reporting {
             <?php
             foreach( $reports as $report ) {
               
-              // Comment data
-              // TODO: set up defaults
-              $comment = $comments[ $report->comment_id ];
               $comment_id = $report->comment_id;
-              $link = get_comment_link( $comment );
               
-              $text = $comment->comment_content;
-              if( strlen( $text ) > 127 ){
-                $text = substr( $comment->comment_content, 0, 127 ) . "...";
+              if( $report->status != 'deleted' ) {
+                $comment = $comments[ $report->comment_id ];
+                
+                $link = get_comment_link( $comment );
+                            
+                $text = $comment->comment_content;
+                if( strlen( $text ) > 127 ){
+                  $text = substr( $comment->comment_content, 0, 127 ) . "...";
+                }
+                
+                $comment = $text." (<a href='$link' target='_blank'>link</a>)";
+              } else {
+                $comment = "[$comment_id] <i>deleted</i>";
               }
-              
-              $comment = ( $report->status != 'deleted' ) ? $text." (<a href='$link' target='_blank'>link</a>)" : "[$comment_id] <i>deleted</i>";
 
               // Reporter data
               if( $report->rep_uid ) {
@@ -176,7 +180,11 @@ class FV_Comments_Reporting {
               $reason = $report->reason;
 
               // Close link
-              $action_link = ( $report->status == 'open' ) ? "<a href='#' onclick='fv_tc_report_admin_close( $report->id ); return false'>Close</a>" : "";
+              $action_link = '';
+              if( $report->status == 'open' ) {
+                $action_link .= "<a href='#' onclick='fv_tc_report_admin( $report->id, \"close\" ); return false'>Close</a>";
+                $action_link .= "<br /><a href='#' onclick='fv_tc_report_admin( $report->comment_id, \"trash\" ); return false'>Trash</a>";
+              }
 
               echo "<tr class='{$report->status}' id='report_row_{$report->id}'>\n";
               echo "\t<td>{$report->rep_date}</td>\n";
