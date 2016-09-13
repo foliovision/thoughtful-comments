@@ -16,6 +16,8 @@ class FV_Comments_Reporting {
     add_action( 'wp_ajax_fv_tc_report', array( $this,'fv_tc_report') );
     add_action( 'wp_ajax_nopriv_fv_tc_report', array( $this,'fv_tc_report') );
     
+    add_filter( 'comment_class', array( $this, 'comment_class' ), 10, 3 );
+    
     add_filter( 'comments_array', array( $this, 'cache' ) );
         
     $this->options =  get_option('thoughtful_comments');
@@ -82,6 +84,14 @@ class FV_Comments_Reporting {
       }
       
     }    
+  }
+  
+  
+  function comment_class( $aClasses, $sClasses, $comment_id ) {
+    if( isset($this->aReports[$comment_id]) ) {
+      $aClasses[] = 'comment-has-report';
+    }
+    return $aClasses;
   }
   
   

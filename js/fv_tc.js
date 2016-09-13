@@ -237,7 +237,8 @@ function fv_tc_report_front_close ( id ) {
       var container = jQuery(this).parents('.fv_tc_reports');
       jQuery(this).remove();
       if( container.find('li').length == 0 ) {
-        container.remove();      
+        container.parents('.comment').removeClass('comment-has-report');
+        container.remove();        
       }
     });
   }

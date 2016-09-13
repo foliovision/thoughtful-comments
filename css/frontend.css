@@ -118,3 +118,7 @@ body.logged-in .fv_cp_hidden > .fv-cp-comment-hide {
   margin: 0;  
   padding: 5px;
 }
+
+.comment-has-report {
+  background: #fff8f8;
+}
