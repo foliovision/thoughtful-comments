@@ -14,7 +14,9 @@ class FV_Comments_Reporting {
     
     add_action( 'wp_ajax_fv_tc_report_close', array( $this,'fv_tc_report_close') );    
     add_action( 'wp_ajax_fv_tc_report', array( $this,'fv_tc_report') );
-    add_action( 'wp_ajax_nopriv_fv_tc_report', array( $this,'fv_tc_report') );    
+    add_action( 'wp_ajax_nopriv_fv_tc_report', array( $this,'fv_tc_report') );
+    
+    add_filter( 'comments_array', array( $this, 'cache' ) );
         
     $this->options =  get_option('thoughtful_comments');
   }
@@ -49,6 +51,36 @@ class FV_Comments_Reporting {
       $count = count( $this->get_reports( false, 'open' ) );
       $count_label = $count > 0 ? " <span class='awaiting-mod count-60504'><span class='pending-count'>".$count."</span></span>" : false;
       add_menu_page( "Comment Reports", "Reports".$count_label, 'moderate_comments', 'comment_reports', array($this, 'comment_reports_panel'), 'dashicons-admin-comments' );
+    }    
+  }
+  
+  
+  function cache( $comments ) {
+    global $wpdb;
+    
+    if( $comments !== NULL && count( $comments ) > 0 ) {
+
+      $all_IDs = array();
+      foreach( $comments AS $comment ) {
+        $all_IDs[] = $comment->comment_ID;
+      }
+      
+      if( count($all_IDs) > 0 ) {
+        $this->aReports = $this->get_reports($all_IDs, 'open');
+        
+        if( count($this->aReports) > 0 ) {
+          $aNew = array();
+          foreach( $this->aReports AS $objReport ) {
+            if( !isset($aNew[$objReport->comment_id]) ) $aNew[$objReport->comment_id] = array();
+            $aNew[$objReport->comment_id][] = $objReport;
+          }
+          $this->aReports = $aNew;
+        }
+        
+      } else {
+        $this->aReports = false;
+      }
+      
     }    
   }
   
@@ -262,8 +294,10 @@ class FV_Comments_Reporting {
 
     $query = "SELECT * FROM {$wpdb->prefix}commentreports_fvtc WHERE 1=1 ";
 
-    if( $comment_id ) {
-      $query .= " AND comment_id = '{$comment_id}'";
+    if( is_array($comment_id) ) {
+      $query .= " AND comment_id IN (".implode(',',$comment_id).")";
+    } else if( $comment_id ) {
+      $query .= " AND comment_id = ".intval($comment_id);
     }
 
     if( $status ) {
@@ -290,12 +324,12 @@ class FV_Comments_Reporting {
 
     if( isset($this->options['comments_reporting']) && $this->options['comments_reporting'] ) {
 
-      $reports = $this->get_reports( $comment->comment_ID, 'open' );
-      if( !empty( $reports ) ){
+      $aReports = isset($this->aReports[$comment->comment_ID]) ? $this->aReports[$comment->comment_ID] : false;
+      if( $aReports ){
         $out .= '<div class="fv_tc_reports">Reports:';
         $out .= '<ul>';
-        foreach( $reports as $report ) {
-          $out .= "<li id='report_row_{$report->id}'>{$report->reason} <a href='#' class='fc-tc-closereport' onclick='fv_tc_report_front_close({$report->id}); return false'>" . __('Close','fv_tc') . "</a></li>";
+        foreach( $aReports as $objReport ) {
+          $out .= "<li id='report_row_{$objReport->id}'>{$objReport->reason} <a href='#' class='fc-tc-closereport' onclick='fv_tc_report_front_close({$objReport->id}); return false'>" . __('Close','fv_tc') . "</a></li>";
         }
         $out .= '</ul>';
         $out .= '</div>';
