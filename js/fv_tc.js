@@ -149,7 +149,7 @@ function fv_tc_moderated(id, frontend) {
 
 /* display report wrapper */
 function fv_tc_report_display( id ) {
-  jQuery("#comment_report_"+id).show();
+  jQuery("#comment_report_"+id).toggle();
 }
 
 
@@ -233,7 +233,13 @@ function fv_tc_report_admin_close ( id ) {
 
 function fv_tc_report_front_close ( id ) {
   if( fv_tc_report_close( id ) ) {
-    jQuery("#report_row_"+id).fadeOut(300, function() { jQuery(this).remove(); });
+    jQuery("#report_row_"+id).fadeOut(300, function() {
+      var container = jQuery(this).parents('.fv_tc_reports');
+      jQuery(this).remove();
+      if( container.find('li').length == 0 ) {
+        container.remove();      
+      }
+    });
   }
 }
 
