@@ -83,7 +83,9 @@ class FV_Comments_Reporting {
         $this->aReports = false;
       }
       
-    }    
+    }
+    
+    return $comments;
   }
   
   
