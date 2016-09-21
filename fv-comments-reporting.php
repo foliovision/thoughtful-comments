@@ -89,8 +89,8 @@ class FV_Comments_Reporting {
   }
   
   
-  function comment_class( $aClasses, $sClasses, $comment_id, $objComment ) {    
-    if( isset($this->aReports[$objComment->comment_ID]) ) {
+  function comment_class( $aClasses, $sClasses, $comment_id, $objComment ) {
+    if( isset($this->aReports[$objComment->comment_ID]) && current_user_can('moderate_comments') ) {
       $aClasses[] = 'comment-has-report';
     }
     
@@ -186,7 +186,7 @@ class FV_Comments_Reporting {
               $action_link = '';
               if( $report->status == 'open' ) {
                 $action_link .= "<a href='#' onclick='fv_tc_report_admin( $report->id, \"close\" ); return false'>Close</a>";
-                $action_link .= "<br /><a href='#' onclick='fv_tc_report_admin( $report->comment_id, \"trash\" ); return false'>Trash</a>";
+                $action_link .= "<br /><a href='#' onclick='fv_tc_report_admin( $report->id, \"trash\", $report->comment_id ); return false'>Trash</a>";
               }
 
               echo "<tr class='{$report->status}' id='report_row_{$report->id}'>\n";

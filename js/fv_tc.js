@@ -224,13 +224,13 @@ function fv_tc_report_close ( id, callback ) {
     });
 }
 
-function fv_tc_report_admin( id, type ) {
+function fv_tc_report_admin( id, type, comment_id ) {
   var text = '';
   if( type == 'close' ) {
     fv_tc_report_close( id );
     text = 'Closed';
   } else if( type == 'trash' ) {
-    fv_tc_delete( id, 'true' );
+    fv_tc_delete( comment_id, 'true' );
     text = 'Deleted';
   }
   
@@ -247,7 +247,7 @@ function fv_tc_report_front_close ( id ) {
     jQuery(this).remove();
     if( container.find('li').length == 0 ) {
       container.parents('.comment').removeClass('comment-has-report');
-      container.remove();        
+      container.remove();
     }
   });
 }
