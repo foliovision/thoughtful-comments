@@ -20,6 +20,8 @@ class FV_Comments_Reporting {
     
     add_filter( 'comments_array', array( $this, 'cache' ) );
         
+    add_filter( 'fv_tc_report', array( $this, 'show_frontend' ), 11, 4 );
+        
     $this->options =  get_option('thoughtful_comments');
   }
   
@@ -31,10 +33,16 @@ class FV_Comments_Reporting {
     if( $this->options['comments_reporting'] && ( !$bCommentReg || is_user_logged_in() ) ) {
       // TODO show different interface for admin
       // TODO display for guest
-      $html = str_replace( "</a>", "</a> <a rel='nofollow' class='comment-report-link' href='#comment_report_{$comment->comment_ID}' onclick='fv_tc_report_display( {$comment->comment_ID} ); return false;'>Report</a>", $html );
+      $button = "<a rel='nofollow' class='comment-report-link' href='#comment_report_{$comment->comment_ID}' onclick='fv_tc_report_display( {$comment->comment_ID} ); return false;'>Report</a>";
+      if( $html ) {
+        $html = str_replace( "</a>", "</a> ".$button, $html );
+      } else {
+        $html  = $button;
+      }
     }
     
     $report_box  = "<div class='comment_report_wrap' id='comment_report_{$comment->comment_ID}' style='display:none'>\n";
+    $report_box .= "<p>What is it about this comment which you think readers of ".get_bloginfo()." would find offensive? Thanks for your report!</p>\n";
     $report_box .= "<input type='hidden' id='report_nonce_{$comment->comment_ID}' name='report_nonce_{$comment->comment_ID}' value='".wp_create_nonce('report_comment_'.$comment->comment_ID)."'/>\n";
     $report_box .= "<label for='report_reason_{$comment->comment_ID}'>Reason:</label>\n";
     $report_box .= "<p><input type='text' id='report_reason_{$comment->comment_ID}' name='report_reason_{$comment->comment_ID}' /></p>\n";
@@ -387,6 +395,13 @@ class FV_Comments_Reporting {
     }
     
     return 2*24*3600; //  2 days
+  }
+  
+  
+  function show_frontend() {
+    
+    global $comment;
+    echo $this->add_frontend( false, false, $comment );
   }
   
   
