@@ -49,6 +49,7 @@ include( 'fp-api.php' );
 include( 'fv-comments-pink-plugin.php' );
 include( 'fv-comments-reporting.php' );
 include( 'fv-comments-voting.php' );
+include( 'fv-comments-blacklist.php' );
 
 if( class_exists('fv_tc_Plugin') ) :
 

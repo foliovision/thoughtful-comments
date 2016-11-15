@@ -54,7 +54,7 @@
  */
 
 div.fv_tc_voting_box {
-  margin: 0 0 10px 0;
+  margin: 0 0 10px;
   border: 1px solid #ccc;
   padding: 5px;
   width: 120px;
@@ -62,33 +62,24 @@ div.fv_tc_voting_box {
 div.fv_tc_voting_box > div.fv_tc_voting,
 div.fv_tc_voting_box > div.fv_tc_voting_count {
   float:left;
-  margin:0 5px 0 5px;
+  margin:0 5px;
 }
-
 div.fv_tc_voting_box > div.fv_tc_voting > span {
   margin: 0 0 0 5px;
 }
-
 div.fv_tc_voting_box > div.fv_tc_voting_count {
   line-height: 25px;
 }
-
 div.fv_tc_voting_box > div.fv_tc_voting {
   cursor: pointer;
 }
-
-.fv_cp_hidden > article > .comment-content, .fv_cp_hidden > article > .reply {
+.fv_cp_hidden > article > .comment-content, .fv_cp_hidden > article > .reply,
+.fv_cp_hidden > .comment-body, .fv_cp_hidden > article > .reply,
+.fv-cp-comment-show,
+body.logged-in .fv_cp_hidden > article > .fv-cp-comment-hide,
+body.logged-in .fv_cp_hidden > .fv-cp-comment-hide {
   display: none;
 }
-
-.fv_cp_hidden > .comment-body, .fv_cp_hidden > article > .reply {
-  display: none;
-}
-
-.fv-cp-comment-show {
-  display: none;
-}
-
 body.logged-in .fv-cp-comment-show {
   display: none;
   float: right;
@@ -97,28 +88,60 @@ body.logged-in .fv-cp-comment-hide {
   float: right;
   display: block;
 }
-body.logged-in .fv_cp_hidden > article > .fv-cp-comment-show {
-  display: block;
-}
-body.logged-in .fv_cp_hidden > article > .fv-cp-comment-hide {
-  display: none;
-}
+body.logged-in .fv_cp_hidden > article > .fv-cp-comment-show,
 body.logged-in .fv_cp_hidden > .fv-cp-comment-show {
   display: block;
 }
-body.logged-in .fv_cp_hidden > .fv-cp-comment-hide {
-  display: none;
-}
-
 .fv_tc_reports {
-  background: #eee;
-  padding: 5px;
+	border-top: 3px solid #bf0000;
+	margin-bottom: 5px;
+	padding: 5px;
+}
+.fv_tc_reports ul {
+	margin: 0;
 }
 .fv_tc_reports ul li {
-  margin: 0;  
-  padding: 5px;
+	margin: 0 !important;  
+	padding: 5px 54px 5px 0;
+	list-style-type: none;
+	border-top: 1px solid #ddd;
+	position: relative;
 }
-
-.comment-has-report {
+.fc-tc-closereport {
+	position: absolute;
+	font-size: 80%;
+	text-transform: lowercase;
+	right: 0;
+	top: 7px;
+	color: #aaa;
+}
+.fc-tc-closereport:before {
+	font: normal 20px/1 'dashicons';
+	content: "\f335";
+	vertical-align: middle;
+}
+.comment_report_wrap {
+	display: block;
+	clear: both;
+	padding: 0 5px;
+	text-align: left;
+}
+.comment_report_wrap p {
+	margin: 0;
+}
+.comment_report_wrap input {
+	margin-bottom: 2px;
+	padding: 6px;
+	width: 98%;
+	border: 1px solid #999;
+	box-shadow: none;
+}
+.comment_report_wrap .report_button {
+	background-color: #666;
+	color: #fff;
+	border: none;
+	padding: 5px;
+}
+.comment-has-report .comment-body {
   background: #fff8f8;
 }
