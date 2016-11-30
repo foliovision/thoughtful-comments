@@ -318,4 +318,6 @@ class FV_Comments_Voting {
   
   
 }
+
 $fvcr = new FV_Comments_Voting;
+
