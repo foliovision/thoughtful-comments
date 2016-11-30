@@ -8,9 +8,10 @@ class FV_Comments_Pink {
     $options = get_option('thoughtful_comments');
     if( !isset($options['live_updates']) || $options['live_updates'] == 'off' ) {
       return;
-    }    
-    
-    add_action('wp_footer', array( $this, 'fv_cp_store_comments_javascript' ));
+    }
+
+    if( !isset($options['live_updates_manual_insert'] ) || !$options['live_updates_manual_insert'] )
+      add_action( 'comment_form_before', array( $this, 'fv_add_fv_tc_controls' ) );
 
     /*logged in users only*/
     //add_action('wp_ajax_fv_cp_store_comments', array($fvcp, 'fv_cp_store_comments_callback'));
@@ -26,6 +27,12 @@ class FV_Comments_Pink {
     
     add_action( 'wp_footer', array( $this, 'scripts' ) );
   }
+
+  function fv_add_fv_tc_controls() {
+    do_action('fv_tc_controls');
+    do_action('fv_tc_show_new_comments');
+  }
+
 
   /*max records in wp_usermeta table*/
   private $max_records = 100;       
@@ -139,48 +146,6 @@ class FV_Comments_Pink {
     update_user_meta($user_id, 'fv_comments_pink_last_' . $post_id, $date);                    
     
     return $comments_to_show;
-  }
-  
-  function fv_cp_store_comments_javascript() {
-    global $post;        
-    if (is_single($post) /*&& is_user_logged_in()*/ ) {
-?>
-<style>
-.fv_cp_hidden > article > .comment-content, .fv_cp_hidden > article > .reply {
-  display: none;
-}
-
-.fv_cp_hidden > .comment-body, .fv_cp_hidden > article > .reply {
-  display: none;
-}
-
-.fv-cp-comment-show {
-  display: none;
-}
-
-body.logged-in .fv-cp-comment-show {
-  display: none;
-  float: right;
-}
-body.logged-in .fv-cp-comment-hide {
-  float: right;
-  display: block;
-}
-body.logged-in .fv_cp_hidden > article > .fv-cp-comment-show {
-  display: block;
-}
-body.logged-in .fv_cp_hidden > article > .fv-cp-comment-hide {
-  display: none;
-}
-body.logged-in .fv_cp_hidden > .fv-cp-comment-show {
-  display: block;
-}
-body.logged-in .fv_cp_hidden > .fv-cp-comment-hide {
-  display: none;
-}
-</style>
-<?php
-    }
   }
   
   function scripts() {
