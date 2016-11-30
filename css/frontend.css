@@ -73,6 +73,7 @@ div.fv_tc_voting_box > div.fv_tc_voting_count {
 div.fv_tc_voting_box > div.fv_tc_voting {
   cursor: pointer;
 }
+
 .fv_cp_hidden > article > .comment-content, .fv_cp_hidden > article > .reply,
 .fv_cp_hidden > .comment-body, .fv_cp_hidden > article > .reply,
 .fv-cp-comment-show,
@@ -80,6 +81,7 @@ body.logged-in .fv_cp_hidden > article > .fv-cp-comment-hide,
 body.logged-in .fv_cp_hidden > .fv-cp-comment-hide {
   display: none;
 }
+
 body.logged-in .fv-cp-comment-show {
   display: none;
   float: right;
@@ -88,6 +90,7 @@ body.logged-in .fv-cp-comment-hide {
   float: right;
   display: block;
 }
+
 body.logged-in .fv_cp_hidden > article > .fv-cp-comment-show,
 body.logged-in .fv_cp_hidden > .fv-cp-comment-show {
   display: block;

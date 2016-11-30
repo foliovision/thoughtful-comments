@@ -13,8 +13,6 @@ class FV_Comments_Pink {
     if( !isset($options['live_updates_manual_insert'] ) || !$options['live_updates_manual_insert'] )
       add_action( 'comment_form_before', array( $this, 'fv_add_fv_tc_controls' ) );
 
-    add_action('wp_footer', array( $this, 'fv_cp_store_comments_javascript' ));
-
     /*logged in users only*/
     //add_action('wp_ajax_fv_cp_store_comments', array($fvcp, 'fv_cp_store_comments_callback'));
 
@@ -149,13 +147,6 @@ class FV_Comments_Pink {
 
     return $comments_to_show;
   }
-
-  /*function fv_cp_store_comments_javascript() {
-    global $post;
-    if (is_single($post) ) {
-      //stylesheet moved to css/frontend.css
-    }
-  }*/
 
   function scripts() {
     if( !is_user_logged_in() ) return;

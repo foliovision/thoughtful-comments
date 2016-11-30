@@ -54,6 +54,7 @@ include( 'fv-comments-blacklist.php' );
 if( class_exists('fv_tc_Plugin') ) :
 
 class fv_tc extends fv_tc_Plugin {
+
   /**
    * Plugin directory URI
    * @var string
@@ -522,6 +523,10 @@ class fv_tc extends fv_tc_Plugin {
     function frontend_start() {
       add_filter( 'comment_text', array( $this, 'frontend' ) );
     }
+    
+    function frontend_start() {
+        add_filter( 'comment_text', array( $this, 'frontend' ) );
+    }
 
     function get_js_translations() {
         $aStrings = Array(
@@ -872,7 +877,7 @@ class fv_tc extends fv_tc_Plugin {
           <th scope="row">User Moderation</th>
           <td>
           <img src="<?php echo $this->url; ?>/screenshot-3.png" alt="FV Thoughtful Comments frontend" style="max-width: 100%; height: auto;"></td>
-        </tr>							
+        </tr>                           
       </table>
       <?php
     }
