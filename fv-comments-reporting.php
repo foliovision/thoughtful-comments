@@ -39,18 +39,19 @@ class FV_Comments_Reporting {
       } else {
         $html  = $button;
       }
+    
+    
+      $report_box  = "<div class='comment_report_wrap' id='comment_report_{$comment->comment_ID}' style='display:none'>\n";
+      $report_box .= "<p>What is it about this comment which you think readers of ".get_bloginfo()." would find offensive? Thanks for your report!</p>\n";
+      $report_box .= "<input type='hidden' id='report_nonce_{$comment->comment_ID}' name='report_nonce_{$comment->comment_ID}' value='".wp_create_nonce('report_comment_'.$comment->comment_ID)."'/>\n";
+      $report_box .= "<label for='report_reason_{$comment->comment_ID}'>Reason:</label>\n";
+      $report_box .= "<p><input type='text' id='report_reason_{$comment->comment_ID}' name='report_reason_{$comment->comment_ID}' /></p>\n";
+      $report_box .= "<button id='report_button_{$comment->comment_ID}' class='report_button' onclick='fv_tc_report_comment( {$comment->comment_ID} )'>Submit report</button>\n";
+      $report_box .= "<p id='report_response_{$comment->comment_ID}'></p>\n";
+      $report_box .= "</div>\n";
+      
+      $html .= $report_box;
     }
-    
-    $report_box  = "<div class='comment_report_wrap' id='comment_report_{$comment->comment_ID}' style='display:none'>\n";
-    $report_box .= "<p>What is it about this comment which you think readers of ".get_bloginfo()." would find offensive? Thanks for your report!</p>\n";
-    $report_box .= "<input type='hidden' id='report_nonce_{$comment->comment_ID}' name='report_nonce_{$comment->comment_ID}' value='".wp_create_nonce('report_comment_'.$comment->comment_ID)."'/>\n";
-    $report_box .= "<label for='report_reason_{$comment->comment_ID}'>Reason:</label>\n";
-    $report_box .= "<p><input type='text' id='report_reason_{$comment->comment_ID}' name='report_reason_{$comment->comment_ID}' /></p>\n";
-    $report_box .= "<button id='report_button_{$comment->comment_ID}' class='report_button' onclick='fv_tc_report_comment( {$comment->comment_ID} )'>Submit report</button>\n";
-    $report_box .= "<p id='report_response_{$comment->comment_ID}'></p>\n";
-    $report_box .= "</div>\n";
-    
-    $html .= $report_box;
     
     return $html;
   }

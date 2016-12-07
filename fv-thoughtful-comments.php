@@ -396,9 +396,12 @@ class fv_tc extends fv_tc_Plugin {
     /**
      * Replace url of reply link only with #
      * functionality is done only by JavaScript
+     *
+     * Also put in anchor "Reply link Keyword"
      */
-    function comment_reply_js( $strLink = null ) {
+    function comment_reply_link( $sHTML = null ) {
       $options = get_option('thoughtful_comments');
+      
       $strReplyKeyWord = 'comment-';
       if( isset( $options['tc_replyKW'] ) && !empty( $options[ 'tc_replyKW' ] ) ) {
          $strReplyKeyWord = $options['tc_replyKW'];
@@ -410,21 +413,14 @@ class fv_tc extends fv_tc_Plugin {
          $strLink
       );
 
-      if ($options['reply_link']) {
-         $noscript = '<noscript>' . __('Reply link does not work in your browser because JavaScript is disabled.', 'fv_tc') . '<br /></noscript>';
-         $link_script = preg_replace( '~href.*onclick~' , 'href="#respond" onclick' , $strLink );
-         return $noscript .  $link_script;
+      if( $options['reply_link'] ) {
+        $noscript = '<noscript>' . __('Reply link does not work in your browser because JavaScript is disabled.', 'fv_tc') . '<br /></noscript>';
+        $sHTML = str_replace( '<div class="reply">', '<div class="reply">'.$noscript, $sHTML );
+        
+        $sHTML = preg_replace( '~(<a[^>]*?class=[\'"]comment-reply[^>]*?)href[^>]*?onclick~' , '$1href="#respond" onclick' , $sHTML );
       }
-    }
-    
-    
-    /**
-     * Replaces reply links in comments
-     */
-    function comment_reply_links ( $strLink = null, $args, $comment, $post ) {
-      $output  = "";
-      $output .= $this->comment_reply_js( $strLink );
-      return $output;
+      
+      return $sHTML;
     }
 
 
@@ -1917,7 +1913,7 @@ add_action( 'admin_head', array($fv_tc, 'admin_css' )) ;
 add_action( 'admin_menu', array($fv_tc, 'admin_menu') );
 add_action( 'admin_enqueue_scripts', array( $fv_tc, 'fv_tc_admin_enqueue_scripts' ) );
 
-add_filter('comment_reply_link', array($fv_tc, 'comment_reply_links'), 10, 4 );
+add_filter('comment_reply_link', array($fv_tc, 'comment_reply_link'), 10, 4 );
 
 add_action('init', array($fv_tc, 'ap_action_init'));
 
