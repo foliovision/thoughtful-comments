@@ -521,10 +521,6 @@ class fv_tc extends fv_tc_Plugin {
     }
     
     function frontend_start() {
-      add_filter( 'comment_text', array( $this, 'frontend' ) );
-    }
-    
-    function frontend_start() {
         add_filter( 'comment_text', array( $this, 'frontend' ) );
     }
 
