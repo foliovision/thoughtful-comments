@@ -143,7 +143,7 @@ class fv_tc extends fv_tc_Plugin {
         
         $options = get_option( 'thoughtful_comments' );
 
-        if( is_user_logged_in() || $options['comments_reporting'] ) {
+        if( is_user_logged_in() || isset($options['comments_reporting']) && $options['comments_reporting'] ) {
           $this->loadScripts = true;
         }
     }
