@@ -53,11 +53,46 @@
  * Live updating comments
  */
 
+.fv_tc_voting {
+	line-height: 12px;
+}
+.fv_tc_voting_like {
+	border-right: 2px solid #ebebeb;
+	padding: 0 5px 0 0;
+}
+.fv_tc_voting_dislike {
+	padding: 0 0 0 5px;
+}
 div.fv_tc_voting_box {
-  margin: 0 0 10px;
-  border: 1px solid #ccc;
-  padding: 5px;
-  width: 120px;
+	margin: 0 0 10px;
+	padding: 5px 0;
+	min-width: 100px;
+}
+.fv_tc_voting {
+	color: #bebebe;
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 1;
+}
+.fv_tc_voting:hover {
+	color: #959595;
+}
+.fv_tc_voting_box i:before {
+	content: "";
+	width: 12px;
+	height: 8px;
+	display: inline-block;
+	background: url("images/voting-arrows.png") no-repeat left top;
+	margin: 0 3px;
+}
+.fv_tc_voting_box .fv_tc_voting_dislike i:before {
+	background-position: left bottom;
+}
+.fv_tc_voting_box .fv_tc_voting_like:hover i:before {
+	background-position: right top;
+}
+.fv_tc_voting_box  .fv_tc_voting_dislike:hover i:before {
+	background-position: right bottom;
 }
 div.fv_tc_voting_box > div.fv_tc_voting,
 div.fv_tc_voting_box > div.fv_tc_voting_count {
@@ -65,7 +100,7 @@ div.fv_tc_voting_box > div.fv_tc_voting_count {
   margin:0 5px;
 }
 div.fv_tc_voting_box > div.fv_tc_voting > span {
-  margin: 0 0 0 5px;
+  margin: 0 5px;
 }
 div.fv_tc_voting_box > div.fv_tc_voting_count {
   line-height: 25px;
