@@ -130,14 +130,11 @@ class FV_Comments_Voting {
     ?>
     <div class="fv_tc_voting_box">
       <div class="fv_tc_voting fv_tc_voting_like" data-postid="<?php echo $comment_id; ?>" data-ratetype="like">
-        <img src="<?php echo plugins_url( 'images/up.png', __FILE__ ); ?>" />
         <?php if( isset($options['voting_display_type']) && $options['voting_display_type'] == 'splitted' ) : ?>
-          <span><?php echo $this->getLikeCount( $comment_id ); ?></span>
-        <?php endif; ?>
+          <span><?php echo $this->getLikeCount( $comment_id ); ?></span><?php endif; ?><i class="fv-tc-up-arrow"></i>
       </div>
       <div class="fv_tc_voting fv_tc_voting_dislike" data-postid="<?php echo $comment_id; ?>" data-ratetype="dislike" >
-        <img src="<?php echo plugins_url( 'images/down.png', __FILE__ ); ?>" />
-        <?php if( isset($options['voting_display_type']) && $options['voting_display_type'] == 'splitted' ) : ?>
+        <i class="fv-tc-down-arrow"></i><?php if( isset($options['voting_display_type']) && $options['voting_display_type'] == 'splitted' ) : ?>
           <span><?php echo $this->getDislikeCount($comment_id); ?></span>
         <?php endif; ?>
       </div>
