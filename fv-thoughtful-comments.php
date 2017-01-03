@@ -1080,9 +1080,9 @@ class fv_tc extends fv_tc_Plugin {
       if( $this->loadScripts ) {  //  todo: only when needed
         wp_localize_script('fv_tc', 'fv_tc_translations', $this->get_js_translations());
         wp_localize_script('fv_tc', 'fv_tc_ajaxurl', admin_url('admin-ajax.php'));
-
+        
         $options = get_option('thoughtful_comments');
-        if( !is_admin() && isset($options['live_updates']) && $options['live_updates']=='on' ) {
+        if( !is_admin() && isset($options['live_updates']) && $options['live_updates']=='on' && ( !get_option('comment_registration') || is_user_logged_in() ) ) {
           global $blog_id, $post;
           wp_localize_script('fv_tc', 'fv_tc_count_json', site_url('wp-content/cache/thoughtful-comments-'.$blog_id.'/count.json'));
           wp_localize_script('fv_tc', 'fv_tc_count', array( 'id' => $post->ID, 'count' => $this->get_wp_count_comments($post->ID) ) );
@@ -1733,6 +1733,8 @@ class fv_tc extends fv_tc_Plugin {
     }
 
     function ticker() {
+      if( get_option('comment_registration') && !is_user_logged_in() ) return;
+      
       $sStyle = !have_comments() ? ' style="display: none;"' : '';
       echo '<div id="fv_tc_ticker"'.$sStyle.'><a style="display: none; " id="fv-comments-pink-toggle" href="#">Show only new comments</a> <a id="fv_tc_reload" style="display: none" href="#" onclick="window.location.reload(); return false"></a></div>'."\n";
     }
