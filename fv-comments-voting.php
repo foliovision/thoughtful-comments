@@ -122,7 +122,11 @@ class FV_Comments_Voting {
   }
   
   
-  function buttons( $comment_text ) {    
+  function buttons( $comment_text ) {
+    if( isset($_GET['json']) ) {
+      return $comment_text;
+    }
+    
     $options = get_option('thoughtful_comments');
     
     global $comment;
