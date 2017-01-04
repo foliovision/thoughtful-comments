@@ -79,6 +79,9 @@ div.fv_tc_voting_box {
 .fv_tc_voting:hover {
 	color: #959595;
 }
+.fv_tc_voting_box.no-permission .fv_tc_voting:hover {
+	color: #bebebe;
+}
 .fv_tc_voting_box i:before {
 	content: "";
 	width: 12px;
@@ -87,14 +90,22 @@ div.fv_tc_voting_box {
 	background: url("images/voting-arrows.png") no-repeat left top;
 	margin: 0 3px;
 }
+
 .fv_tc_voting_box .fv_tc_voting_dislike i:before {
 	background-position: left bottom;
 }
+.fv_tc_voting_box  .fv_tc_voting_dislike:hover i:before {
+	background-position: right bottom;
+}
+.fv_tc_voting_box.no-permission  .fv_tc_voting_dislike:hover i:before {
+	background-position: left bottom;
+}
+
 .fv_tc_voting_box .fv_tc_voting_like:hover i:before {
 	background-position: right top;
 }
-.fv_tc_voting_box  .fv_tc_voting_dislike:hover i:before {
-	background-position: right bottom;
+.fv_tc_voting_box.no-permission .fv_tc_voting_like:hover i:before {
+	background-position: left top;
 }
 div.fv_tc_voting_box > div.fv_tc_voting,
 div.fv_tc_voting_box > div.fv_tc_voting_count {
@@ -109,6 +120,9 @@ div.fv_tc_voting_box > div.fv_tc_voting_count {
 }
 div.fv_tc_voting_box > div.fv_tc_voting {
   cursor: pointer;
+}
+div.fv_tc_voting_box.no-permission > div.fv_tc_voting {
+  cursor: not-allowed;
 }
 
 .fv_cp_hidden > article > .comment-content, .fv_cp_hidden > article > .reply,

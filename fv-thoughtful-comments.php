@@ -65,7 +65,7 @@ class fv_tc extends fv_tc_Plugin {
    * Plugin version
    * @var string
    */
-  var $strVersion = '0.3.5.9';
+  var $strVersion = '0.3.5.14';
 
   /**
    * Decide if scripts will be loaded on current page

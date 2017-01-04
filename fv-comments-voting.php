@@ -21,7 +21,9 @@ class FV_Comments_Voting {
   }
   
   
-  function ajax() { //  todo: nonce security! 
+  function ajax() { //  todo: nonce security!
+    if( get_option('comment_registration') && !is_user_logged_in() ) return;
+    
     global $wpdb;
     $table_name = FV_Comments_Voting::get_table_name();
     $options = get_option('thoughtful_comments');
@@ -120,20 +122,32 @@ class FV_Comments_Voting {
   }
   
   
-  function buttons( $comment_text ) {
+  function buttons( $comment_text ) {    
     $options = get_option('thoughtful_comments');
     
     global $comment;
 	  $comment_id = get_comment_ID();
     
+    if( is_admin() ) {
+      $up = $this->getLikeCount( $comment_id );
+      $down = $this->getDislikeCount($comment_id);
+      if( $up ) {
+        $comment_text .= "\n\nUpvotes: ".$up;
+      }
+      if( $down ) {
+        $comment_text .= "\n\nDownvotes: ".$down;
+      }
+      return $comment_text;
+    }    
+    
     ob_start();
     ?>
-    <div class="fv_tc_voting_box">
-      <div class="fv_tc_voting fv_tc_voting_like" data-postid="<?php echo $comment_id; ?>" data-ratetype="like">
+    <div class="fv_tc_voting_box<?php if( get_option('comment_registration') && !is_user_logged_in() ) echo ' no-permission'; ?>">
+      <div class="fv_tc_voting fv_tc_voting_like" data-postid="<?php echo $comment_id; ?>" data-ratetype="like"<?php if( get_option('comment_registration') && !is_user_logged_in() ) echo ' title="You must be logged in to vote."'; ?>>
         <?php if( isset($options['voting_display_type']) && $options['voting_display_type'] == 'splitted' ) : ?>
           <span><?php echo $this->getLikeCount( $comment_id ); ?></span><?php endif; ?><i class="fv-tc-up-arrow"></i>
       </div>
-      <div class="fv_tc_voting fv_tc_voting_dislike" data-postid="<?php echo $comment_id; ?>" data-ratetype="dislike" >
+      <div class="fv_tc_voting fv_tc_voting_dislike" data-postid="<?php echo $comment_id; ?>" data-ratetype="dislike"<?php if( get_option('comment_registration') && !is_user_logged_in() ) echo ' title="You must be logged in to vote."'; ?>>
         <i class="fv-tc-down-arrow"></i><?php if( isset($options['voting_display_type']) && $options['voting_display_type'] == 'splitted' ) : ?>
           <span><?php echo $this->getDislikeCount($comment_id); ?></span>
         <?php endif; ?>
@@ -256,6 +270,8 @@ class FV_Comments_Voting {
       //<![CDATA[
       jQuery(document).ready(function() {
         jQuery('div.fv_tc_voting').each(function() {
+          if( jQuery(this).parents('.fv_tc_voting_box.no-permission').length > 0 ) return;
+          
           jQuery(this).click(function() {
             var thisBtn = jQuery(this);
             jQuery('div.fv_tc_voting').fadeTo('fast',0.5);
