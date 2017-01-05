@@ -848,6 +848,93 @@ class fv_tc extends fv_tc_Plugin {
       <p>
           <input type="submit" name="fv_thoughtful_comments_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
       </p>
+      
+      <h3>Stats</h3>
+      <style>
+        .half { width: 48%; float: left; margin-right: 1%}
+      </style>
+      <?php
+      
+      global $wpdb;
+      $aBestComments = $wpdb->get_results( "SELECT c.*, length(rate_like_ip) - length(replace(rate_like_ip,',','')) as votes FROM `{$wpdb->prefix}commentvoting_fvtc` as v JOIN {$wpdb->comments} as c ON v.comment_id = c.comment_id WHERE comment_date > '".date('Y-m-d', strtotime('-3days'))."' ORDER BY votes desc LIMIT 10" );
+      $aWorstComments = $wpdb->get_results( "SELECT c.*, length(rate_dislike_ip) - length(replace(rate_dislike_ip,',','')) as votes FROM `{$wpdb->prefix}commentvoting_fvtc` as v JOIN {$wpdb->comments} as c ON v.comment_id = c.comment_id WHERE comment_date > '".date('Y-m-d', strtotime('-3days'))."' ORDER BY votes desc LIMIT 10" );
+      
+      
+      function display_comment_votes( $aComments ) {
+        echo "<table class='wp-list-table widefat striped'>";
+        echo "<thead><th>Votes</th><th>Date</th><th>Author</th><th></th></thead><tbody>";
+        foreach( $aComments AS $aComment ) {                    
+          echo "<tr><td>".++$aComment->votes."</td><td style='width: 90px'><a href='".get_comment_link($aComment->comment_ID)."' target='_blank'>".get_comment_date('Y-m-d',$aComment->comment_ID)."</a></td><td>".$aComment->comment_author."</td><td>".wpautop($aComment->comment_content)."</td></tr>";
+        }
+        echo "</tbody></table>";
+      }
+      
+      
+      ?>
+      <div class='half'>
+        <h4>Best Comments in last 3 days</h4>
+        <?php display_comment_votes($aBestComments); ?>
+      </div>
+      <div class='half'>
+        <h4>Worst Comments in last 3 days</h4>
+        <?php display_comment_votes($aWorstComments); ?>
+        </div>
+      <div style='clear: both'></div>
+      <?php      
+      
+
+      function display_user_votes( $aStatsLikes, $aUsers ) {
+        echo "<ul>";
+        $iCount = 0;
+        foreach( $aStatsLikes AS $ip => $count ) {
+          $iCount++;
+          $name = isset($aUsers[$ip]) ? $aUsers[$ip]->display_name : $ip;
+          echo "<li>".$name." (".$count.")</li>";
+          if( $iCount > 10 ) break;
+        }
+        echo "</ul>";
+      }
+      
+      
+      $aData = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}commentvoting_fvtc" );
+      
+      $iCount = 0;
+      
+      $aStatsLikes = array();
+      $aStatsDislikes = array();
+      
+      foreach( $aData AS $objRow ) {
+        $iCount++;
+        foreach( json_decode($objRow->rate_like_ip) AS $ip ) {
+          $aStatsLikes[$ip] ++;
+        }
+        foreach( json_decode($objRow->rate_dislike_ip) AS $ip ) {
+          $aStatsDislikes[$ip] ++;
+        }
+        
+        //if( $iCount > 10 ) break;
+      }
+      
+      asort($aStatsLikes);
+      asort($aStatsDislikes);
+      
+      $aStatsLikes = array_reverse($aStatsLikes,true);
+      $aStatsDislikes = array_reverse($aStatsDislikes,true);
+      
+      $aIDs = array_merge( array_keys($aStatsLikes), array_keys($aStatsDislikes) );
+      $aIDs = array_map('intval',$aIDs);
+      
+      $aUsers = $wpdb->get_results( "SELECT * FROM $wpdb->users WHERE ID IN (".implode(",",$aIDs).")", OBJECT_K );
+      ?>
+      <div class='half'>
+        <h4>Users giving most positive votes</h4>
+        <?php display_user_votes($aStatsLikes, $aUsers); ?>
+      </div>
+      <div class='half'>
+        <h4>Users giving most negative votes</h4>
+        <?php display_user_votes($aStatsDislikes, $aUsers); ?>
+        </div>
+      <div style='clear: both'></div>
       <?php
     }
 
