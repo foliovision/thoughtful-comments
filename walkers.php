@@ -86,7 +86,15 @@ class FV_TC_Walker_Comment_capture extends Walker_Comment {
       $aCache['comments'] = $fv_tc->cache_comment_count;
         
       if( !current_user_can('edit_published_posts') && !$fv_tc->cache_comment_author && !isset( $_COOKIE['fv-debug'] ) ) {        
-        $res = file_put_contents( $fv_tc->cache_filename, serialize( $aCache ) );
+        $res = false;
+        $file = fopen($fv_tc->cache_filename,"w+");
+        if( flock($file,LOCK_EX) ) {
+          fwrite($file,serialize($aCache));   
+          flock($file,LOCK_UN);
+          $res = true;
+        }
+        fclose($file);
+        
         if( !$res ) {
           echo "<!--fv comments error writing into $fv_tc->cache_filename -->\n";
         } else {
