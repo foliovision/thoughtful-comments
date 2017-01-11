@@ -279,12 +279,12 @@ class fv_tc extends fv_tc_Plugin {
         echo "<!--fv comments cache - unapproved comments for $this->cache_comment_author - not serving cached data -->\n";
       }
 
-      $sType = ( !empty($wptouch_pro->is_mobile_device) && $wptouch_pro->is_mobile_device ) ? '-wptouch' : '-desktop';
+      $sType = ( ( empty($_COOKIE['wptouch-pro-view']) || $_COOKIE['wptouch-pro-view'] != 'desktop' ) && !empty($wptouch_pro->is_mobile_device) && $wptouch_pro->is_mobile_device ) ? '-wptouch' : '-desktop';
       $sType .= ( !empty($_GET['fvtc_order']) && ( $_GET['fvtc_order'] == 'desc' || $_GET['fvtc_order'] == 'asc' ) ) ? '-'.$_GET['fvtc_order'] : '-noorder';
       $sType .= ( current_user_can('read') ) ? '-subscriber' : '-guest';  //  todo: this is not the best way of doing this but the other check for edit_published_posts takes care of it
 
       $this->cache_data = false;
-      $cpage = ( isset($wp_query->query_vars) && !empty($wp_query->query_vars['cpage']) ) ? $wp_query->query_vars['cpage'] : '-1';
+      $cpage = ( isset($wp_query->query_vars) && !empty($wp_query->query_vars['cpage']) ) ? $wp_query->query_vars['cpage'] : '0';
       $this->cache_filename = $post->ID.'-'.$post->post_name.$sType.'-cpage'.$cpage.'.tmp';
       if( !file_exists(WP_CONTENT_DIR.'/cache/') ) {
         mkdir(WP_CONTENT_DIR.'/cache/');
