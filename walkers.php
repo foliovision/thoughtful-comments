@@ -68,12 +68,14 @@ class FV_TC_Walker_Comment_capture extends Walker_Comment {
     global $wp_query;
     //$output .= "<!--fv comments cache - DEBUG ".$this->count." ".$wp_query->query_vars['comments_per_page']." remainder ".($wp_query->queried_object->comment_count % $wp_query->query_vars['comments_per_page'])."-->\n";
     if(
-      $this->count == $wp_query->queried_object->comment_count ||
-      $this->count == $wp_query->query_vars['comments_per_page'] ||
-        ( $this->count == $wp_query->queried_object->comment_count % $wp_query->query_vars['comments_per_page'] &&
+      $this->count == $wp_query->queried_object->comment_count || //  shown all comments
+      get_option('page_comments') && (
+        $this->count == $wp_query->query_vars['comments_per_page'] || //  shown all comments on a page
+        ( $this->count == $wp_query->queried_object->comment_count % $wp_query->query_vars['comments_per_page'] &&  //  shown all comments on the last page
           $wp_query->query_vars['cpage'] == ceil($wp_query->queried_object->comment_count/$wp_query->query_vars['comments_per_page'])
         )
-      ) {
+      )
+    ) {
       global $fv_tc;
       
       $output .= "<!--fv comments cache - END-->\n";
