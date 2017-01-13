@@ -142,7 +142,14 @@ class FV_Comments_Voting {
         $comment_text .= "\n\nDownvotes: ".$down;
       }
       return $comment_text;
-    }    
+    }
+    
+    if( get_option('comment_registration') && !is_user_logged_in() ) {
+       
+    } else {
+      global $fv_tc;
+      $fv_tc->loadScripts = true;
+    }
     
     ob_start();
     ?>

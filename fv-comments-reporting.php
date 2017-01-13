@@ -31,6 +31,10 @@ class FV_Comments_Reporting {
     $bCommentReg = get_option( 'comment_registration' );
     
     if( $this->options['comments_reporting'] && ( !$bCommentReg || is_user_logged_in() ) ) {
+      
+      global $fv_tc;
+      $fv_tc->loadScripts = true;
+      
       // TODO show different interface for admin
       // TODO display for guest
       $button = "<a rel='nofollow' class='comment-report-link' href='#comment_report_{$comment->comment_ID}' onclick='fv_tc_report_display( {$comment->comment_ID} ); return false;'>Report</a>";

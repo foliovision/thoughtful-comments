@@ -143,7 +143,7 @@ class fv_tc extends fv_tc_Plugin {
         
         $options = get_option( 'thoughtful_comments' );
 
-        if( is_user_logged_in() || isset($options['comments_reporting']) && $options['comments_reporting'] ) {
+        if( is_user_logged_in() ) {
           $this->loadScripts = true;
         }
     }
@@ -1162,9 +1162,10 @@ class fv_tc extends fv_tc_Plugin {
     *
     * @global int Current user ID
     */
-    function scripts() {
-      wp_enqueue_script('fv_tc',$this->url. '/js/fv_tc.js',array('jquery'), $this->strVersion, true);
-      if( $this->loadScripts ) {  //  todo: only when needed
+    function scripts() {      
+      if( $this->loadScripts ) {
+        wp_enqueue_script('fv_tc',$this->url. '/js/fv_tc.js',array('jquery'), $this->strVersion, true);
+        
         wp_localize_script('fv_tc', 'fv_tc_translations', $this->get_js_translations());
         wp_localize_script('fv_tc', 'fv_tc_ajaxurl', admin_url('admin-ajax.php'));
         
@@ -1218,9 +1219,9 @@ class fv_tc extends fv_tc_Plugin {
     function styles() {
         global $post;
         //  this is executed in the header, so we can't do the check for every post on index/archive pages, so we better load styles if there are any unapproved comments to show. it's loaded even for contributors which don't need it.
-        //if(!is_admin() && current_user_can('edit_posts')) { //todo: only when needed!
+        if( is_single() && $post->comment_count > 0 || current_user_can('moderate_comments') ) {
           echo '<link rel="stylesheet" href="'.$this->url.'/css/frontend.css?ver='.$this->strVersion.'" type="text/css" media="screen" />';
-        //}
+        }
     }
 
 
