@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin.
-Version: 0.3.5.9
+Version: 0.3.5.15
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -65,7 +65,7 @@ class fv_tc extends fv_tc_Plugin {
    * Plugin version
    * @var string
    */
-  var $strVersion = '0.3.5.14';
+  var $strVersion = '0.3.5.15';
 
   /**
    * Decide if scripts will be loaded on current page
@@ -407,10 +407,10 @@ class fv_tc extends fv_tc_Plugin {
          $strReplyKeyWord = $options['tc_replyKW'];
       }
 
-      $strLink = preg_replace(
+      $sHTML = preg_replace(
          '~href="([^"]*)"~' ,
          'href="$1' . urlencode( '#' . $strReplyKeyWord . get_comment_ID() ) . '"',
-         $strLink
+         $sHTML
       );
 
       if( $options['reply_link'] ) {
@@ -697,6 +697,26 @@ class fv_tc extends fv_tc_Plugin {
               <td><label for="frontend_spam"><span><?php _e('Reveal spam comments in front-end comment list for moderators.', 'fv_tc'); ?></span></label><br />
               </td>
           </tr>
+          <?php if( get_option('comment_whitelist') ): ?>
+            <tr valign="top">
+                <th scope="row"><?php _e('Comments before auto-approval', 'fv_tc'); ?> </th>
+                <td colspan="2"><fieldset><legend class="screen-reader-text"><span><?php _e('Comments before auto-approval', 'fv_tc'); ?></span></legend>
+                <input id="comment_autoapprove_count" type="text" size="2" name="comment_autoapprove_count" value="<?php echo ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : 1; ?>" />
+                <label for="reply_link">
+                  <span><?php _e('Number of approved comments before auto-approval', 'fv_tc'); ?></span>
+                  <br />
+                  <small>(Depends on the "Comment author must have a previously approved comment" Discussion setting)</small>
+                </label>
+                </td>
+            </tr>
+          <?php endif; ?>          
+          <tr valign="top">
+              <th scope="row"><?php _e('Before a comment appears', 'fv_tc'); ?> </th>
+              <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Before a comment appears', 'fv_tc'); ?></span></legend>
+              <input id="comment_whitelist_link" type="checkbox" name="comment_whitelist_link" value="1" <?php if( isset($options['comment_whitelist_link']) && $options['comment_whitelist_link'] ) echo 'checked="checked"'; ?> /></td>
+              <td><label for="comment_whitelist_link"><span><?php _e('Comment author must have a previously approved comment if the comment contains a link', 'fv_tc'); ?></span></label><br />
+              </td>
+          </tr>          
           <tr valign="top">
               <th scope="row"><?php _e('Enable comments reporting', 'fv_tc'); ?> </th>
               <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Enable comments reporting', 'fv_tc'); ?></span></legend>
@@ -737,15 +757,6 @@ class fv_tc extends fv_tc_Plugin {
               <td><label for="reply_link"><span><?php _e('Disable HTML replies. <br /><small>(Lightens your server load. Reply function still works, but through JavaScript.)</small>', 'fv_tc'); ?></span></label><br />
               </td>
           </tr>
-          <?php if( get_option('comment_whitelist') ): ?>
-            <tr valign="top">
-                <th scope="row"><?php _e('Comments before auto-approval', 'fv_tc'); ?> </th>
-                <td colspan="2"><fieldset><legend class="screen-reader-text"><span><?php _e('Comments before auto-approval', 'fv_tc'); ?></span></legend>
-                <input id="comment_autoapprove_count" type="text" size="2" name="comment_autoapprove_count" value="<?php echo ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : 1; ?>" />
-                <label for="reply_link"><span><?php _e('Number of approved comments before auto-approval', 'fv_tc'); ?></span></label><br />
-                </td>
-            </tr>
-          <?php endif; ?>
           <tr valign="top">
             <th scope="row"><?php _e('Allow nicename change', 'fv_tc'); ?> </th>
             <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Allow nicename editing', 'fv_tc'); ?></span></legend>
@@ -1029,6 +1040,7 @@ class fv_tc extends fv_tc_Plugin {
               'user_nicename_edit' => ( isset($_POST['user_nicename_edit']) && $_POST['user_nicename_edit'] ) ? true : false,
               'comment_cache' => ( isset($_POST['comment_cache']) && $_POST['comment_cache'] ) ? true : false,
               'frontend_spam' => ( isset($_POST['frontend_spam']) && $_POST['frontend_spam'] ) ? true : false,
+              'comment_whitelist_link' => ( isset($_POST['comment_whitelist_link']) && $_POST['comment_whitelist_link'] ) ? true : false,
               'comments_reporting' => ( isset($_POST['comments_reporting']) && $_POST['comments_reporting'] ) ? true : false,
               'voting_display_type' => $_POST['voting_display_type'],
               'live_updates' => $_POST['live_updates'],
@@ -1413,7 +1425,7 @@ class fv_tc extends fv_tc_Plugin {
       preg_match( '~>(.*?)</a>~', $link[0], $text );
       if( $href[1] == $text[1] ) {
         preg_match( '!//(.+?)/!', $text[1], $domain );
-        if( $domain[1] ) {
+        if( isset($domain[1]) && $domain[1] ) {
 
           $options = get_option('thoughtful_comments');
           if( $options['shorten_urls'] === true ){
@@ -1689,9 +1701,11 @@ class fv_tc extends fv_tc_Plugin {
 
 
     function fv_tc_auto_approve_comment( $approved, $commentdata ){
-
-      //edit: whitelist has to be on to trigger this functionality
-      if( !get_option('comment_whitelist') ){
+      $options = get_option('thoughtful_comments');
+      $comment_whitelist_link = ( isset($options['comment_whitelist_link']) ) ? $options['comment_whitelist_link'] : false;
+      
+      //edit: "Comment author must have a previously approved comment" or "Comment author must have a previously approved comment if the comment contains a link" has to be on to trigger this functionality
+      if( !get_option('comment_whitelist') && !$comment_whitelist_link ){
         return $approved;
       }
 
@@ -1717,22 +1731,37 @@ class fv_tc extends fv_tc_Plugin {
         return $approved;
       }
 
-      $options = get_option('thoughtful_comments');
-      $auto_approve_count = ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : false;
-
-      //stop if auto-approve count is not set OR is less or equal 1 (comment whitelist already handle this)
-      if( !$auto_approve_count || $auto_approve_count <= 1 ){
-        return $approved;
-      }
-
-      global $wpdb;
-      $dbCount = $wpdb->get_var("SELECT count(*) FROM {$wpdb->prefix}comments WHERE comment_author = '".$commentdata['comment_author']."' AND comment_author_email = '".$commentdata['comment_author_email']."' AND comment_approved = 1");
-
-      if( $dbCount >= $auto_approve_count ) {
-        return 1;
-      } else {
+      if( get_option('comment_whitelist') ) {
+        $auto_approve_count = ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : false;
+  
+        //stop if auto-approve count is not set OR is less or equal 1 (comment whitelist already handle this)
+        if( !$auto_approve_count || $auto_approve_count <= 1 ){
+          return $approved;
+        }
+  
+        global $wpdb;        
+        $dbCount = $wpdb->get_var( $wpdb->prepare( "SELECT count(*) FROM {$wpdb->prefix}comments WHERE comment_author = %s AND comment_author_email = %s AND comment_approved = 1", $commentdata['comment_author'], $commentdata['comment_author_email'] ) );  
+        if( $dbCount >= $auto_approve_count ) {
+          return 1;
+        } else {
+          return 0;
+        }
+      
+      } else if( $comment_whitelist_link ) {
+		// if the comment has no link, just approve it
+        if( stripos($commentdata['comment_content'],'http://') === false && stripos($commentdata['comment_content'],'https://') === false ) {
+          return 1;
+        }        
+        
+        global $wpdb;
+        $ok_to_comment = $wpdb->get_var( $wpdb->prepare( "SELECT comment_approved FROM $wpdb->comments WHERE comment_author = %s AND comment_author_email = %s and comment_approved = '1' LIMIT 1", $commentdata['comment_author'], $commentdata['comment_author_email'] ) );
+        if( 1 == $ok_to_comment ) {
+          return 1;
+        }
         return 0;
+        
       }
+      
     }
 
 
@@ -1741,15 +1770,12 @@ class fv_tc extends fv_tc_Plugin {
         return;
       }
 
-      //do not add warning if this setting is disabled
-      if( !get_option('comment_whitelist') ){
-        return;
-      }
-
       $options = get_option('thoughtful_comments');
-      //do not add warning if option is not set or is set to 1
+      //do not add warning if option is not set or is set to 1, or if comment_whitelist (Comment author must have a previously approved comment) is not set
       $auto_approve_count = ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : false;
-      if( !$auto_approve_count || $auto_approve_count <= 1 ){
+      $comment_whitelist_link = ( isset($options['comment_whitelist_link']) ) ? $options['comment_whitelist_link'] : false;
+            
+      if( !$comment_whitelist_link && ( !get_option('comment_whitelist') || !$auto_approve_count || $auto_approve_count <= 1 ) ){
         return;
       }
 
@@ -1765,9 +1791,18 @@ class fv_tc extends fv_tc_Plugin {
 
     function fv_tc_override_notification_ob_end( $avatar_defaults ){
       $discussion_settings = ob_get_clean();
-      $fv_tc_link = admin_url('options-general.php?page=manage_fv_thoughtful_comments#comment_autoapprove_count');
+      $fv_tc_link = admin_url('options-general.php?page=manage_fv_thoughtful_comments');
 
-      $discussion_settings = preg_replace( '~(<input[^>]*id="comment_whitelist"[^>]*>[^<]*)~', '$1 <br/><strong>WARNING:</strong> This setting is overridden by <a href="'.$fv_tc_link.'">FV Thoughtful Comments</a> plugin.', $discussion_settings );
+      $options = get_option('thoughtful_comments');
+      //do not add warning if option is not set or is set to 1
+      $auto_approve_count = ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : false;
+      $comment_whitelist_link = ( isset($options['comment_whitelist_link']) ) ? $options['comment_whitelist_link'] : false;
+      
+      if( get_option('comment_whitelist') && $auto_approve_count > 0 ) {
+        $discussion_settings = preg_replace( '~(<input[^>]*id="comment_whitelist"[^>]*>[^<]*)~', '$1 <br/><strong>WARNING:</strong> This setting is extended by <a href="'.$fv_tc_link.'#comment_autoapprove_count">FV Thoughtful Comments</a> plugin.', $discussion_settings );
+      } else if( $comment_whitelist_link ) {
+        $discussion_settings = preg_replace( '~(<label for="comment_whitelist">[\s\S]*?</label>)~', '$1<br/><label for="comment_whitelist_link"><input type="checkbox" id="comment_whitelist_link" name="comment_whitelist_link" value="1" disabled="true" checked="checked" /> Comment author must have a previously approved comment if the comment contains a link - see <a href="'.$fv_tc_link.'#comment_whitelist_link">FV Thoughtful Comments</a> plugin.</label>', $discussion_settings );
+      }
 
       echo $discussion_settings;
       return $avatar_defaults;

@@ -64,6 +64,7 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 * Live comment updates - without excessive Ajax
 * Simple Comment Editing compatilibity with Thoughtful Comments cache
 * Added access to comment blacklist for editors - in Tools menu
+* Added "Comment author must have a previously approved comment if the comment contains a link" setting
 
 = 0.3.3 =
 * spam moderation - added option to show spam in front-end for admins. Useful mainly if your spambot spam is in trash (thanks to FV Antispam)
