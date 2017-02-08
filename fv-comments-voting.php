@@ -10,9 +10,9 @@ class FV_Comments_Voting {
       return;
     }
     
-    add_filter( 'comments_array', array($this,'prefetch') );
+    add_filter( 'comments_array', array($this,'prefetch') );    
     
-    add_filter( 'comment_text', array($this,'buttons') );
+    add_action( 'wp_head', array( $this, 'frontend_start' ) );
     
     add_action( 'wp_head', array($this,'javascript') );
     
@@ -177,6 +177,11 @@ class FV_Comments_Voting {
   }
   
   
+  public function frontend_start() {
+    add_filter( 'comment_text', array($this,'buttons'), 10001 );
+  }
+  
+  
   public function checkRow( $comment_id = NULL) {
     global $wpdb;
     if( empty($comment_id) )	$comment_id = get_comment_ID();
@@ -202,7 +207,7 @@ class FV_Comments_Voting {
           
     global $wpdb;
     $table_name = FV_Comments_Voting::get_table_name();
-    return $wpdb->get_var("SELECT rate_like_value FROM $table_name WHERE comment_id = ".$comment_id);   
+    return intval($wpdb->get_var("SELECT rate_like_value FROM $table_name WHERE comment_id = ".$comment_id));   
   }
   
   
@@ -214,7 +219,7 @@ class FV_Comments_Voting {
           
     global $wpdb;
     $table_name = FV_Comments_Voting::get_table_name();
-    return $wpdb->get_var("SELECT rate_dislike_value FROM $table_name WHERE comment_id = ".$comment_id);                    
+    return intval($wpdb->get_var("SELECT rate_dislike_value FROM $table_name WHERE comment_id = ".$comment_id));                    
   }
   
   

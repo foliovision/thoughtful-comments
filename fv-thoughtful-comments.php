@@ -1770,7 +1770,7 @@ class fv_tc extends fv_tc_Plugin {
         return $comment_text;
       }           
       
-      remove_filter( 'comment_reply_link', '__return_false' );
+      remove_filter( 'comment_reply_link', '__return_false', PHP_INT_MAX );
       
       $comment_text .= get_comment_reply_link( array(
 					'add_below' => isset($args['add_below']) ? $args['add_below'] : 'div-comment',

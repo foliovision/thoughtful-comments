@@ -251,14 +251,17 @@ class FV_Comments_Reporting {
   
   
   function frontend ($content) {
-    global  $comment;
-    $content .= $this->get_t_reports( $comment );
+    global $fv_tc;
+    if( $fv_tc->can_edit ) {
+      global  $comment;
+      $content .= $this->get_t_reports( $comment );
+    }
     return $content;
   }
   
   
   function frontend_start() {
-    add_filter( 'comment_text', array( $this, 'frontend' ), 999 );
+    add_filter( 'comment_text', array( $this, 'frontend' ), 10001 );
   }  
   
   
