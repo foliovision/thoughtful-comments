@@ -97,6 +97,8 @@ class fv_tc extends fv_tc_Plugin {
    * @string
    */
   var $cache_filename;
+  
+  var $hack_comment_wrapper = false;
 
 
   /**
@@ -450,36 +452,17 @@ class fv_tc extends fv_tc_Plugin {
     *
     * @return string Comment text with added features.
     */
-    function frontend ($content) {
-        global  $user_ID, $comment, $post;
-
-        // for performance reasons only check once!
-        if( !isset($this->can_edit) ) {
-          if( current_user_can('edit_posts') && current_user_can( 'edit_comment', $comment->comment_ID ) ) {
-            $this->can_edit = true;
-          } else {
-            $this->can_edit = false;
-          }
-        }
-
-        if( !isset($this->can_ban) ) {
-          $this->can_ban = current_user_can('moderate_comments');
-        }
-
+    function frontend ($comment_text) {
         if( !$this->can_edit ) {
-          return $content;
-        }
-
+          return $comment_text;
+        }           
         
+        global  $user_ID, $comment, $post;
         
         //$child = $this->comment_has_child($comment->comment_ID, $comment->comment_post_ID);
         /*  Container   */
-        
-        $out = '<span id="fv-tc-comment-'.$comment->comment_ID.'"></span>';
-        
-        $out .= '</div><!-- .comment-content (fvtc) -->'."\n";  //  Closing the comment DIV prematurely. Todo: what if it's a <section> tag?
-        
-        $out .= '<div class="tc-frontend">'."\n";
+        $tag = $this->hack_comment_wrapper ? $this->hack_comment_wrapper : 'div';
+        $out = '<'.$tag.' class="tc-frontend">'."\n";
         
         /* Approve comment */
         if($comment->comment_approved == '0') {
@@ -519,13 +502,24 @@ class fv_tc extends fv_tc_Plugin {
           }
         }
         
+        
+        //  No closing DIV as the existing one was closed earlier by fv_tc::hack_html_close_comment_element()
+        
         $out .= "\n";
         
-        return $content . $out;
+        return $comment_text . $out;
     }
     
     function frontend_start() {
-        add_filter( 'comment_text', array( $this, 'frontend' ), 999 );
+        if( !current_user_can('edit_posts') ) return;
+        
+        add_filter( 'get_comment_link', array( $this, 'hack_check_comment_properties' ), 10, 4 );
+        
+        add_filter( 'comment_text', array( $this, 'hack_html_close_comment_element' ), 10000 );
+        add_filter( 'comment_text', array( $this, 'frontend' ), 10002 );
+        add_filter( 'comment_text', array( $this, 'hack_replies_enable' ), 10001, 3 );
+        add_filter( 'comment_text', array( $this, 'hack_replies_disable' ), 10003 );
+        
     }
 
     function get_js_translations() {
@@ -1705,6 +1699,88 @@ class fv_tc extends fv_tc_Plugin {
           $link = preg_replace( '~/comment-page-1[$/]~', '', $link );  //  todo: make this an option, I guess!
         }
         return $link;
+    }
+    
+    
+    function hack_html_close_comment_element( $comment_text ) {
+      global $comment;
+      
+      // for performance reasons only check once!
+      if( !isset($this->can_edit) ) {
+        if( current_user_can('edit_posts') && current_user_can( 'edit_comment', $comment->comment_ID ) ) {
+          $this->can_edit = true;
+        } else {
+          $this->can_edit = false;
+        }
+      }
+
+      if( !isset($this->can_ban) ) {
+        $this->can_ban = current_user_can('moderate_comments');
+      }
+
+      if( !$this->can_edit ) {
+        return $comment_text;
+      }           
+      
+      $comment_text .= '<span id="fv-tc-comment-'.$comment->comment_ID.'"></span>';
+      
+      $tag = $this->hack_comment_wrapper ? $this->hack_comment_wrapper : 'div';
+      
+      $comment_text .= '</'.$tag.'><!-- .comment-content (fvtc) -->'."\n";  //  Closing the comment DIV prematurely. Todo: what if it's a <section> tag?
+      return $comment_text;
+    }
+    
+    
+    function hack_check_comment_properties( $link, $comment, $args, $cpage ) {
+      if( !$this->hack_comment_wrapper ) {
+        ob_start();
+        add_filter( 'comment_text', array( $this, 'hack_check_comment_wrapper' ), 0 );
+      }
+      
+      return $link;
+    }
+    
+    
+    function hack_check_comment_wrapper( $comment_text ) {
+      $sHTML = ob_get_clean();
+      
+      if( preg_match( '~<(\S+).*?>\s*?$~', $sHTML, $tag ) ) {      
+        $this->hack_comment_wrapper = trim($tag[1]);
+      }
+      
+      echo $sHTML;
+      
+      remove_filter( 'comment_text', array( $this, 'hack_check_comment_wrapper' ), 0 );
+      return $comment_text;
+    }
+    
+    
+    function hack_replies_disable( $comment_text ) {
+      if( !$this->can_edit ) {
+        return $comment_text;
+      }           
+      
+      add_filter( 'comment_reply_link', '__return_false' );
+      return $comment_text;
+    }
+    
+    
+    function hack_replies_enable( $comment_text, $comment, $args = false ) {
+      if( !$this->can_edit ) {
+        return $comment_text;
+      }           
+      
+      remove_filter( 'comment_reply_link', '__return_false' );
+      
+      $comment_text .= get_comment_reply_link( array(
+					'add_below' => isset($args['add_below']) ? $args['add_below'] : 'div-comment',
+					'depth'     => isset($args['depth']) ? $args['depth'] : 1,
+					'max_depth' => get_option('thread_comments_depth'),
+					'before'    => '<div class="reply wtf">',
+					'after'     => '</div>'
+				) );
+      
+      return $comment_text;
     }
 
 
