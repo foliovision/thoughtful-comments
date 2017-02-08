@@ -65,7 +65,7 @@ class fv_tc extends fv_tc_Plugin {
    * Plugin version
    * @var string
    */
-  var $strVersion = '0.3.5.15';
+  var $strVersion = '0.3.5.16.4';
 
   /**
    * Decide if scripts will be loaded on current page
@@ -470,11 +470,19 @@ class fv_tc extends fv_tc_Plugin {
           return $content;
         }
 
-        $reports_out = $fvcrep->get_t_reports( $comment );
+        
         
         //$child = $this->comment_has_child($comment->comment_ID, $comment->comment_post_ID);
         /*  Container   */
-        $out = '<p class="tc-frontend">';
+        
+        $out = '<span id="fv-tc-comment-'.$comment->comment_ID.'"></span>';
+        
+        $out .= '</div><!-- .comment-content (fvtc) -->'."\n";  //  Closing the comment DIV prematurely. Todo: what if it's a <section> tag?
+        
+        $out .= $fvcrep->get_t_reports( $comment );
+        
+        $out .= '<div class="tc-frontend">'."\n";
+        
         /* Approve comment */
         if($comment->comment_approved == '0') {
           $out .= '<span id="comment-'.$comment->comment_ID.'-approve">'.$this->get_t_approve($comment).' </span>';
@@ -496,7 +504,7 @@ class fv_tc extends fv_tc_Plugin {
               $out .= $this->get_t_delete_ban($comment);//.' | ';
               /*  Delete thread and ban   */
               //if($child>0)
-              $out .= ' | '.$this->get_t_delete_thread_ban($comment);
+              $out .= $this->get_t_delete_thread_ban($comment);
           } else {
               $out .= 'IP '.$comment->comment_author_IP.' ';
               $out .= "<a href='" . admin_url( 'tools.php?page=fv_thoughtful_comments' ) . "'>" . __('already banned!', 'fv_tc' ) . "</a>";
@@ -504,20 +512,22 @@ class fv_tc extends fv_tc_Plugin {
         }
 
         /*  Moderation status   */
-        $user_info = ( isset($comment->user_id) && $comment->user_id > 0 ) ? get_userdata($comment->user_id) : false;
-        if( current_user_can("moderate_comments") && $user_info && $user_info->user_level < 3) {
-            $out .= '<br />'.$this->get_t_moderated($comment->user_id);
-        } else if( $user_info && $user_info->user_level >= 3 ) {
-            $out .= '<br /><abbr title="' . __('Comments from this user level are automatically approved', 'fv_tc') . '">' . __('Power user', 'fv_tc') . '</a>';
+        if( get_option('comment_moderation') ) {
+          $user_info = ( isset($comment->user_id) && $comment->user_id > 0 ) ? get_userdata($comment->user_id) : false;
+          if( current_user_can("moderate_comments") && $user_info && $user_info->user_level < 3) {
+              $out .= '<br />'.$this->get_t_moderated($comment->user_id);
+          } else if( $user_info && $user_info->user_level >= 3 ) {
+              $out .= '<br />'.'<abbr title="' . __('Comments from this user level are automatically approved', 'fv_tc') . '">' . __('Power user', 'fv_tc') . '</a>';
+          }
         }
-        $out .= '</p>';
-        $out .= '<span id="fv-tc-comment-'.$comment->comment_ID.'"></span>';
         
-        return $content . $reports_out . $out;
+        $out .= "\n";
+        
+        return $content . $out;
     }
     
     function frontend_start() {
-        add_filter( 'comment_text', array( $this, 'frontend' ) );
+        add_filter( 'comment_text', array( $this, 'frontend' ), 999 );
     }
 
     function get_js_translations() {
@@ -600,7 +610,7 @@ class fv_tc extends fv_tc_Plugin {
      * @return string HTML of the anchor
      */
     function get_t_delete_thread_ban($comment) {
-        return '<a href="#" class="fc-tc-banthread" onclick="fv_tc_delete_thread_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Trash Thread & Ban IP','fv_tc') . '</a>';
+        return '<a href="#" class="fv-tc-banthread" onclick="fv_tc_delete_thread_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Trash Thread & Ban IP','fv_tc') . '</a>';
     }
     
 

@@ -63,12 +63,9 @@
 .fv_tc_voting_dislike {
 	padding: 0 0 0 4px;
 }
-div.fv_tc_voting_box {
-	margin: 0 0 10px;
-	padding: 5px 0;
+div.fv_tc_voting_box {	
 	min-width: 120px;
-	display: inline-block;
-	float: left;
+	display: inline-block;	
 }
 .fv_tc_voting {
 	color: #ababab;
