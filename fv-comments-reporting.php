@@ -21,6 +21,8 @@ class FV_Comments_Reporting {
     add_filter( 'comments_array', array( $this, 'cache' ) );
         
     add_filter( 'fv_tc_report', array( $this, 'show_frontend' ), 11, 4 );
+    
+    add_action( 'wp_head', array( $this, 'frontend_start' ) );
         
     $this->options =  get_option('thoughtful_comments');
   }
@@ -30,7 +32,7 @@ class FV_Comments_Reporting {
     
     $bCommentReg = get_option( 'comment_registration' );
     
-    if( $this->options['comments_reporting'] && ( !$bCommentReg || is_user_logged_in() ) ) {
+    if( isset($this->options['comments_reporting']) && $this->options['comments_reporting'] && ( !$bCommentReg || is_user_logged_in() ) ) {
       
       global $fv_tc;
       $fv_tc->loadScripts = true;
@@ -246,6 +248,18 @@ class FV_Comments_Reporting {
       )
     );
   }
+  
+  
+  function frontend ($content) {
+    global  $comment;
+    $content .= $this->get_t_reports( $comment );
+    return $content;
+  }
+  
+  
+  function frontend_start() {
+    add_filter( 'comment_text', array( $this, 'frontend' ), 999 );
+  }  
   
   
   function fv_tc_report() {

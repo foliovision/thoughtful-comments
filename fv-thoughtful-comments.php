@@ -451,7 +451,7 @@ class fv_tc extends fv_tc_Plugin {
     * @return string Comment text with added features.
     */
     function frontend ($content) {
-        global  $user_ID, $comment, $post, $fvcrep;
+        global  $user_ID, $comment, $post;
 
         // for performance reasons only check once!
         if( !isset($this->can_edit) ) {
@@ -478,8 +478,6 @@ class fv_tc extends fv_tc_Plugin {
         $out = '<span id="fv-tc-comment-'.$comment->comment_ID.'"></span>';
         
         $out .= '</div><!-- .comment-content (fvtc) -->'."\n";  //  Closing the comment DIV prematurely. Todo: what if it's a <section> tag?
-        
-        $out .= $fvcrep->get_t_reports( $comment );
         
         $out .= '<div class="tc-frontend">'."\n";
         
