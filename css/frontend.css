@@ -165,6 +165,7 @@ body.logged-in .fv_cp_hidden > .fv-cp-comment-show {
 	right: 0;
 	top: 7px;
 	color: #aaa;
+  text-decoration: none;
 }
 .fc-tc-closereport:before {
 	font: normal 20px/1 'dashicons';

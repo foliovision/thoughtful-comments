@@ -1760,7 +1760,7 @@ class fv_tc extends fv_tc_Plugin {
         return $comment_text;
       }           
       
-      add_filter( 'comment_reply_link', '__return_false' );
+      add_filter( 'comment_reply_link', '__return_false', PHP_INT_MAX );
       return $comment_text;
     }
     
@@ -1776,7 +1776,7 @@ class fv_tc extends fv_tc_Plugin {
 					'add_below' => isset($args['add_below']) ? $args['add_below'] : 'div-comment',
 					'depth'     => isset($args['depth']) ? $args['depth'] : 1,
 					'max_depth' => get_option('thread_comments_depth'),
-					'before'    => '<div class="reply wtf">',
+					'before'    => '<div class="reply">',
 					'after'     => '</div>'
 				) );
       

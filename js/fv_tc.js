@@ -255,7 +255,7 @@ function fv_tc_report_front_close ( id ) {
 
 jQuery('.comment').each( function() {
   if( jQuery(this).find('ul.children').length == 0 ) {
-    jQuery(this).find('.fv-tc-delthread, .fc-tc-banthread').remove();
+    jQuery(this).find('.fv-tc-delthread, .fv-tc-banthread').remove();
   }
 });
 
