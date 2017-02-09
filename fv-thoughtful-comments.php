@@ -1735,7 +1735,7 @@ class fv_tc extends fv_tc_Plugin {
       $tag = $this->hack_comment_wrapper ? $this->hack_comment_wrapper : 'div';
       
       $comment_text .= '</'.$tag.'><!-- .comment-content (fvtc) -->'."\n";
-      $comment_text .= '<div class="clear clear-fix">'."\n";
+      $comment_text .= '<div class="fv-tc-wrapper">'."\n";
       
       return $comment_text;
     }
