@@ -862,6 +862,13 @@ class fv_tc extends fv_tc_Plugin {
           <input type="submit" name="fv_thoughtful_comments_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
       </p>
       
+      <?php
+      global $wpdb;
+      if( $wpdb->get_var("SELECT count(*) FROM {$wpdb->prefix}commentvoting_fvtc") == 0 ) {
+        return;
+      }
+      ?>
+      
       <h3>Stats</h3>
       <style>
         .half { width: 48%; float: left; margin-right: 1%}
@@ -910,45 +917,46 @@ class fv_tc extends fv_tc_Plugin {
       
       
       $aData = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}commentvoting_fvtc" );
-      
-      $iCount = 0;
-      
-      $aStatsLikes = array();
-      $aStatsDislikes = array();
-      
-      foreach( $aData AS $objRow ) {
-        $iCount++;
-        foreach( json_decode($objRow->rate_like_ip) AS $ip ) {
-          $aStatsLikes[$ip] ++;
-        }
-        foreach( json_decode($objRow->rate_dislike_ip) AS $ip ) {
-          $aStatsDislikes[$ip] ++;
+      if( count($aData) ) {
+        $iCount = 0;
+        
+        $aStatsLikes = array();
+        $aStatsDislikes = array();
+        
+        foreach( $aData AS $objRow ) {
+          $iCount++;
+          foreach( json_decode($objRow->rate_like_ip) AS $ip ) {
+            $aStatsLikes[$ip] ++;
+          }
+          foreach( json_decode($objRow->rate_dislike_ip) AS $ip ) {
+            $aStatsDislikes[$ip] ++;
+          }
+          
+          //if( $iCount > 10 ) break;
         }
         
-        //if( $iCount > 10 ) break;
-      }
-      
-      asort($aStatsLikes);
-      asort($aStatsDislikes);
-      
-      $aStatsLikes = array_reverse($aStatsLikes,true);
-      $aStatsDislikes = array_reverse($aStatsDislikes,true);
-      
-      $aIDs = array_merge( array_keys($aStatsLikes), array_keys($aStatsDislikes) );
-      $aIDs = array_map('intval',$aIDs);
-      
-      $aUsers = $wpdb->get_results( "SELECT * FROM $wpdb->users WHERE ID IN (".implode(",",$aIDs).")", OBJECT_K );
-      ?>
-      <div class='half'>
-        <h4>Users giving most positive votes</h4>
-        <?php display_user_votes($aStatsLikes, $aUsers); ?>
-      </div>
-      <div class='half'>
-        <h4>Users giving most negative votes</h4>
-        <?php display_user_votes($aStatsDislikes, $aUsers); ?>
+        asort($aStatsLikes);
+        asort($aStatsDislikes);
+        
+        $aStatsLikes = array_reverse($aStatsLikes,true);
+        $aStatsDislikes = array_reverse($aStatsDislikes,true);
+        
+        $aIDs = array_merge( array_keys($aStatsLikes), array_keys($aStatsDislikes) );
+        $aIDs = array_map('intval',$aIDs);
+        
+        $aUsers = $wpdb->get_results( "SELECT * FROM $wpdb->users WHERE ID IN (".implode(",",$aIDs).")", OBJECT_K );
+        ?>
+        <div class='half'>
+          <h4>Users giving most positive votes</h4>
+          <?php display_user_votes($aStatsLikes, $aUsers); ?>
         </div>
-      <div style='clear: both'></div>
-      <?php
+        <div class='half'>
+          <h4>Users giving most negative votes</h4>
+          <?php display_user_votes($aStatsDislikes, $aUsers); ?>
+          </div>
+        <div style='clear: both'></div>
+        <?php
+      }
     }
 
     function fv_tc_admin_comment_instructions(){
@@ -1726,7 +1734,9 @@ class fv_tc extends fv_tc_Plugin {
       
       $tag = $this->hack_comment_wrapper ? $this->hack_comment_wrapper : 'div';
       
-      $comment_text .= '</'.$tag.'><!-- .comment-content (fvtc) -->'."\n";  //  Closing the comment DIV prematurely. Todo: what if it's a <section> tag?
+      $comment_text .= '</'.$tag.'><!-- .comment-content (fvtc) -->'."\n";
+      $comment_text .= '<div class="clear clear-fix">'."\n";
+      
       return $comment_text;
     }
     
@@ -1779,6 +1789,8 @@ class fv_tc extends fv_tc_Plugin {
 					'before'    => '<div class="reply">',
 					'after'     => '</div>'
 				) );
+      
+      $comment_text .= '</div><!-- .clear.clear-fix -->'."\n";
       
       return $comment_text;
     }
