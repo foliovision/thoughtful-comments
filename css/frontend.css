@@ -9,11 +9,13 @@
 	color: white;
 	padding: 3px;
 }
+.fv-tc-wrapper,
 .tc-frontend {
 	font-size: 80%;
 	clear: both;
 	display: block;
-	min-height: 18px;
+	min-height: 22px;
+	margin-bottom: 10px;
 }
 .tc-frontend a {
 	margin-right: 6px;
@@ -123,6 +125,9 @@ div.fv_tc_voting_box > div.fv_tc_voting {
 }
 div.fv_tc_voting_box.no-permission > div.fv_tc_voting {
   cursor: not-allowed;
+}
+.fv_tc_voting_box + .reply {
+	margin-top: 0;
 }
 .fv_tc_voting_box + .reply .comment-reply-link {
 	float: left;
