@@ -261,7 +261,7 @@ class FV_Comments_Reporting {
   
   
   function frontend_start() {
-    add_filter( 'comment_text', array( $this, 'frontend' ), 10001 );
+    add_filter( 'comment_text', array( $this, 'frontend' ), 9999 );
   }  
   
   
