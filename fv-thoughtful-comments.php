@@ -1785,7 +1785,7 @@ class fv_tc extends fv_tc_Plugin {
       $comment_text .= get_comment_reply_link( array(
 					'add_below' => isset($args['add_below']) ? $args['add_below'] : 'div-comment',
 					'depth'     => isset($args['depth']) ? $args['depth'] : 1,
-					'max_depth' => get_option('thread_comments_depth'),
+					'max_depth' => get_option('thread_comments') ? get_option('thread_comments_depth') : -1,
 					'before'    => '<div class="reply">',
 					'after'     => '</div>'
 				) );
