@@ -252,7 +252,7 @@ class FV_Comments_Reporting {
   
   function frontend ($content) {
     global $fv_tc;
-    if( $fv_tc->can_edit ) {
+    if( isset($fv_tc->can_edit) && $fv_tc->can_edit ) {
       global  $comment;
       $content .= $this->get_t_reports( $comment );
     }

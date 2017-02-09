@@ -122,7 +122,7 @@ class FV_Comments_Voting {
   }
   
   
-  function buttons( $comment_text ) {
+  function buttons( $comment_text = false ) {
     if( isset($_GET['json']) ) {
       return $comment_text;
     }
@@ -177,8 +177,17 @@ class FV_Comments_Voting {
   }
   
   
+  function buttons_before( $reply_html ) {
+    return $this->buttons().$reply_html;
+  }
+  
+  
   public function frontend_start() {
-    add_filter( 'comment_text', array($this,'buttons'), 10001 );
+    if( get_option('thread_comments') ) {
+      add_filter( 'comment_reply_link', array($this,'buttons_before') );
+    } else {
+      add_filter( 'comment_text', array($this,'buttons'), 10001 );
+    }
   }
   
   
