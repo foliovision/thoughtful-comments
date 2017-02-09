@@ -847,8 +847,8 @@ class fv_tc extends fv_tc_Plugin {
           <td>
             <select name="voting_display_type">
               <option value="off" <?php if( !isset($options['voting_display_type']) || $options['voting_display_type']=='off' ) echo 'selected="selected"'; ?>>Off</option>
-              <option value="compact" <?php if( isset($options['voting_display_type']) && $options['voting_display_type']=='compact' ) echo 'selected="selected"'; ?>>Compact mode</option>
-              <option value="splitted" <?php if( isset($options['voting_display_type']) && $options['voting_display_type']=='splitted' ) echo 'selected="selected"'; ?>>Splitted mode</option>
+              <option value="compact" <?php if( isset($options['voting_display_type']) && $options['voting_display_type']=='compact' ) echo 'selected="selected"'; ?>>Single Score</option>
+              <option value="splitted" <?php if( isset($options['voting_display_type']) && $options['voting_display_type']=='splitted' ) echo 'selected="selected"'; ?>>Dual Score</option>
             </select>
             <p class="description">
                 <?php echo __('Campact mode: Like and Dislike results will be grouped and displayed as a difference','fv_tc'); ?>
