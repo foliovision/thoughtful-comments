@@ -11,6 +11,9 @@
 }
 .tc-frontend {
 	font-size: 80%;
+	clear: both;
+	display: block;
+	min-height: 18px;
 }
 .tc-frontend a {
 	margin-right: 6px;
@@ -19,6 +22,7 @@
 	box-shadow: 		none !important;
 	text-decoration: none !important;
 	border-bottom: none !important;
+	display: inline-block;
 }
 .tc-frontend a:before {
 	-webkit-font-smoothing: antialiased;
@@ -64,8 +68,8 @@
 	padding: 0 0 0 4px;
 }
 div.fv_tc_voting_box {	
-	min-width: 120px;
-	display: inline-block;	
+	margin-right: 12px;
+	float: left;
 }
 .fv_tc_voting {
 	color: #ababab;
@@ -87,7 +91,6 @@ div.fv_tc_voting_box {
 	background: url("images/voting-arrows.png") no-repeat left top;
 	margin: 0 3px;
 }
-
 .fv_tc_voting_box .fv_tc_voting_dislike i:before {
 	background-position: left bottom;
 }
@@ -120,6 +123,16 @@ div.fv_tc_voting_box > div.fv_tc_voting {
 }
 div.fv_tc_voting_box.no-permission > div.fv_tc_voting {
   cursor: not-allowed;
+}
+.fv_tc_voting_box + .reply .comment-reply-link {
+	float: left;
+}
+.fv_tc_voting_box + .reply .comment-report-link {
+	float: right;
+	color: #666;
+}
+.fv_tc_voting_box + .reply .comment-report-link:hover {
+	color: #fff;
 }
 
 .fv_cp_hidden > article > .comment-content, .fv_cp_hidden > article > .reply,
