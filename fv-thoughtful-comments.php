@@ -740,16 +740,13 @@ class fv_tc extends fv_tc_Plugin {
       <table class="optiontable form-table">
           <tr valign="top">
               <th scope="row"><?php _e('Automatic link shortening', 'fv_tc'); ?>:
-              <br/>
-              <select type="select" id="shorten_urls" name="shorten_urls">
+              </th>
+              <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Link shortening', 'fv_tc'); ?></span></legend>
+              <td><select type="select" id="shorten_urls" name="shorten_urls">
                 <option value="0" <?php if($options['shorten_urls'] === true) echo "selected"; ?> >link to domain.com</option>
                 <option value="50" <?php if($options['shorten_urls'] === 50) echo "selected"; ?> >Shorten to 50 characters</option>
                 <option value="100" <?php if($options['shorten_urls'] === false) echo "selected"; ?> >Shorten to 100 characters</option>
-              </select>
-              </th>
-              <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Link shortening', 'fv_tc'); ?></span></legend>
-
-              <td><label for="shorten_urls"><span><?php _e('Shortens the plain URL link text in comments to "link to: domain.com" or strip URL after N characters and add &hellip; at the end. Hides long ugly URLs', 'fv_tc'); ?></span></label><br />
+              </select><br /><label for="shorten_urls"><span><?php _e('Shortens the plain URL link text in comments to "link to: domain.com" or strip URL after N characters and add &hellip; at the end. Hides long ugly URLs', 'fv_tc'); ?></span></label><br />
               </td>
           </tr>
           <tr valign="top">
@@ -772,9 +769,8 @@ class fv_tc extends fv_tc_Plugin {
           if( isset( $bCommentReg ) && 1 == $bCommentReg ) { ?>
           <tr valign="top">
               <th scope="row"><?php _e('Reply link Keyword', 'fv_tc'); ?> </th>
-              <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Reply link', 'fv_tc'); ?></span></legend>
-              <input id="tc_replyKW" type="text" name="tc_replyKW" size="10" value="<?php if( isset( $options['tc_replyKW'] ) ) echo $options['tc_replyKW']; else echo 'comment-'; ?>" /></td>
-              <td><label for="tc_replyKW"><span><?php _e('<strong>Advanced!</strong> Only change this if your "Log in to Reply" link doesn\'t bring the commenter back to the comment they wanted to comment on after logging in.', 'fv_tc'); ?></span></label><br />
+              <td style="margin-bottom: 0; width: 11px; padding-right: 2px;"><fieldset><legend class="screen-reader-text"><span><?php _e('Reply link', 'fv_tc'); ?></span></legend></td>
+              <td><input id="tc_replyKW" type="text" name="tc_replyKW" size="10" value="<?php if( isset( $options['tc_replyKW'] ) ) echo $options['tc_replyKW']; else echo 'comment-'; ?>" /><br /><label for="tc_replyKW"><span><?php _e('<strong>Advanced!</strong> Only change this if your "Log in to Reply" link doesn\'t bring the commenter back to the comment they wanted to comment on after logging in.', 'fv_tc'); ?></span></label><br />
               </td>
           </tr>
           <?php } ?>
