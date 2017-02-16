@@ -6,7 +6,7 @@ class FV_Comments_Reporting {
   
   function __construct() {
     add_action( 'admin_menu', array( $this, 'admin_menu' ) );
-    add_filter( 'comment_reply_link', array( $this, 'add_frontend' ), 11, 4 );
+    add_filter( 'comment_reply_link', array( $this, 'add_frontend' ), 11, 4 );  //  report button
     add_filter( 'nonce_life', array( $this, 'nonce_life' ) );
     
     add_action( 'deleted_comment', array( $this, 'delete_report' ) );
@@ -22,7 +22,7 @@ class FV_Comments_Reporting {
         
     add_filter( 'fv_tc_report', array( $this, 'show_frontend' ), 11, 4 );
     
-    add_action( 'wp_head', array( $this, 'frontend_start' ) );
+    add_action( 'wp_head', array( $this, 'frontend_start' ) );  //  list of reports for admin
         
     $this->options =  get_option('thoughtful_comments');
   }

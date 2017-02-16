@@ -415,8 +415,7 @@ class fv_tc extends fv_tc_Plugin {
          $sHTML
       );
 
-      if( $options['reply_link'] ) {
-        $noscript = '<noscript>' . __('Reply link does not work in your browser because JavaScript is disabled.', 'fv_tc') . '<br /></noscript>';
+      if( $options['reply_link'] ) {        
         $sHTML = str_replace( '<div class="reply">', '<div class="reply">'.$noscript, $sHTML );
         
         $sHTML = preg_replace( '~(<a[^>]*?class=[\'"]comment-reply[^>]*?)href[^>]*?onclick~' , '$1href="#respond" onclick' , $sHTML );
@@ -511,15 +510,14 @@ class fv_tc extends fv_tc_Plugin {
     }
     
     function frontend_start() {
-        if( !current_user_can('edit_posts') ) return;
+        add_filter( 'get_comment_link', array( $this, 'hack_check_comment_properties' ), 10, 4 ); //  figure out what element is comment_text wrapped in      
         
-        add_filter( 'get_comment_link', array( $this, 'hack_check_comment_properties' ), 10, 4 );
+        add_filter( 'comment_text', array( $this, 'hack_replies_disable' ), 10003 );  //  disabling the comment reply button as it's displayed by this plugin in comment_text
+        add_filter( 'comment_text', array( $this, 'hack_replies_enable' ), 10001, 3 );  //  show the new reply button
         
-        add_filter( 'comment_text', array( $this, 'hack_html_close_comment_element' ), 10000 );
-        add_filter( 'comment_text', array( $this, 'frontend' ), 10002 );
-        add_filter( 'comment_text', array( $this, 'hack_replies_enable' ), 10001, 3 );
-        add_filter( 'comment_text', array( $this, 'hack_replies_disable' ), 10003 );
-        
+        //  appends the moderation buttons into a new sibling element of where comment_text is
+        add_filter( 'comment_text', array( $this, 'hack_html_close_comment_element' ), 20000 );
+        add_filter( 'comment_text', array( $this, 'frontend' ), 20001 );
     }
 
     function get_js_translations() {
@@ -1709,7 +1707,7 @@ class fv_tc extends fv_tc_Plugin {
     function hack_html_close_comment_element( $comment_text ) {
       global $comment;
       
-      // for performance reasons only check once!
+      // figure out the user permission, for performance reasons only check once!
       if( !isset($this->can_edit) ) {
         if( current_user_can('edit_posts') && current_user_can( 'edit_comment', $comment->comment_ID ) ) {
           $this->can_edit = true;
@@ -1724,21 +1722,18 @@ class fv_tc extends fv_tc_Plugin {
 
       if( !$this->can_edit ) {
         return $comment_text;
-      }           
-      
-      $comment_text .= '<span id="fv-tc-comment-'.$comment->comment_ID.'"></span>';
+      }
       
       $tag = $this->hack_comment_wrapper ? $this->hack_comment_wrapper : 'div';
       
-      $comment_text .= '</'.$tag.'><!-- .comment-content (fvtc) -->'."\n";
-      $comment_text .= '<div class="fv-tc-wrapper">'."\n";
+      $comment_text .= "\n".'</'.$tag.'><!-- .comment-content (fvtc) -->'."\n";
       
       return $comment_text;
     }
     
     
     function hack_check_comment_properties( $link, $comment, $args, $cpage ) {
-      if( !$this->hack_comment_wrapper ) {
+      if( !$this->hack_comment_wrapper ) {  //  making sure it only executed once
         ob_start();
         add_filter( 'comment_text', array( $this, 'hack_check_comment_wrapper' ), 0 );
       }
@@ -1756,29 +1751,21 @@ class fv_tc extends fv_tc_Plugin {
       
       echo $sHTML;
       
-      remove_filter( 'comment_text', array( $this, 'hack_check_comment_wrapper' ), 0 );
+      remove_filter( 'comment_text', array( $this, 'hack_check_comment_wrapper' ), 0 ); //  making sure it only executed once
       return $comment_text;
     }
     
     
     function hack_replies_disable( $comment_text ) {
-      if( !$this->can_edit ) {
-        return $comment_text;
-      }           
-      
       add_filter( 'comment_reply_link', '__return_false', PHP_INT_MAX );
       return $comment_text;
     }
     
     
     function hack_replies_enable( $comment_text, $comment, $args = false ) {
-      if( !$this->can_edit ) {
-        return $comment_text;
-      }           
-      
       remove_filter( 'comment_reply_link', '__return_false', PHP_INT_MAX );
       
-      $comment_text .= get_comment_reply_link( array(
+      $reply_button = get_comment_reply_link( array(
 					'add_below' => isset($args['add_below']) ? $args['add_below'] : 'div-comment',
 					'depth'     => isset($args['depth']) ? $args['depth'] : 1,
 					'max_depth' => get_option('thread_comments') ? get_option('thread_comments_depth') : -1,
@@ -1786,7 +1773,9 @@ class fv_tc extends fv_tc_Plugin {
 					'after'     => '</div>'
 				) );
       
-      $comment_text .= '</div><!-- .clear.clear-fix -->'."\n";
+      if( $reply_button ) $comment_text .= '<div class="fv_tc_wrapper">'.$reply_button.'</div>';
+      
+      //$comment_text .= '</div><!-- .clear.clear-fix -->'."\n";
       
       return $comment_text;
     }
@@ -2028,6 +2017,10 @@ class fv_tc extends fv_tc_Plugin {
         $this->write_count_json( $comment->comment_post_ID );
       }
     }
+    
+    function noscript_notice() {
+      echo '<noscript>' . __('Reply link does not work in your browser because JavaScript is disabled.', 'fv_tc') . '<br /></noscript>';
+    }
 
 }
 $fv_tc = new fv_tc;
@@ -2150,5 +2143,6 @@ add_filter( 'pre_option_comment_order', array( $fv_tc, 'comment_order' ) );
 add_action( 'fv_tc_controls', array( $fv_tc, 'fv_tc_comment_sorting' ) );
 add_action( 'comment_post', array( $fv_tc, 'comment_post_to_count_json' ), 10, 2 );
 
+add_action( 'comment_form_top', array( $fv_tc, 'noscript_notice' ), 10, 2 );
 
 endif;  //  class_exists('fv_tc_Plugin')
