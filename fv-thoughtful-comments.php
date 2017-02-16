@@ -1473,6 +1473,13 @@ class fv_tc extends fv_tc_Plugin {
 
         return $content;
     }
+    
+    function comment_class( $classes, $class, $comment_ID, $comment, $post_id ) {
+        if( $this->can_edit && $comment->comment_approved == 0 ) {
+          $classes[] = 'unapproved';
+        }
+        return $classes;
+    }
 
     function stc_comment_deleted() {
         global $wp_subscribe_reloaded;
@@ -1983,6 +1990,10 @@ class fv_tc extends fv_tc_Plugin {
 
       return $value;
     }
+    
+    function noscript_notice() {
+      echo '<noscript>' . __('Reply link does not work in your browser because JavaScript is disabled.', 'fv_tc') . '<br /></noscript>';
+    }    
 
     function write_count_json( $post_id ) {
       global $blog_id;
@@ -2016,10 +2027,6 @@ class fv_tc extends fv_tc_Plugin {
         $comment = get_comment( $comment_ID );
         $this->write_count_json( $comment->comment_post_ID );
       }
-    }
-    
-    function noscript_notice() {
-      echo '<noscript>' . __('Reply link does not work in your browser because JavaScript is disabled.', 'fv_tc') . '<br /></noscript>';
     }
 
 }
@@ -2144,5 +2151,6 @@ add_action( 'fv_tc_controls', array( $fv_tc, 'fv_tc_comment_sorting' ) );
 add_action( 'comment_post', array( $fv_tc, 'comment_post_to_count_json' ), 10, 2 );
 
 add_action( 'comment_form_top', array( $fv_tc, 'noscript_notice' ), 10, 2 );
+add_filter( 'comment_class', array( $fv_tc, 'comment_class' ), 10, 5 );
 
 endif;  //  class_exists('fv_tc_Plugin')
