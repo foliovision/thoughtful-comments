@@ -99,6 +99,10 @@ class fv_tc extends fv_tc_Plugin {
   var $cache_filename;
   
   var $hack_comment_wrapper = false;
+  
+  var $can_edit = false;
+  
+  var $can_ban = false;
 
 
   /**
@@ -479,7 +483,7 @@ class fv_tc extends fv_tc_Plugin {
 
         if( $this->can_ban ) {
           /*  If IP isn't banned  */
-          if(stripos(trim(get_option('blacklist_keys')),$comment->comment_author_IP)===FALSE) {
+          if(stripos(get_option('blacklist_keys'),$comment->comment_author_IP)===FALSE) {
               /*  Delete and ban  */
               $out .= $this->get_t_delete_ban($comment);//.' | ';
               /*  Delete thread and ban   */
@@ -510,14 +514,29 @@ class fv_tc extends fv_tc_Plugin {
     }
     
     function frontend_start() {
-        add_filter( 'get_comment_link', array( $this, 'hack_check_comment_properties' ), 10, 4 ); //  figure out what element is comment_text wrapped in      
+        $this->max_depth = get_option('thread_comments') ? get_option('thread_comments_depth') : -1;
         
-        add_filter( 'comment_text', array( $this, 'hack_replies_disable' ), 10003 );  //  disabling the comment reply button as it's displayed by this plugin in comment_text
-        add_filter( 'comment_text', array( $this, 'hack_replies_enable' ), 10001, 3 );  //  show the new reply button
+        add_filter( 'pre_option_thread_comments_depth', '__return_zero' );  //  disabling the standard reply buttons!
+        add_filter( 'comment_text', array( $this, 'reply_button' ), 10001, 3 );  //  show the new reply button
         
-        //  appends the moderation buttons into a new sibling element of where comment_text is
-        add_filter( 'comment_text', array( $this, 'hack_html_close_comment_element' ), 20000 );
-        add_filter( 'comment_text', array( $this, 'frontend' ), 20001 );
+        //  setup permissions, but don't slow down guests users
+        if( is_singular() && is_user_logged_in() ) {
+          global $post;
+          if( current_user_can('moderate_comments') || $post->post_author == get_current_user_id() && current_user_can('edit_posts') ) {  //  only author of the post or editor can moderate comments
+            $this->can_edit = true;
+          }
+          $this->can_ban = current_user_can('moderate_comments');
+        
+          if( $this->can_edit ) {
+            add_filter( 'get_comment_link', array( $this, 'hack_check_comment_properties' ), 10, 4 ); //  figure out what element is comment_text wrapped in
+            
+            //  appends the moderation buttons into a new sibling element of where comment_text is
+            add_filter( 'comment_text', array( $this, 'hack_html_close_comment_element' ), 20000 );
+            add_filter( 'comment_text', array( $this, 'frontend' ), 20001 );
+          }
+        }
+        
+        
     }
 
     function get_js_translations() {
@@ -1713,20 +1732,6 @@ class fv_tc extends fv_tc_Plugin {
     
     function hack_html_close_comment_element( $comment_text ) {
       global $comment;
-      
-      // figure out the user permission, for performance reasons only check once!
-      if( !isset($this->can_edit) ) {
-        if( current_user_can('edit_posts') && current_user_can( 'edit_comment', $comment->comment_ID ) ) {
-          $this->can_edit = true;
-        } else {
-          $this->can_edit = false;
-        }
-      }
-
-      if( !isset($this->can_ban) ) {
-        $this->can_ban = current_user_can('moderate_comments');
-      }
-
       if( !$this->can_edit ) {
         return $comment_text;
       }
@@ -1763,26 +1768,17 @@ class fv_tc extends fv_tc_Plugin {
     }
     
     
-    function hack_replies_disable( $comment_text ) {
-      add_filter( 'comment_reply_link', '__return_false', PHP_INT_MAX );
-      return $comment_text;
-    }
-    
-    
-    function hack_replies_enable( $comment_text, $comment, $args = false ) {
-      remove_filter( 'comment_reply_link', '__return_false', PHP_INT_MAX );
+    function reply_button( $comment_text, $comment, $args = false ) {      
       
       $reply_button = get_comment_reply_link( array(
 					'add_below' => isset($args['add_below']) ? $args['add_below'] : 'div-comment',
 					'depth'     => isset($args['depth']) ? $args['depth'] : 1,
-					'max_depth' => get_option('thread_comments') ? get_option('thread_comments_depth') : -1,
+					'max_depth' => $this->max_depth,
 					'before'    => '<div class="reply">',
 					'after'     => '</div>'
 				) );
       
       if( $reply_button ) $comment_text .= '<div class="fv_tc_wrapper">'.$reply_button.'</div>';
-      
-      //$comment_text .= '</div><!-- .clear.clear-fix -->'."\n";
       
       return $comment_text;
     }
