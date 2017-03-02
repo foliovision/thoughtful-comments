@@ -3,7 +3,7 @@
 Contributors: FolioVision
 Tags: comments,moderation,frontend,unapproved
 Requires at least: 2.7
-Tested up to: 4.5
+Tested up to: 4.7.2
 Stable tag: trunk
 
 FV Thoughtful Comments adds front end comment moderation including sophisticated banning mechanisms. Say Goodbye to Disqus!
@@ -26,6 +26,9 @@ While Automattic has a horse in the ring (Intense Debate), we'd really like to s
 
 * Front-end comment moderation - for logged in users with required permission
 * Unapproved comments shown in front-end - for logged in users with required permission
+* New - comment reporting feature! Requuires the reporter to provide reason for the report
+* New - comment voting
+* New - live comment updates
 * Per-user moderation settings
 * Comment caching - lightening PHP load and speeding up busy sites significantly - works with any WP cache plugin!
 
@@ -58,7 +61,7 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 
 == Changelog ==
 
-= 0.3.5 =
+= 0.4 =
 
 * Comment voting added
 * Live comment updates - without excessive Ajax
