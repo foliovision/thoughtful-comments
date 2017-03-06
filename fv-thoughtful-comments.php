@@ -398,7 +398,15 @@ class fv_tc extends fv_tc_Plugin {
         return $wpdb->get_var("SELECT comment_ID FROM {$wpdb->comments} WHERE comment_post_id = '{$postid}' AND comment_parent = '{$id}' LIMIT 1");
         */
     }
-
+    
+    
+    function comment_list_walker( $args ) {
+      require_once( dirname(__FILE__).'/class-walker-comment-with-cache.php' );
+      $args['walker'] = new Walker_Comment_with_Cache;
+      return $args;  
+    }
+    
+    
     /**
      * Replace url of reply link only with #
      * functionality is done only by JavaScript
@@ -2148,5 +2156,7 @@ add_action( 'comment_post', array( $fv_tc, 'comment_post_to_count_json' ), 10, 2
 
 add_action( 'comment_form_top', array( $fv_tc, 'noscript_notice' ), 10, 2 );
 add_filter( 'comment_class', array( $fv_tc, 'comment_class' ), 10, 5 );
+
+add_filter( 'wp_list_comments_args', array( $fv_tc, 'comment_list_walker' ) );
 
 endif;  //  class_exists('fv_tc_Plugin')
