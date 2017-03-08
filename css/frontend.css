@@ -126,13 +126,27 @@ div.fv_tc_voting_box > div.fv_tc_voting {
 div.fv_tc_voting_box.no-permission > div.fv_tc_voting {
   cursor: not-allowed;
 }
-.fv_tc_voting_box + .reply {
+.fv_tc_wrapper {
+	min-height: 18px;
+	margin-bottom: 6px;
+}
+.comment-list .fv_tc_voting_box + .reply {
 	margin-top: 0;
+	line-height: 1;
+	float: none;
+	width: auto;
 }
-.fv_tc_voting_box + .reply .comment-reply-link {
+.comment-list .fv_tc_voting_box + .reply .comment-reply-link {
 	float: left;
+	margin-top: -1px;
+	border: none;
+	box-shadow: none;
+	padding: 0;
+	text-decoration: none;
+	line-height: 1;
+	font-size: 14px;
 }
-.fv_tc_voting_box + .reply .comment-report-link {
+.comment-list .fv_tc_voting_box + .reply .comment-report-link {
 	float: right;
 	color: #666;
 }
