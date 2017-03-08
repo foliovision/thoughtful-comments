@@ -39,7 +39,7 @@ class FV_Comments_Reporting {
       
       // TODO show different interface for admin
       // TODO display for guest
-      $button = "<a rel='nofollow' class='comment-report-link' href='#comment_report_{$comment->comment_ID}' onclick='fv_tc_report_display( {$comment->comment_ID} ); return false;'>Report</a>";
+      $button = "<a rel='nofollow' class='comment-reply-link comment-report-link' href='#comment_report_{$comment->comment_ID}' onclick='fv_tc_report_display( {$comment->comment_ID} ); return false;'>Report</a>";
       if( $html ) {
         $html = str_replace( "</a>", "</a> ".$button, $html );
       } else {
