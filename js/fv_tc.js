@@ -491,4 +491,13 @@ jQuery( function($) {
       document.cookie="fv_tc_reply=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
     }
   });
+  
+  if( jQuery(window).height() < 700 ) {
+    $(document).on('click','#comment', function() {    
+      $(this).blur( function() {
+        $('#fv-comments-pink-toggle').css('visibility','visible');
+      });
+      $('#fv-comments-pink-toggle').css('visibility','hidden');
+    });
+  }
 });
