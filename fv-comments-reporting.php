@@ -6,7 +6,7 @@ class FV_Comments_Reporting {
   
   function __construct() {
     add_action( 'admin_menu', array( $this, 'admin_menu' ) );
-    add_filter( 'comment_reply_link', array( $this, 'add_frontend' ), 11, 4 );  //  report button
+    add_filter( 'comment_reply_link', array( $this, 'add_frontend' ), 11, 3 );  //  report button
     add_filter( 'nonce_life', array( $this, 'nonce_life' ) );
     
     add_action( 'deleted_comment', array( $this, 'delete_report' ) );
@@ -28,7 +28,7 @@ class FV_Comments_Reporting {
   }
   
   
-  function add_frontend( $html, $args, $comment, $post ) {
+  function add_frontend( $html, $args, $comment ) {
     
     $bCommentReg = get_option( 'comment_registration' );
     
