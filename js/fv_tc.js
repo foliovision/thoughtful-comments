@@ -361,15 +361,12 @@ jQuery('#fv-comments-pink-toggle').click( function(e) {
 
 jQuery(document).ready(function($) {
 
-  if( typeof(fv_tc_new_comments) == "undefined" ){
-    return;
-  }
-
   jQuery('#fv-comments-pink-toggle').show();
 
   var fv_cp_id_prefix = '#comment-';
-  var response = fv_tc_new_comments;
-  if (response != -1) {	//	user has visited the post before
+  
+  if( typeof(fv_tc_new_comments) != "undefined" && fv_tc_new_comments != -1) {	//	user has visited the post before
+    var response = fv_tc_new_comments;
     jQuery('#fv-comments-pink-toggle').show();
     jQuery('#sharebox').addClass('with_comments');
     jQuery("#comments li").each(function(){

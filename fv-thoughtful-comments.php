@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin.
-Version: 0.3.5.15
+Version: 0.3.5.16.5
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -65,7 +65,7 @@ class fv_tc extends fv_tc_Plugin {
    * Plugin version
    * @var string
    */
-  var $strVersion = '0.3.5.16.4';
+  var $strVersion = '0.3.5.16.5';
 
   /**
    * Decide if scripts will be loaded on current page
@@ -517,6 +517,7 @@ class fv_tc extends fv_tc_Plugin {
         $this->max_depth = get_option('thread_comments') ? get_option('thread_comments_depth') : -1;
         
         add_filter( 'pre_option_thread_comments_depth', '__return_zero' );  //  disabling the standard reply buttons!
+        add_filter( 'wptouch_settings_domain', array( $this, 'wptouch_disable_reply' ) );  //  disabling the WPTouch reply buttons!
         add_filter( 'comment_text', array( $this, 'reply_button' ), 10001, 3 );  //  show the new reply button
         
         //  setup permissions, but don't slow down guests users
@@ -1979,7 +1980,8 @@ class fv_tc extends fv_tc_Plugin {
 
       echo "<div class='fv_tc_comment_sorting'>$newest $oldest</div>";
     }
-
+    
+    
     function comment_order( $value ) {
 
       if( !empty($_GET['fvtc_order']) && ( $_GET['fvtc_order'] == 'desc' || $_GET['fvtc_order'] == 'asc' ) ) $value = $_GET['fvtc_order'];
@@ -1987,9 +1989,17 @@ class fv_tc extends fv_tc_Plugin {
       return $value;
     }
     
+    
     function noscript_notice() {
       echo '<noscript>' . __('Reply link does not work in your browser because JavaScript is disabled.', 'fv_tc') . '<br /></noscript>';
-    }    
+    }
+    
+    
+    function wptouch_disable_reply( $settings ) {
+      $settings->allow_nested_comment_replies = false;      
+      return $settings;
+    }
+    
 
     function write_count_json( $post_id ) {
       global $blog_id;
