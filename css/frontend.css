@@ -74,13 +74,13 @@ div.fv_tc_voting_box {
 	float: left;
 }
 .fv_tc_voting {
-	color: #ababab;
+	color: #888;
 	font-size: 12px;
 	font-weight: 700;
 	line-height: 1;
 }
 .fv_tc_voting:hover {
-	color: #959595;
+	color: #5a5a5a;
 }
 .fv_tc_voting_box.no-permission .fv_tc_voting:hover {
 	color: #bebebe;
