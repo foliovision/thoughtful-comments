@@ -420,8 +420,6 @@ class fv_tc extends fv_tc_Plugin {
       );
 
       if( $options['reply_link'] ) {        
-        $sHTML = str_replace( '<div class="reply">', '<div class="reply">'.$noscript, $sHTML );
-        
         $sHTML = preg_replace( '~(<a[^>]*?class=[\'"]comment-reply[^>]*?)href[^>]*?onclick~' , '$1href="#respond" onclick' , $sHTML );
       }
       
@@ -1769,10 +1767,10 @@ class fv_tc extends fv_tc_Plugin {
     }
     
     
-    function reply_button( $comment_text, $comment, $args = false ) {      
-      
+    function reply_button( $comment_text, $comment, $args = false ) {			
+      $add_below = current_theme_supports( 'html5', 'comment-list' ) ? 'div-comment' : 'comment'; //  you might also need to check wp_list_comments() args['style'] here
       $reply_button = get_comment_reply_link( array(
-					'add_below' => isset($args['add_below']) ? $args['add_below'] : 'div-comment',
+					'add_below' => isset($args['add_below']) ? $args['add_below'] : $add_below,
 					'depth'     => isset($args['depth']) ? $args['depth'] : 1,
 					'max_depth' => $this->max_depth,
 					'before'    => '<div class="reply">',
