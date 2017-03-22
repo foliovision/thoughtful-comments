@@ -401,6 +401,11 @@ class fv_tc extends fv_tc_Plugin {
     
     
     function comment_list_walker( $args ) {
+      $options = get_option('thoughtful_comments');
+      if( empty($options['comment_cache']) ) {
+        return $args;
+      }
+      
       require_once( dirname(__FILE__).'/class-walker-comment-with-cache.php' );
       $args['walker'] = new Walker_Comment_with_Cache;
       return $args;  
@@ -427,9 +432,7 @@ class fv_tc extends fv_tc_Plugin {
          $sHTML
       );
 
-      if( $options['reply_link'] ) {        
-        $sHTML = str_replace( '<div class="reply">', '<div class="reply">'.$noscript, $sHTML );
-        
+      if( $options['reply_link'] ) {
         $sHTML = preg_replace( '~(<a[^>]*?class=[\'"]comment-reply[^>]*?)href[^>]*?onclick~' , '$1href="#respond" onclick' , $sHTML );
       }
       
@@ -454,7 +457,7 @@ class fv_tc extends fv_tc_Plugin {
 
 
     /**
-    * Filter for comment_text. Displays frontend moderation options if user can edit posts.
+    * Prepare the DIV for the admin front-end buttons
     *
     * @param string $content Comment text.
     *
@@ -464,60 +467,8 @@ class fv_tc extends fv_tc_Plugin {
     * @return string Comment text with added features.
     */
     function frontend ($comment_text) {
-        if( !$this->can_edit ) {
-          return $comment_text;
-        }           
-        
-        global  $user_ID, $comment, $post;
-        
-        //$child = $this->comment_has_child($comment->comment_ID, $comment->comment_post_ID);
-        /*  Container   */
         $tag = $this->hack_comment_wrapper ? $this->hack_comment_wrapper : 'div';
-        $out = '<'.$tag.' class="tc-frontend">'."\n";
-        
-        /* Approve comment */
-        if($comment->comment_approved == '0') {
-          $out .= '<span id="comment-'.$comment->comment_ID.'-approve">'.$this->get_t_approve($comment).' </span>';
-        }
-        if($comment->comment_approved == 'spam') {
-          $out .= '<span id="comment-'.$comment->comment_ID.'-approve">'.$this->get_t_unspam($comment).' </span>';
-        }
-        /*  Delete comment  */
-        $out .= $this->get_t_delete($comment).' ';
-        /*  Delete thread   */
-        //if($child>0) {
-          $out .= $this->get_t_delete_thread($comment).' ';
-        //}
-
-        if( $this->can_ban ) {
-          /*  If IP isn't banned  */
-          if(stripos(get_option('blacklist_keys'),$comment->comment_author_IP)===FALSE) {
-              /*  Delete and ban  */
-              $out .= $this->get_t_delete_ban($comment);//.' | ';
-              /*  Delete thread and ban   */
-              //if($child>0)
-              $out .= $this->get_t_delete_thread_ban($comment);
-          } else {
-              $out .= 'IP '.$comment->comment_author_IP.' ';
-              $out .= "<a href='" . admin_url( 'tools.php?page=fv_thoughtful_comments' ) . "'>" . __('already banned!', 'fv_tc' ) . "</a>";
-          }
-        }
-
-        /*  Moderation status   */
-        if( get_option('comment_moderation') ) {
-          $user_info = ( isset($comment->user_id) && $comment->user_id > 0 ) ? get_userdata($comment->user_id) : false;
-          if( current_user_can("moderate_comments") && $user_info && $user_info->user_level < 3) {
-              $out .= '<br />'.$this->get_t_moderated($comment->user_id);
-          } else if( $user_info && $user_info->user_level >= 3 ) {
-              $out .= '<br />'.'<abbr title="' . __('Comments from this user level are automatically approved', 'fv_tc') . '">' . __('Power user', 'fv_tc') . '</a>';
-          }
-        }
-        
-        
-        //  No closing DIV as the existing one was closed earlier by fv_tc::hack_html_close_comment_element()
-        
-        $out .= "\n";
-        
+        $out = '<'.$tag.' class="tc-frontend">'."\n";        
         return $comment_text . $out;
     }
     
@@ -535,17 +486,35 @@ class fv_tc extends fv_tc_Plugin {
           }
           $this->can_ban = current_user_can('moderate_comments');
         
-          if( $this->can_edit ) {
-            add_filter( 'get_comment_link', array( $this, 'hack_check_comment_properties' ), 10, 4 ); //  figure out what element is comment_text wrapped in
-            
-            //  appends the moderation buttons into a new sibling element of where comment_text is
-            add_filter( 'comment_text', array( $this, 'hack_html_close_comment_element' ), 20000 );
-            add_filter( 'comment_text', array( $this, 'frontend' ), 20001 );
-          }
         }
+        
+        add_filter( 'get_comment_link', array( $this, 'hack_check_comment_properties' ), 10, 4 ); //  figure out what element is comment_text wrapped in
+            
+        //  appends the moderation buttons into a new sibling element of where comment_text is
+        add_filter( 'comment_text', array( $this, 'hack_html_close_comment_element' ), 20000 );
+        add_filter( 'comment_text', array( $this, 'frontend' ), 20001 );        
         
         
     }
+    
+    function frontend_template() {        
+        global  $user_ID, $comment, $post;
+        
+        // todo: class if comment unapproved, spam, if IP banned, if comment $user_info->user_level >= 3, if already not moderated
+        $out = '<a href="#" class="fv-tc-approve">' . __('Approve', 'fv_tc') . '</a>';
+        $out .= '<a href="#" class="fv-tc-unspam">' . __('Unspam', 'fv_tc') . '</a>';        
+        $out .= '<a href="#" class="fv-tc-del">' . __('Trash', 'fv_tc') . '</a>';
+        $out .= '<a href="#" class="fv-tc-delthread">' . __('Trash Thread', 'fv_tc') . '</a>';
+        $out .= '<a href="#" class="fv-tc-ban">' . __('Trash & Ban IP', 'fv_tc') . '</a>';
+        $out .= '<a href="#" class="fv-tc-banthread">' . __('Trash Thread & Ban IP','fv_tc') . '</a>';
+        $out .= '<a href="' . admin_url( 'tools.php?page=fv_thoughtful_comments' ) . '" class="fv-tc-already-banned" target="_blank">' . __(' IP already banned!', 'fv_tc' ) . '</a>';
+        if( get_option('comment_moderation') ) {
+          $out .= '<a href="#" class="fv-tc-dont-moderate">' . __('Allow user to comment without moderation', 'fv_tc') . '</a>';
+          $out .= '<a href="#" class="fv-tc-moderate">' . __('Moderate future comments by this user', 'fv_tc') . '</a>';
+        }
+        
+        return $out;
+    }    
 
     function get_js_translations() {
         $aStrings = Array(
@@ -1209,6 +1178,14 @@ class fv_tc extends fv_tc_Plugin {
       if( $this->loadScripts ) {
         wp_enqueue_script('fv_tc',$this->url. '/js/fv_tc.js',array('jquery'), $this->strVersion, true);
         
+        if( $this->can_edit ) {
+          global $post;
+          wp_localize_script('fv_tc', 'fv_tc_html', $this->frontend_template());
+          wp_localize_script('fv_tc', 'fv_tc_nonce', wp_create_nonce('fv_tc-'.$post->ID) );
+        }
+        
+        // todo: somehow consider also $this->can_ban 
+        
         wp_localize_script('fv_tc', 'fv_tc_translations', $this->get_js_translations());
         wp_localize_script('fv_tc', 'fv_tc_ajaxurl', admin_url('admin-ajax.php'));
         
@@ -1502,9 +1479,16 @@ class fv_tc extends fv_tc_Plugin {
     }
     
     function comment_class( $classes, $class, $comment_ID, $comment, $post_id ) {
-        if( $this->can_edit && $comment->comment_approved == 0 ) {
-          $classes[] = 'unapproved';
+        if( $comment->comment_approved == 0 ) {
+          $classes[] = 'tc-unapproved';
+        } else if( $comment->comment_approved == 'spam' ) {
+          $classes[] = 'tc-spam';
         }
+        
+        if( stripos(trim(get_option('blacklist_keys')),$comment->comment_author_IP) !== false ) {
+          $classes[] = 'tc-banned';
+        }
+        
         return $classes;
     }
 
@@ -1652,8 +1636,13 @@ class fv_tc extends fv_tc_Plugin {
     }
 
     function fv_tc_approve() {
-        if(!wp_set_comment_status( $_REQUEST['id'], 'approve' ))
-            die('db error');
+      if( isset($_POST['id']) ) {        
+        $objComment = get_comment( $_REQUEST['id'] );
+        check_ajax_referer('fv_tc-'.$objComment->comment_post_ID);
+        if( !wp_set_comment_status( $_REQUEST['id'], 'approve' ) ) {
+          die('db error');
+        }
+      }
     }
 
     function fv_tc_count() {
@@ -1664,7 +1653,7 @@ class fv_tc extends fv_tc_Plugin {
       die();
     }
 
-    function fv_tc_delete() {
+    function fv_tc_del() {
         global $wpdb;
 
         if(isset($_REQUEST['ip']) && stripos(trim(get_option('blacklist_keys')),$_REQUEST['ip'])===FALSE) {
@@ -1709,7 +1698,7 @@ class fv_tc extends fv_tc_Plugin {
     function fv_tc_delete_recursive($id) {
         global  $wpdb;
         echo ' '.$id.' ';
-        $comments = $wpdb->get_results("SELECT * FROM {$wpdb->comments} WHERE `comment_parent` ='{$id}'",ARRAY_A);
+        $comments = $wpdb->get_results("SELECT * FROM {$wpdb->comments} WHERE `comment_parent` = ".intval($id),ARRAY_A);
         if(strlen($wpdb->last_error)>0)
             die('db error');
         if(!wp_delete_comment($id))
@@ -2037,7 +2026,10 @@ class fv_tc extends fv_tc_Plugin {
 $fv_tc = new fv_tc;
 
 add_action( 'wp_ajax_fv_tc_approve', array( $fv_tc,'fv_tc_approve'));
-add_action( 'wp_ajax_fv_tc_delete', array( $fv_tc,'fv_tc_delete'));
+add_action( 'wp_ajax_fv_tc_del', array( $fv_tc,'fv_tc_del'));
+add_action( 'wp_ajax_fv_tc_delthread', array( $fv_tc,'fv_tc_del'));
+add_action( 'wp_ajax_fv_tc_ban', array( $fv_tc,'fv_tc_del'));
+add_action( 'wp_ajax_fv_tc_banthread', array( $fv_tc,'fv_tc_del'));
 add_action( 'wp_ajax_fv_tc_moderated', array( $fv_tc,'fv_tc_moderated'));
 
 add_action( 'wp_ajax_fv_tc_count', array( $fv_tc,'fv_tc_count'));
@@ -2143,7 +2135,7 @@ add_filter('get_comments_pagenum_link', array($fv_tc, 'get_comments_pagenum_link
 add_filter('paginate_links', array($fv_tc, 'get_comments_pagenum_link'));
 
 //  comments html caching
-add_filter( 'wp_list_comments_args', array($fv_tc, 'cache_start') );
+//add_filter( 'wp_list_comments_args', array($fv_tc, 'cache_start') );
 add_filter( 'admin_init', array($fv_tc, 'cache_purge') );
 add_filter( 'sce_save_after', array($fv_tc, 'cache_purge'), 10 , 3 );
 

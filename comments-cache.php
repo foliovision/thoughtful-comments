@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Comment API: Walker_Comment class
  *
@@ -171,6 +172,9 @@ class Walker_Comment_with_Cache extends Walker {
 	 * @param int        $id      Optional. ID of the current comment. Default 0 (unused).
 	 */
 	public function start_el( &$output, $comment, $depth = 0, $args = array(), $id = 0 ) {
+    
+    if( !isset($this->tCommentStart) ) $this->tCommentStart = microtime(true);
+    
 		$depth++;
 		$GLOBALS['comment_depth'] = $depth;
 		$GLOBALS['comment'] = $comment;
@@ -179,7 +183,7 @@ class Walker_Comment_with_Cache extends Walker {
     global $blog_id;
     $cache_dir = WP_CONTENT_DIR . '/cache/thoughtful-comments-'.$blog_id.'/'.$comment->comment_post_ID;
     $cache_file = $cache_dir.'/'.$comment->comment_ID.'.html';
-    if( $this->get_caching_mode() == 'file' ) {    
+    if( $_GET['comment_cache'] == 'file' ) {    
       if( !file_exists($cache_dir) ) {
         mkdir($cache_dir, 0755, true);
       }
@@ -191,7 +195,7 @@ class Walker_Comment_with_Cache extends Walker {
     }
     
     
-    if( $this->get_caching_mode() == 'db' ) {
+    if( $_GET['comment_cache'] == 'db' ) {
       global $wpdb;
       if( !isset($this->aComments) ) {
         echo 'DB cache: select once! ';
@@ -206,7 +210,7 @@ class Walker_Comment_with_Cache extends Walker {
     }
     
     
-    if( $this->get_caching_mode() == 'meta' ) {
+    if( $_GET['comment_cache'] == 'meta' ) {
       if( $cache = get_comment_meta( $comment->comment_ID, '_cache', true ) ) {
         $output .= $cache;
         return;
@@ -237,7 +241,7 @@ class Walker_Comment_with_Cache extends Walker {
     }
     $End = microtime(true) - $tStart;
     
-    if( $this->get_caching_mode() == 'file' ) {
+    if( $_GET['comment_cache'] == 'file' ) {
       $res = false;
       $file = fopen($cache_file,"w+");
       if( flock($file,LOCK_EX) ) {
@@ -249,7 +253,7 @@ class Walker_Comment_with_Cache extends Walker {
     }
     
     
-    if( $this->get_caching_mode() == 'db' ) {
+    if( $_GET['comment_cache'] == 'db' ) {
       //echo 'DB cache: insert for '.$comment->comment_ID.' ';
       $wpdb->insert( $wpdb->prefix.'comments_cache',
         array( 
@@ -265,7 +269,7 @@ class Walker_Comment_with_Cache extends Walker {
     }
     
     
-    if( $this->get_caching_mode()== 'meta' ) {
+    if( $_GET['comment_cache'] == 'meta' ) {
       update_comment_meta( $comment->comment_ID, '_cache', $html );
     }
     
@@ -302,6 +306,8 @@ class Walker_Comment_with_Cache extends Walker {
 			$output .= "</div><!-- #comment-## -->\n";
 		else
 			$output .= "</li><!-- #comment-## -->\n";
+      
+    //echo "Total: ".(microtime(true) - $this->tCommentStart)."<br />";
 	}
 
 	/**
@@ -450,16 +456,18 @@ class Walker_Comment_with_Cache extends Walker {
 				?>
 			</article><!-- .comment-body -->
 <?php
-	}
-  
-  
-  
-  
-  function get_caching_mode() {
-    if( isset($_GET['comment_cache']) ) {
-      return $_GET['comment_cache'];
-    } else {
-      return 'file';
-    }
-  }
+	}  
 }
+
+
+
+
+function fv_tweak_comment_list_walker( $args ) {
+  if( isset($_GET['comment_cache']) ) {
+    $args['walker'] = new Walker_Comment_with_Cache;
+  }
+  
+  return $args;
+}
+
+add_filter( 'wp_list_comments_args', 'fv_tweak_comment_list_walker' );

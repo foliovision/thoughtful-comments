@@ -1,131 +1,3 @@
-/*  approve/disapprove comment  */
-function fv_tc_approve(id) {
-    jQuery("#comment-"+id+"-approve").text(fv_tc_translations.wait + ' | ');
-    jQuery.ajax({
-        type: 'POST',
-        url: fv_tc_ajaxurl,
-        data: {"action": "fv_tc_approve", 'id': id},
-        success: function(data){
-            jQuery("#comment-body-"+id).children(":first").text('');
-            jQuery("#comment-"+id+"-approve").remove();
-            jQuery("#comment-"+id+"-unapproved").removeClass("tc_highlight");
-            jQuery("#comment-"+id+"-unapproved").removeClass("tc_highlight_spam");
-            jQuery("#comment-"+id).find("p.comment-awaiting-moderation").remove();
-        }
-    });
-    return false;
-}
-
-
-
-/*  delete comment  */
-function fv_tc_delete(id,skip_confirmation) {
-    var result = false;
-  
-    if( skip_confirmation || confirm(fv_tc_translations.comment_delete)) {
-        jQuery.ajax({
-            type: 'POST',
-            url: fv_tc_ajaxurl,
-            data: {"action": "fv_tc_delete", 'id': id},
-            success: function(data){
-                if(data.search(/db error/)==-1) {
-                    var item = jQuery("[id^='comment'][id$='"+id+"']");
-                    item.slideUp();
-                    result = true;
-                } else {
-                    alert(fv_tc_translations.delete_error);
-                }
-            }
-        });
-        
-    }
-    
-    return result;
-}
-
-
-
-/*  delete comment and ban ip */
-function fv_tc_delete_ban(id,ip) {
-    if(confirm(fv_tc_translations.comment_delete_ban_ip)) {
-        jQuery.ajax({
-            type: 'POST',
-            url: fv_tc_ajaxurl,
-            data: {"action": "fv_tc_delete", 'id': id, 'ip': ip},
-            success: function(data){
-                if(data.search(/db error/)==-1) {
-                    var item = jQuery("[id^='comment'][id$='"+id+"']");
-                    item.slideUp();
-                } else {
-                    alert(fv_tc_translations.delete_error);
-                }
-            }
-        });
-        return false;
-    }
-}
-
-
-
-/*  delete thread */
-function fv_tc_delete_thread(id) {
-    if(confirm(fv_tc_translations.comment_delete_replies)) {
-        jQuery.ajax({
-            type: 'POST',
-            url: fv_tc_ajaxurl,
-            data: {"action": "fv_tc_delete", 'id': id, 'thread': 'yes'},
-            success: function(data){
-                if(data.search(/db error/)==-1) {
-                    var posts = data.split(" ");
-                    var i = 0;
-                    while (i < posts.length) {
-                        if(posts[i]!='') {
-                            var item = jQuery("[id^='comment'][id$='"+posts[i]+"']");
-                            item.slideUp();
-                        }
-                        i+=1;
-                    }
-                } else {
-                    alert(fv_tc_translations.comment_delete_replies);
-                }
-            }
-        });
-        return false;
-    }
-}
-
-
-
-
-/*  delete thread and ban */
-function fv_tc_delete_thread_ban(id, ip) {
-    if(confirm(fv_tc_translations.comment_delete_replies_ban_ip)) {
-        jQuery.ajax({
-            type: 'POST',
-            url: fv_tc_ajaxurl,
-            data: {"action": "fv_tc_delete", 'id': id, 'ip': ip, 'thread': 'yes'},
-            success: function(data){
-                if(data.search(/db error/)==-1) {
-                    var posts = data.split(" ");
-                    var i = 0;
-                    while (i < posts.length) {
-                        if(posts[i]!='') {
-                            var item = jQuery("[id^='comment'][id$='"+posts[i]+"']");
-                            item.slideUp();
-                        }
-                        i+=1;
-                    }
-                } else {
-                    alert(fv_tc_translations.delete_error);
-                }
-            }
-        });
-        return false;
-    }
-}
-
-
-
 /*  manage user moderation  */
 function fv_tc_moderated(id, frontend) {
     jQuery.ajax({
@@ -253,11 +125,7 @@ function fv_tc_report_front_close ( id ) {
 }
 
 
-jQuery('.comment').each( function() {
-  if( jQuery(this).find('ul.children').length == 0 ) {
-    jQuery(this).find('.fv-tc-delthread, .fv-tc-banthread').remove();
-  }
-});
+
 
 
 
@@ -356,6 +224,7 @@ jQuery('#fv-comments-pink-toggle').click( function(e) {
 
   fv_comments_pink_process( true );
 } );
+
 
 
 
@@ -475,12 +344,85 @@ setInterval( function() {
 
 
 
-jQuery( function($) {
+( function($) {
+  var start = +new Date();
+  var div = jQuery(fv_tc_html);
+  jQuery('.tc-frontend').append(div);
+  console.log( 'FV Thoughtful Comments took '+(+new Date() - start)+' ms' );
+  
+  $('.comment').each( function() {
+    if( $(this).find('.children').length == 0 ) {
+      $(this).find('.fv-tc-delthread, .fv-tc-banthread').remove();
+    }
+  });
+  
+  
+  $(document).on('click','.fv-tc-approve, .fv-tc-unspam, .fv-tc-del, .fv-tc-delthread, .fv-tc-ban, .fv-tc-banthread', function(e) {
+    e.preventDefault();
+    
+    var button = $(this);
+    
+    var action = button.attr('class').replace(/-/g,'_');
+    if( action == 'fv_tc_del' && !confirm(fv_tc_translations.comment_delete) ) return;
+    if( action == 'fv_tc_ban' && !confirm(fv_tc_translations.comment_delete_ban_ip) ) return;
+    if( action == 'fv_tc_delthread' && !confirm(fv_tc_translations.comment_delete_replies) ) return;
+    if( action == 'fv_tc_banthread' && !confirm(fv_tc_translations.comment_delete_replies_ban_ip) ) return;
+    
+    
+    var comment_id = button.parents('[id^=comment-]').attr('id').match(/\d+/);
+    if( comment_id ) {
+      button.text(fv_tc_translations.wait);
+      console.log(action,comment_id[0]);
+      jQuery.ajax({
+          type: 'POST',
+          url: fv_tc_ajaxurl,
+          data: { "_ajax_nonce": fv_tc_nonce, "action": action, 'id': comment_id[0] },
+          success: function(data){
+            
+            if ( action == 'fv_tc_approve' ) {
+              button.parents('.tc-unapproved').removeClass('tc-unapproved');
+              $("#comment-"+comment_id+"-unapproved").removeClass("tc_highlight");
+              $("#comment-"+comment_id+"-unapproved").removeClass("tc_highlight_spam"); //  todo: what is this?
+              $("#comment-"+comment_id).find("p.comment-awaiting-moderation").remove();
+              
+            } else if( action == 'fv_tc_del' || action == 'fv_tc_ban' ) {
+              if(data.search(/db error/)==-1) {
+                  var item = jQuery("[id^='comment'][id$='"+comment_id+"']");
+                  item.slideUp();
+                  result = true;
+              } else {
+                  alert(fv_tc_translations.delete_error);
+              }
+              
+            } else if( action == 'fv_tc_delthread' || action == 'fv_tc_banthread' ) {
+              if(data.search(/db error/)==-1) {
+                var posts = data.split(" ");
+                var i = 0;
+                while (i < posts.length) {
+                  if(posts[i]!='') {
+                    var item = jQuery("[id^='comment'][id$='"+posts[i]+"']");
+                    item.slideUp();
+                  }
+                  i+=1;
+                }
+              } else {
+                alert(fv_tc_translations.comment_delete_replies);
+              }
+              
+            }
+            
+          }
+      });      
+    }
+    
+  });  
+  
+
   $(document).on('click','.comment-reply-login', function() {
     var id = $(this).parents('li.comment').attr('id');
     document.cookie="fv_tc_reply="+id;
-  });
-
+  });  
+  
   $(document).ready( function() {
     var match = document.cookie.match(/fv_tc_reply=(comment-\d+)/);
     if( match && match[1] && $('#'+match[1]).length ) {
@@ -491,4 +433,5 @@ jQuery( function($) {
       document.cookie="fv_tc_reply=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
     }
   });
-});
+  
+})(jQuery);

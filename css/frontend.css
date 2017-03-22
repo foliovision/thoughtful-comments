@@ -9,8 +9,8 @@
 	color: white;
 	padding: 3px;
 }
-.fv-tc-wrapper,
-.tc-frontend {
+body.logged-in .fv-tc-wrapper,
+body.logged-in .tc-frontend {
 	font-size: 80%;
 	clear: both;
 	display: block;
@@ -32,7 +32,7 @@
 	font: normal 20px/1 'dashicons';
 	vertical-align: middle;
 }
-.tc-frontend span[id$="-approve"] a:before {
+.tc-frontend a.fv-tc-approve:before {
 	content: "\f147";	
 }
 .tc-frontend a.fv-tc-del:before {
@@ -46,6 +46,22 @@
 }
 .tc-frontend a.fv-tc-banthread:before {
 	content: "\f335";
+}
+
+.tc-frontend .fv-tc-approve, .tc-frontend .fv-tc-unspam, .tc-frontend .fv-tc-already-banned {
+  display: none;
+}
+.comment.tc-unapproved .tc-frontend .fv-tc-approve {
+  display: inline-block;
+}
+.comment.tc-spam .tc-frontend .fv-tc-unspam {
+  display: inline-block;
+}
+.comment.tc-banned .tc-frontend .fv-tc-already-banned {
+  display: inline-block;
+}
+.comment.tc-banned .tc-frontend .fv-tc-ban, .comment.tc-banned .tc-frontend .fv-tc-banthread {
+  display: none;
 }
 
 #fv_tc_ticker.floating {
