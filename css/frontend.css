@@ -47,6 +47,9 @@ body.logged-in .tc-frontend {
 .tc-frontend a.fv-tc-banthread:before {
 	content: "\f335";
 }
+.tc-frontend a.fv-tc-already-banned:before {
+	content: "\f534";
+}
 
 .tc-frontend .fv-tc-approve, .tc-frontend .fv-tc-unspam, .tc-frontend .fv-tc-already-banned {
   display: none;
