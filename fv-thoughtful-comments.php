@@ -368,7 +368,7 @@ class fv_tc extends fv_tc_Plugin {
     function frontend_start() {
         $this->max_depth = get_option('thread_comments') ? get_option('thread_comments_depth') : -1;
         
-        add_filter( 'comment_reply_link', '__return_false' ); //  disabling the standard reply buttons!        
+        add_filter( 'comment_reply_link', '__return_false', 999 ); //  disabling the standard reply buttons!        
         add_filter( 'wptouch_settings_domain', array( $this, 'wptouch_disable_reply' ) );  //  disabling the WPTouch reply buttons!
         add_filter( 'comment_text', array( $this, 'reply_button' ), 10001, 3 );  //  show the new reply button
         
@@ -1398,7 +1398,7 @@ class fv_tc extends fv_tc_Plugin {
     function hack_check_comment_properties( $link, $comment, $args, $cpage ) {
       if( !$this->hack_comment_wrapper ) {  //  making sure it only executed once
         ob_start();
-        add_filter( 'comment_text', array( $this, 'hack_check_comment_wrapper' ), 0 );
+        add_filter( 'comment_text', array( $this, 'hack_check_comment_wrapper' ) );
       }
       
       return $link;
@@ -1414,7 +1414,7 @@ class fv_tc extends fv_tc_Plugin {
       
       echo $sHTML;
       
-      remove_filter( 'comment_text', array( $this, 'hack_check_comment_wrapper' ), 0 ); //  making sure it only executed once
+      remove_filter( 'comment_text', array( $this, 'hack_check_comment_wrapper' ) ); //  making sure it only executed once
       return $comment_text;
     }
     
@@ -1422,7 +1422,7 @@ class fv_tc extends fv_tc_Plugin {
     function reply_button( $comment_text, $comment, $args = false ) {			
       $add_below = current_theme_supports( 'html5', 'comment-list' ) ? 'div-comment' : 'comment'; //  you might also need to check wp_list_comments() args['style'] here
       
-      remove_filter( 'comment_reply_link', '__return_false' ); //  enable the reply button for a bit!
+      remove_filter( 'comment_reply_link', '__return_false', 999 ); //  enable the reply button for a bit!
       $reply_button = get_comment_reply_link( array(
 					'add_below' => isset($args['add_below']) ? $args['add_below'] : $add_below,
 					'depth'     => isset($args['depth']) ? $args['depth'] : 1,
@@ -1430,7 +1430,7 @@ class fv_tc extends fv_tc_Plugin {
 					'before'    => '<div class="reply">',
 					'after'     => '</div>'
 				) );
-      add_filter( 'comment_reply_link', '__return_false' ); //  disabling the standard reply buttons again!
+      add_filter( 'comment_reply_link', '__return_false', 999 ); //  disabling the standard reply buttons again!
       
       if( $reply_button ) $comment_text .= '<div class="fv_tc_wrapper">'.$reply_button.'</div>';
       
