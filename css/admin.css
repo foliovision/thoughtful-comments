@@ -1,2 +1,3 @@
 .form-table th { text-align: right; padding: 15px 10px 20px 0; }
 .form-table td { vertical-align: baseline; }
+tr.disabled, tr.disabled th, tr.disabled p.description { color: lightgray }

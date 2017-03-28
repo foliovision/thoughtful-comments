@@ -126,15 +126,25 @@ class fv_tc extends fv_tc_Plugin {
           </th>
           <td>
             <p class="description">
-              <?php if( stripos($type,'textarea') === 0 ) : ?>
-                <textarea <?php echo $disabled; ?> id="<?php echo $name; ?>" name="<?php echo $name; ?>" class="large-text code" rows="8"><?php echo esc_textarea( $this->get_setting($option_key) ); ?></textarea><br />
-              <?php elseif( stripos($type,'text') === 0 ) : ?>
-                <input <?php echo $disabled; ?> type="text" id="<?php echo $name; ?>" name="<?php echo $name; ?>" value="<?php echo esc_attr( $this->get_setting($option_key) ); ?>" />
-              <?php else : ?>
-                <input <?php echo $disabled; ?> type="checkbox" id="<?php echo $name; ?>" name="<?php echo $name; ?>" value="1" <?php if( $this->get_setting($option_key) ) echo 'checked="checked"'; ?> /> 
+              <?php if( stripos($type,'-checkbox') !== false ) : ?>
+                <input <?php echo $disabled; ?> type="checkbox" id="<?php echo $name; ?>-checkbox" name="<?php echo $name; ?>-checkbox" value="1" <?php if( $this->get_setting($option_key.'-checkbox') ) echo 'checked="checked"'; ?> /> 
               <?php endif; ?>
-              <?php if( $help ) : ?>
-                <label for="<?php echo $name; ?>"><?php echo $help; ?></p>
+              
+              <?php
+              if( stripos($type,'textarea') === 0 ) {
+                $input = '<textarea '.$disabled.' id="'.$name.'" name="'.$name.'" class="large-text code" rows="8">'.esc_textarea( $this->get_setting($option_key) ).'</textarea><br />';
+              } elseif( stripos($type,'text') === 0 ) {
+                $input = '<input '.$disabled.' type="text" id="'.$name.'" name="'.$name.'" value="'.esc_attr( $this->get_setting($option_key) ).'" />';
+              } elseif( stripos($type,'number') === 0 ) {
+                $input = '<input '.$disabled.' type="number" id="'.$name.'" name="'.$name.'" value="'.esc_attr( $this->get_setting($option_key) ).'" min="1" max="100" />';
+              } else {
+                $input = '<input '.$disabled.' type="checkbox" id="'.$name.'" name="'.$name.'" value="1" '.( $this->get_setting($option_key) ? 'checked="checked"' : '' ).' />';
+              }
+              
+              if( !$help || stripos($help,'%input%') === false ) echo $input;
+              
+              if( $help ) : ?>
+                <label for="<?php echo $name; ?>"><?php echo str_replace( '%input%', $input, $help ); ?></p>
               <?php endif; ?>
           </td>
         </tr>
@@ -426,7 +436,9 @@ class fv_tc extends fv_tc_Plugin {
       if( isset($options[$key]) ) {
         if( $options[$key] === true || $options[$key] === 'true' ) return true;
         return trim($options[$key]);
-      }      
+      }
+      
+      if( $key == 'daily_comments_limit' ) return 4;
       
       return false;
     }    
@@ -572,15 +584,16 @@ class fv_tc extends fv_tc_Plugin {
                     'comment_autoapprove_count',
                     'comment_autoapprove_count',
                     __('Comments before auto-approval', 'fv_tc'),
-                    __('Number of approved comments before auto-approval<br /><small>Depends on the "Comment author must have a previously approved comment" Discussion setting</small>', 'fv_tc'),
-                    get_option('comment_whitelist') ? 'text' : 'text-disabled' );
+                    __( sprintf( 'Number of approved comments before auto-approval<br /><small>Depends on the <a href=\'%s\' target=\'_blank\'>Comment author must have a previously approved comment</a> Discussion setting</small>',site_url('wp-admin/options-discussion.php#moderation_notify') ), 'fv_tc'),
+                    get_option('comment_whitelist') ? 'number' : 'number-disabled',
+                    get_option('comment_whitelist') ? '' : 'disabled');
         
         $this->admin_show_setting(
                     'daily_comments_limit',
                     'daily_comments_limit',
                     __('Daily Comment Limit', 'fv_tc'),
-                    __('If you post more comments than that to a certain post your user ID or email gets moderated for that post. Leave empty to turn it off', 'fv_tc'),
-                    'text' );
+                    __('Posting more than %input% comments to a post in a day will enable moderation for further comments by that user email or logged in user ID on that post', 'fv_tc'),
+                    'number-checkbox' );
         
         $this->admin_show_setting(
                     'comments_reporting',
@@ -637,7 +650,7 @@ class fv_tc extends fv_tc_Plugin {
                     'tc_replyKW',
                     __('Reply Link Keyword', 'fv_tc'),
                     __('<strong>Advanced!</strong> Only change this if your "Log in to Reply" link doesn\'t bring the commenter back to the comment they wanted to comment on after logging in.', 'fv_tc'),
-                    isset( $bCommentReg ) && 1 == $bCommentReg ? 'text' : 'text-disabled' );
+                    'text' );
           ?>
       </table>
       <p>
@@ -730,6 +743,7 @@ class fv_tc extends fv_tc_Plugin {
               'reply_link' => ( isset($_POST['reply_link']) && $_POST['reply_link'] ) ? true : false,
               'comment_autoapprove_count' => ( isset($_POST['comment_autoapprove_count']) && intval($_POST['comment_autoapprove_count']) > 0 ) ? intval($_POST['comment_autoapprove_count']) : 1,
               'daily_comments_limit' => ( isset($_POST['daily_comments_limit']) && intval($_POST['daily_comments_limit']) > 0 ) ? intval($_POST['daily_comments_limit']) : false,
+              'daily_comments_limit-checkbox' => ( isset($_POST['daily_comments_limit-checkbox']) && $_POST['daily_comments_limit-checkbox'] ) ? true : false,
               'tc_replyKW' => isset( $_POST['tc_replyKW'] ) ? $_POST['tc_replyKW'] : 'comment-',
               'user_nicename_edit' => ( isset($_POST['user_nicename_edit']) && $_POST['user_nicename_edit'] ) ? true : false,              
               'frontend_spam' => ( isset($_POST['frontend_spam']) && $_POST['frontend_spam'] ) ? true : false,
@@ -1151,7 +1165,9 @@ class fv_tc extends fv_tc_Plugin {
     }
     
     function daily_comment_limit( $approved, $commentdata ) {      
-      if( current_user_can( 'manage_options' ) || current_user_can( 'moderate_comments' ) || intval($this->get_setting('daily_comments_limit')) < 1 ) return $approved;
+      if( current_user_can( 'manage_options' ) || current_user_can( 'moderate_comments' ) ) return $approved;
+      
+      if( intval($this->get_setting('daily_comments_limit')) < 1 || !$this->get_setting('daily_comments_limit-checkbox') ) return $approved;
 
       if( isset($commentdata['user_id']) && $commentdata['user_id'] > 0 ) {
         $where = "user_id = ".intval($commentdata['user_id']);

@@ -61,13 +61,12 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 
 == Changelog ==
 
-= 0.4 =
+= 0.3.6 =
 
-* Comment voting added
-* Live comment updates - without excessive Ajax
-* Simple Comment Editing compatilibity with Thoughtful Comments cache
 * Added access to comment blacklist for editors - in Tools menu
 * Added "Comment author must have a previously approved comment if the comment contains a link" setting
+* Added "Daily Comment Limit" setting
+* Pro version with comment caching, voting and live updates coming!
 
 = 0.3.3 =
 * spam moderation - added option to show spam in front-end for admins. Useful mainly if your spambot spam is in trash (thanks to FV Antispam)
