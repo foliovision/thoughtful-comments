@@ -83,7 +83,7 @@ body.logged-in .tc-frontend {
 }
 .fv_tc_voting_like {
 	border-right: 2px solid #ebebeb;
-	padding: 0 5px 0 0;
+	padding: 0 4px 0 0;
 }
 .fv_tc_voting_dislike {
 	padding: 0 0 0 4px;
@@ -110,16 +110,16 @@ div.fv_tc_voting_box {
 	height: 8px;
 	display: inline-block;
 	background: url("images/voting-arrows.png") no-repeat left top;
-	margin: 0 3px;
+	margin: 0 2px;
 }
 .fv_tc_voting_box .fv_tc_voting_dislike i:before {
-	background-position: left bottom;
+	background-position: left -51px;
 }
 .fv_tc_voting_box  .fv_tc_voting_dislike:hover i:before {
-	background-position: right bottom;
+	background-position: right -51px;
 }
 .fv_tc_voting_box.no-permission  .fv_tc_voting_dislike:hover i:before {
-	background-position: left bottom;
+	background-position: left -51px;
 }
 
 .fv_tc_voting_box .fv_tc_voting_like:hover i:before {
@@ -134,7 +134,7 @@ div.fv_tc_voting_box > div.fv_tc_voting_count {
   margin:0;
 }
 div.fv_tc_voting_box > div.fv_tc_voting > span {
-  margin: 0 2px;
+  margin: 0;
 }
 div.fv_tc_voting_box > div.fv_tc_voting_count {
   line-height: 25px;
@@ -171,6 +171,15 @@ div.fv_tc_voting_box.no-permission > div.fv_tc_voting {
 }
 .fv_tc_voting_box + .reply .comment-report-link:hover {
 	color: #fff;
+}
+.comment-list .fv_tc_wrapper .comment-report-link span {
+	display: inline-block;
+	overflow: hidden;
+	text-indent: -9999px;
+}
+.comment-list .fv_tc_wrapper .comment-report-link i:before {
+	background-position: left bottom;
+	height: 14px;
 }
 
 .fv_cp_hidden > article > .comment-content, .fv_cp_hidden > article > .reply,
@@ -226,7 +235,8 @@ body.logged-in .fv_cp_hidden > .fv-cp-comment-show {
 .comment_report_wrap {
 	display: block;
 	clear: both;
-	padding: 0 5px;
+	padding: 5px 10px;
+	background-color: #f2f2f2;
 	text-align: left;
 }
 .comment_report_wrap p {
