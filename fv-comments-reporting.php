@@ -120,7 +120,7 @@ class FV_Comments_Reporting {
     $comments = array();
 
     // TODO: add filters
-    $reports = $this->get_reports();
+    $reports = $this->get_reports(false, false, 'all' );
 
     foreach ( $reports as $rep ) {
       if( ! in_array( $rep->comment_id, $comment_ids) ) {
@@ -340,10 +340,13 @@ class FV_Comments_Reporting {
    * @param  string $status     Status of report. False for all reports. (default = false)
    * @return array             Array of repots Objects
    */
-  function get_reports ( $comment_id = false, $status = false ) {
+  function get_reports ( $comment_id = false, $status = false, $fields = false ) {
     global $wpdb;
+    
+    if( $fields == 'all' ) $fields = '*';
+    if( !$fields ) $fields = 'id, comment_id, reason';
 
-    $query = "SELECT * FROM {$wpdb->prefix}commentreports_fvtc WHERE 1=1 ";
+    $query = "SELECT $fields FROM {$wpdb->prefix}commentreports_fvtc WHERE 1=1 ";
 
     if( is_array($comment_id) ) {
       $query .= " AND comment_id IN (".implode(',',$comment_id).")";
