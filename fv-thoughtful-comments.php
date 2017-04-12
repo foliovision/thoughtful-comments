@@ -1721,7 +1721,7 @@ add_action('wp_print_styles', array( $fv_tc, 'styles' ) );
 add_filter( 'comments_array', array( $fv_tc, 'unapproved' ) );
 
 /* Cache users */
-if( !function_exists('apc_fetch') && !function_exists('memcache_get') ) add_filter( 'comments_array', array( $fv_tc, 'users_cache' ) );
+if( !function_exists('apc_fetch') && !function_exists('memcache_get') && !class_exists('Redis') ) add_filter( 'comments_array', array( $fv_tc, 'users_cache' ) );
 
 /* Bring back children of deleted comments */
 add_action( 'transition_comment_status', array( $fv_tc, 'transition_comment_status' ), 1000, 3 );
