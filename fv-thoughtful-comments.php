@@ -382,7 +382,7 @@ class fv_tc extends fv_tc_Plugin {
         
         }
         
-        add_filter( 'get_comment_link', array( $this, 'hack_check_comment_properties' ), 10, 4 ); //  figure out what element is comment_text wrapped in
+        add_filter( 'get_comment_link', array( $this, 'hack_check_comment_properties' ), 10 ); //  figure out what element is comment_text wrapped in
             
         //  appends the moderation buttons into a new sibling element of where comment_text is
         add_filter( 'comment_text', array( $this, 'hack_html_close_comment_element' ), 20000 );
@@ -1395,7 +1395,7 @@ class fv_tc extends fv_tc_Plugin {
     }
     
     
-    function hack_check_comment_properties( $link, $comment, $args, $cpage ) {
+    function hack_check_comment_properties( $link ) {
       if( !$this->hack_comment_wrapper ) {  //  making sure it only executed once
         ob_start();
         add_filter( 'comment_text', array( $this, 'hack_check_comment_wrapper' ) );
