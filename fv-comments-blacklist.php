@@ -4,29 +4,43 @@ add_filter( 'pre_comment_approved', 'fv_tc_pre_comment_approved', -999999, 2 );
 
 function fv_tc_pre_comment_approved( $approved, $commentdata ) {
     
-  if ( fv_tc_check_comment(
-    $commentdata['comment_author'],
-    $commentdata['comment_author_email'],
-    $commentdata['comment_author_url'],
-    $commentdata['comment_content'],
-    $commentdata['comment_author_IP'],
-    $commentdata['comment_agent'],
-    $commentdata['comment_type']
-  ) ) {
-    $approved = 1;
-  } else {
-    $approved = 0;
-  }
-
-  if ( fv_tc_wp_blacklist_check(
-    $commentdata['comment_author'],
-    $commentdata['comment_author_email'],
-    $commentdata['comment_author_url'],
-    $commentdata['comment_content'],
-    $commentdata['comment_author_IP'],
-    $commentdata['comment_agent']
-  ) ) {
-    $approved = 'spam';
+  if ( ! empty( $commentdata['user_id'] ) ) {
+		$user = get_userdata( $commentdata['user_id'] );
+    global $wpdb;
+		$post_author = $wpdb->get_var( $wpdb->prepare(
+			"SELECT post_author FROM $wpdb->posts WHERE ID = %d LIMIT 1",
+			$commentdata['comment_post_ID']
+		) );
+	}
+    
+  if ( isset( $user ) && ( $commentdata['user_id'] == $post_author || $user->has_cap( 'moderate_comments' ) ) ) {
+		// The author and the admins get respect.
+		$approved = 1;
+	} else {
+    if ( fv_tc_check_comment(
+      $commentdata['comment_author'],
+      $commentdata['comment_author_email'],
+      $commentdata['comment_author_url'],
+      $commentdata['comment_content'],
+      $commentdata['comment_author_IP'],
+      $commentdata['comment_agent'],
+      $commentdata['comment_type']
+    ) ) {
+      $approved = 1;
+    } else {
+      $approved = 0;
+    }
+  
+    if ( fv_tc_wp_blacklist_check(
+      $commentdata['comment_author'],
+      $commentdata['comment_author_email'],
+      $commentdata['comment_author_url'],
+      $commentdata['comment_content'],
+      $commentdata['comment_author_IP'],
+      $commentdata['comment_agent']
+    ) ) {
+      $approved = 'spam';
+    }
   }
   
   return $approved;
