@@ -163,12 +163,12 @@ class fv_tc extends fv_tc_Plugin {
           $this->loadScripts = true;
           
           /*  If the IP isn't on the blacklist yet, display delete and ban ip link  */
-          $banned = stripos(trim(get_option('blacklist_keys')),$comment->comment_author_IP);
+          $banned = $this->is_commenter_banned($comment);
           $child = $this->comment_has_child($comment->comment_ID, $comment->comment_post_ID);
           if($banned===FALSE)
               $actions['delete_ban'] = $this->get_t_delete_ban($comment);
           else
-              $actions['delete_ban'] = '<a href="#">' . __('Already banned!', 'fv_tc') . '</a>';
+              $actions['delete_ban'] = '<a href="#">' . __('Already banned!', 'fv_tc') . '</a> '.$banned;
           if($child>0) {
             $actions['delete_thread'] = $this->get_t_delete_thread($comment);
             if($banned===FALSE)            
@@ -440,8 +440,8 @@ class fv_tc extends fv_tc_Plugin {
           //if($child>0) {
             $out .= $this->get_t_delete_thread($comment).' ';
           //}
-          /*  If IP isn't banned  */
-          if( stripos( trim( get_option( 'blacklist_keys' ) ), $comment->comment_author_IP ) === FALSE ) {
+          $whats_banned = $this->is_commenter_banned($comment);
+          if( !$whats_banned ) {
 		// Only show ban link if allowed.
 		if ( true === (bool) apply_filters( 'fv_show_trash_and_ban_link', true ) ) {
 			/*  Delete and ban  */
@@ -452,8 +452,8 @@ class fv_tc extends fv_tc_Plugin {
 			$out .= ' | '.$this->get_t_delete_thread_ban($comment);
 		}
           } else {
-              $out .= 'IP '.$comment->comment_author_IP.' ';
-                            $out .= __('already banned!', 'fv_tc' );
+              $out .= "<a class='fv-tc-ban' href='" . admin_url( 'tools.php?page=fv_thoughtful_comments' ) . "'>" . __('Already banned', 'fv_tc' ) . "</a>: ";
+              $out .= $whats_banned; 
           }
           /*  Moderation status   */
           $user_info = ( isset($comment->user_id) && $comment->user_id > 0 ) ? get_userdata($comment->user_id) : false;
@@ -474,7 +474,7 @@ class fv_tc extends fv_tc_Plugin {
         $aStrings = Array(
             'comment_delete' => __('Do you really want to trash this comment?', 'fv_tc'),
             'delete_error' => __('Error deleting comment', 'fv_tc'),
-            'comment_delete_ban_ip' => __('Do you really want to trash this comment and ban the IP?', 'fv_tc'),
+            'comment_delete_ban_ip' => __('Do you really want to trash this comment and ban the IP and email address?', 'fv_tc'),
             'comment_delete_replies' => __('Do you really want to trash this comment and all the replies?', 'fv_tc'),
             'comment_delete_replies_ban_ip' => __('Do you really want to trash this comment with all the replies and ban the IP?', 'fv_tc'),
             'moderate_future' => __('Moderate future comments by this user','fv_tc'),
@@ -514,14 +514,14 @@ class fv_tc extends fv_tc_Plugin {
     
     
     /**
-     * Generate the anchor for delete and ban IP function
+     * Generate the anchor for delete and ban function
      * 
      * @param object $comment Comment object
      * 
      * @return string HTML of the anchor
      */
     function get_t_delete_ban($comment) {
-        return '<a href="#" class="fv-tc-ban" onclick="fv_tc_delete_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Trash & Ban IP', 'fv_tc') . '</a>';
+        return '<a href="#" class="fv-tc-ban" onclick="fv_tc_delete_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Trash & Ban', 'fv_tc') . '</a>';
     }
     
     
@@ -538,14 +538,14 @@ class fv_tc extends fv_tc_Plugin {
 
     
     /**
-     * Generate the anchor for delete thread and ban IP function
+     * Generate the anchor for delete thread and ban function
      * 
      * @param object $comment Comment object
      * 
      * @return string HTML of the anchor
      */
     function get_t_delete_thread_ban($comment) {
-        return '<a href="#" class="fc-tc-banthread" onclick="fv_tc_delete_thread_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Trash Thread & Ban IP','fv_tc') . '</a>';
+        return '<a href="#" class="fc-tc-banthread" onclick="fv_tc_delete_thread_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Trash Thread & Ban','fv_tc') . '</a>';
     }
     
     
@@ -575,7 +575,16 @@ class fv_tc extends fv_tc_Plugin {
             else
                 $out .= __('Unmoderated', 'fv_tc') . '</a>';
         return  $out;
-    }    
+    }  
+    
+    
+    function is_commenter_banned( $comment ) {
+      $blacklist = trim(get_option('blacklist_keys'));
+      $banned = array();
+      if( stripos($blacklist,$comment->comment_author_email) !== false ) $banned[] = $comment->comment_author_email;
+      if( stripos($blacklist,$comment->comment_author_IP) !== false ) $banned[] = $comment->comment_author_IP;
+      return count($banned) ? implode( ', ', $banned ) : false;
+    }      
 
     
     /**
@@ -1261,6 +1270,9 @@ class fv_tc extends fv_tc_Plugin {
           $commentStatus = $objComment->comment_approved;
           $blacklist_keys = trim(stripslashes(get_option('blacklist_keys')));      
           $blacklist_keys_update = $blacklist_keys."\n".$_REQUEST['ip'];
+          if( is_email($objComment->comment_author_email) ) {
+            $blacklist_keys_update = $blacklist_keys_update."\n".$objComment->comment_author_email;
+          }
           update_option('blacklist_keys', $blacklist_keys_update);
 
           $wpdb->update( 'wp_comments', array( 'comment_approved' => 'spam' ), array( 'comment_ID' => intval($_REQUEST['id']) ) );
