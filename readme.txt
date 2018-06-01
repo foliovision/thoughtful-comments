@@ -3,7 +3,7 @@
 Contributors: FolioVision
 Tags: comments,moderation,frontend,unapproved
 Requires at least: 2.7
-Tested up to: 4.8
+Tested up to: 4.9.6
 Stable tag: trunk
 
 FV Thoughtful Comments adds front end comment moderation including sophisticated banning mechanisms. Say Goodbye to Disqus!
