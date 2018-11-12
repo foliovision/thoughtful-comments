@@ -248,6 +248,9 @@ class fv_tc extends fv_tc_Plugin {
       }
             
       $sMobile = ( !empty($wptouch_pro->is_mobile_device) && $wptouch_pro->is_mobile_device ) ? '-wptouch' : '';
+      if( function_exists('is_amp_endpoint') && is_amp_endpoint() ) {
+        $sMobile = '-amp';
+      }
           
       $this->cache_data = false;
       $this->cache_filename = $post->ID.'-'.$post->post_name.$sMobile.'-cpage'.$wp_query->query_vars['cpage'].'.tmp';
