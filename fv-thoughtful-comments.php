@@ -286,6 +286,9 @@ class fv_tc extends fv_tc_Plugin {
       }
 
       $sType = ( ( empty($_COOKIE['wptouch-pro-view']) || $_COOKIE['wptouch-pro-view'] != 'desktop' ) && !empty($wptouch_pro->is_mobile_device) && $wptouch_pro->is_mobile_device ) ? '-wptouch' : '-desktop';
+      if( function_exists('is_amp_endpoint') && is_amp_endpoint() ) {
+        $sType = '-amp';
+      }
       $sType .= ( !empty($_GET['fvtc_order']) && ( $_GET['fvtc_order'] == 'desc' || $_GET['fvtc_order'] == 'asc' ) ) ? '-'.$_GET['fvtc_order'] : '-noorder';
       $sType .= ( current_user_can('read') ) ? '-subscriber' : '-guest';  //  todo: this is not the best way of doing this but the other check for edit_published_posts takes care of it
 
