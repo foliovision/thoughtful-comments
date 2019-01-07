@@ -909,7 +909,7 @@ class fv_tc extends fv_tc_Plugin {
       }
       
       
-      $aData = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}commentvoting_fvtc" );
+      $aData = $wpdb->get_results( "SELECT rate_like_ip,rate_dislike_ip FROM {$wpdb->prefix}commentvoting_fvtc" );
       if( count($aData) ) {
         $iCount = 0;
         
