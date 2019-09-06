@@ -1117,7 +1117,7 @@ class fv_tc extends fv_tc_Plugin {
     function comment_links_replace_2( $link ) {
       preg_match( '~href=["\'](.*?)["\']~', $link[0], $href );
       preg_match( '~>(.*?)</a>~', $link[0], $text );
-      if( ! isset( $href[1] ) || ! isset( $text[1] ) ) {
+      if( ! ( isset( $href[1] ) && isset( $text[1] ) ) ) {
         return $link[0];
       }
       if( $href[1] == $text[1] ) {
