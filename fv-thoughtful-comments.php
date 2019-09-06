@@ -56,27 +56,27 @@ class fv_tc extends fv_tc_Plugin {
      * @var string
      */
     var $url;
-  
+
     /**
      * Plugin version
      * @var string
      */
     var $strVersion = '0.3.6';
-  
+
     /**
      * Decide if scripts will be loaded on current page
      * True if array( $fv_tc, 'frontend' ) filter was aplied on current page
      * @bool
      */
     var $loadScripts = false;
-    
+
     var $hack_comment_wrapper = false;
-    
+
     var $can_edit = false;
-    
+
     var $can_ban = false;
-  
-  
+
+
     /**
      * Class contructor. Sets all basic variables.
      */
@@ -84,10 +84,10 @@ class fv_tc extends fv_tc_Plugin {
         $this->url = trailingslashit( site_url() ).PLUGINDIR.'/'. dirname( plugin_basename(__FILE__) );
         $this->readme_URL = 'http://plugins.trac.wordpress.org/browser/thoughtful-comments/trunk/readme.txt?format=txt';
         add_action( 'in_plugin_update_message-thoughtful-comments/fv-thoughtful-comments.php', array( &$this, 'plugin_update_message' ) );
-        add_action( 'admin_init', array( $this, 'option_defaults' ) );      
+        add_action( 'admin_init', array( $this, 'option_defaults' ) );
     }
-  
-  
+
+
     function option_defaults() {
       $options = get_option('thoughtful_comments');
       if( !$options ){
@@ -101,10 +101,10 @@ class fv_tc extends fv_tc_Plugin {
         }
       }
     }
-  
-    
+
+
     function admin_css(){
-      
+
       if( !isset($_GET['page']) || $_GET['page'] != 'manage_fv_thoughtful_comments' ) {
         return;
       }
@@ -112,13 +112,13 @@ class fv_tc extends fv_tc_Plugin {
       <link rel="stylesheet" type="text/css" href="<?php echo plugins_url('css/admin.css',__FILE__); ?>" />
       <?php
     }
-    
-    
+
+
     function admin_show_setting( $name, $option_key, $title, $help = false, $type = 'checkbox', $class = false ) {
       $name = esc_attr($name);
       $class = 'fv_tc-setting-'.$name.' ' .$class;
       $disabled = stripos($type,'disabled') !== false ? ' disabled' : false;
-      
+
       ?>
         <tr class="<?php echo $class; ?>">
           <th>
@@ -127,9 +127,9 @@ class fv_tc extends fv_tc_Plugin {
           <td>
             <p class="description">
               <?php if( stripos($type,'-checkbox') !== false ) : ?>
-                <input <?php echo $disabled; ?> type="checkbox" id="<?php echo $name; ?>-checkbox" name="<?php echo $name; ?>-checkbox" value="1" <?php if( $this->get_setting($option_key.'-checkbox') ) echo 'checked="checked"'; ?> /> 
+                <input <?php echo $disabled; ?> type="checkbox" id="<?php echo $name; ?>-checkbox" name="<?php echo $name; ?>-checkbox" value="1" <?php if( $this->get_setting($option_key.'-checkbox') ) echo 'checked="checked"'; ?> />
               <?php endif; ?>
-              
+
               <?php
               if( stripos($type,'textarea') === 0 ) {
                 $input = '<textarea '.$disabled.' id="'.$name.'" name="'.$name.'" class="large-text code" rows="8">'.esc_textarea( $this->get_setting($option_key) ).'</textarea><br />';
@@ -140,22 +140,22 @@ class fv_tc extends fv_tc_Plugin {
               } else {
                 $input = '<input '.$disabled.' type="checkbox" id="'.$name.'" name="'.$name.'" value="1" '.( $this->get_setting($option_key) ? 'checked="checked"' : '' ).' />';
               }
-              
+
               if( !$help || stripos($help,'%input%') === false ) echo $input;
-              
+
               if( $help ) : ?>
                 <label for="<?php echo $name; ?>"><?php echo str_replace( '%input%', $input, $help ); ?></p>
               <?php endif; ?>
           </td>
         </tr>
       <?php
-    }  
-    
+    }
+
 
     function ap_action_init() {
         // Localization
         load_plugin_textdomain('fv_tc', false, dirname(plugin_basename(__FILE__)) . "/languages");
-        
+
         $options = get_option( 'thoughtful_comments' );
 
         if( is_user_logged_in() ) {
@@ -303,8 +303,8 @@ class fv_tc extends fv_tc_Plugin {
         return $wpdb->get_var("SELECT comment_ID FROM {$wpdb->comments} WHERE comment_post_id = '{$postid}' AND comment_parent = '{$id}' LIMIT 1");
         */
     }
-    
-    
+
+
     /**
      * Replace url of reply link only with #
      * functionality is done only by JavaScript
@@ -313,7 +313,7 @@ class fv_tc extends fv_tc_Plugin {
      */
     function comment_reply_link( $sHTML = null ) {
       $options = get_option('thoughtful_comments');
-      
+
       $strReplyKeyWord = 'comment-';
       if( isset( $options['tc_replyKW'] ) && !empty( $options[ 'tc_replyKW' ] ) ) {
          $strReplyKeyWord = $options['tc_replyKW'];
@@ -328,7 +328,7 @@ class fv_tc extends fv_tc_Plugin {
       if( $options['reply_link'] ) {
         $sHTML = preg_replace( '~(<a[^>]*?class=[\'"]comment-reply[^>]*?)href[^>]*?onclick~' , '$1href="#respond" onclick' , $sHTML );
       }
-      
+
       return $sHTML;
     }
 
@@ -361,17 +361,17 @@ class fv_tc extends fv_tc_Plugin {
     */
     function frontend ($comment_text) {
         $tag = $this->hack_comment_wrapper ? $this->hack_comment_wrapper : 'div';
-        $out = '<'.$tag.' class="tc-frontend">'."\n";        
+        $out = '<'.$tag.' class="tc-frontend">'."\n";
         return $comment_text . $out;
     }
-    
+
     function frontend_start() {
         $this->max_depth = get_option('thread_comments') ? get_option('thread_comments_depth') : -1;
-        
-        add_filter( 'comment_reply_link', '__return_false', 999 ); //  disabling the standard reply buttons!        
+
+        add_filter( 'comment_reply_link', '__return_false', 999 ); //  disabling the standard reply buttons!
         add_filter( 'wptouch_settings_domain', array( $this, 'wptouch_disable_reply' ) );  //  disabling the WPTouch reply buttons!
         add_filter( 'comment_text', array( $this, 'reply_button' ), 10001, 3 );  //  show the new reply button
-        
+
         //  setup permissions, but don't slow down guests users
         if( is_singular() && is_user_logged_in() ) {
           global $post;
@@ -379,24 +379,24 @@ class fv_tc extends fv_tc_Plugin {
             $this->can_edit = true;
           }
           $this->can_ban = current_user_can('moderate_comments');
-        
+
         }
-        
+
         add_filter( 'get_comment_link', array( $this, 'hack_check_comment_properties' ), 10 ); //  figure out what element is comment_text wrapped in
-            
+
         //  appends the moderation buttons into a new sibling element of where comment_text is
         add_filter( 'comment_text', array( $this, 'hack_html_close_comment_element' ), 20000 );
-        add_filter( 'comment_text', array( $this, 'frontend' ), 20001 );        
-        
-        
+        add_filter( 'comment_text', array( $this, 'frontend' ), 20001 );
+
+
     }
-    
-    function frontend_template() {        
+
+    function frontend_template() {
         global  $user_ID, $comment, $post;
-        
+
         // todo: class if comment unapproved, spam, if IP banned, if comment $user_info->user_level >= 3, if already not moderated
         $out = '<a href="#" class="fv-tc-approve">' . __('Approve', 'fv_tc') . '</a>';
-        $out .= '<a href="#" class="fv-tc-unspam">' . __('Unspam', 'fv_tc') . '</a>';        
+        $out .= '<a href="#" class="fv-tc-unspam">' . __('Unspam', 'fv_tc') . '</a>';
         $out .= '<a href="#" class="fv-tc-del">' . __('Trash', 'fv_tc') . '</a>';
         $out .= '<a href="#" class="fv-tc-delthread">' . __('Trash Thread', 'fv_tc') . '</a>';
         $out .= '<a href="#" class="fv-tc-ban">' . __('Trash & Ban IP', 'fv_tc') . '</a>';
@@ -406,9 +406,9 @@ class fv_tc extends fv_tc_Plugin {
           $out .= '<a href="#" class="fv-tc-dont-moderate">' . __('Allow user to comment without moderation', 'fv_tc') . '</a>';
           $out .= '<a href="#" class="fv-tc-moderate">' . __('Moderate future comments by this user', 'fv_tc') . '</a>';
         }
-        
+
         return $out;
-    }    
+    }
 
     function get_js_translations() {
         $aStrings = Array(
@@ -428,20 +428,20 @@ class fv_tc extends fv_tc_Plugin {
         );
         return $aStrings;
     }
-    
-    
+
+
     function get_setting( $key ) {
       $options = get_option('thoughtful_comments');
-      
+
       if( isset($options[$key]) ) {
         if( $options[$key] === true || $options[$key] === 'true' ) return true;
         return trim($options[$key]);
       }
-      
+
       if( $key == 'daily_comments_limit' ) return 4;
-      
+
       return false;
-    }    
+    }
 
 
     /**
@@ -508,7 +508,7 @@ class fv_tc extends fv_tc_Plugin {
     function get_t_delete_thread_ban($comment) {
         return '<a href="#" class="fv-tc-banthread" onclick="fv_tc_delete_thread_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Trash Thread & Ban IP','fv_tc') . '</a>';
     }
-    
+
 
     /**
      * Generate the anchor for auto approving function
@@ -579,7 +579,7 @@ class fv_tc extends fv_tc_Plugin {
                     'comment_whitelist_link',
                     __('Before a comment appears', 'fv_tc'),
                     __('Comment author must have a previously approved comment if the comment contains a link', 'fv_tc') );
-        
+
           $this->admin_show_setting(
                     'comment_autoapprove_count',
                     'comment_autoapprove_count',
@@ -587,27 +587,27 @@ class fv_tc extends fv_tc_Plugin {
                     __( sprintf( 'Number of approved comments before auto-approval<br /><small>Depends on the <a href=\'%s\' target=\'_blank\'>Comment author must have a previously approved comment</a> Discussion setting</small>',site_url('wp-admin/options-discussion.php#moderation_notify') ), 'fv_tc'),
                     get_option('comment_whitelist') ? 'number' : 'number-disabled',
                     get_option('comment_whitelist') ? '' : 'disabled');
-        
+
         $this->admin_show_setting(
                     'daily_comments_limit',
                     'daily_comments_limit',
                     __('Daily Comment Limit', 'fv_tc'),
                     __('Posting more than %input% comments to a post in a day will enable moderation for further comments by that user email or logged in user ID on that post', 'fv_tc'),
                     'number-checkbox' );
-        
+
         $this->admin_show_setting(
                     'comments_reporting',
                     'comments_reporting',
                     __('Enable Comment Reporting', 'fv_tc'),
                     __('Enable reporting of abusive comments.', 'fv_tc') );
-        
+
         $this->admin_show_setting(
                     'frontend_spam',
                     'frontend_spam',
                     __('Show spam comments in front-end', 'fv_tc'),
                     __('Reveal spam comments in front-end comment list for moderators', 'fv_tc') );
-                
-        ?>     
+
+        ?>
       </table>
       <p>
           <input type="submit" name="fv_thoughtful_comments_submit" class="button-primary" value="<?php _e('Save Changes', 'fv_tc') ?>" />
@@ -630,20 +630,20 @@ class fv_tc extends fv_tc_Plugin {
               </select><br /><label for="shorten_urls"><span><?php _e('Shortens the plain URL link text in comments to "link to: domain.com" or strip URL after N characters and add &hellip; at the end. Hides long ugly URLs', 'fv_tc'); ?></span></label><br />
               </td>
           </tr>
-          
+
           <?php
           $this->admin_show_setting(
                     'user_nicename_edit',
                     'user_nicename_edit',
                     __('Allow User Nicename Change', 'fv_tc'),
                     __('Allow site administrators to change user nicename (author URL) on the "Edit user" screen.', 'fv_tc') );
-          
+
           $this->admin_show_setting(
                     'reply_link',
                     'reply_link',
                     __('Reply Link', 'fv_tc'),
                     __('Disable HTML replies. <br /><small>Lightens your server load. Reply function still works, but through JavaScript.</small>', 'fv_tc') );
-          
+
           $bCommentReg = get_option( 'comment_registration' );
           $this->admin_show_setting(
                     'tc_replyKW',
@@ -677,7 +677,7 @@ class fv_tc extends fv_tc_Plugin {
           <th scope="row">User Moderation</th>
           <td>
           <img src="<?php echo $this->url; ?>/screenshot-3.png" alt="FV Thoughtful Comments frontend" style="max-width: 100%; height: auto;"></td>
-        </tr>                           
+        </tr>
       </table>
       <?php
     }
@@ -716,7 +716,7 @@ class fv_tc extends fv_tc_Plugin {
       add_meta_box( 'fv_tc_description', 'Description', array( $this, 'fv_tc_admin_description' ), 'fv_tc_settings', 'normal' );
       add_meta_box( 'fv_tc_comment_moderation', 'Comment Moderation', array( $this,'fv_tc_admin_comment_moderation' ), 'fv_tc_settings', 'normal' );
       add_meta_box( 'fv_tc_comment_tweaks', 'Comment Tweaks', array( $this,'fv_tc_admin_comment_tweaks' ), 'fv_tc_settings', 'normal' );
-      
+
       add_meta_box( 'fv_tc_comment_instructions', 'Instructions', array( $this,'fv_tc_admin_comment_instructions' ), 'fv_tc_settings', 'normal' );
 
       if (!empty($_POST)) :
@@ -745,10 +745,10 @@ class fv_tc extends fv_tc_Plugin {
               'daily_comments_limit' => ( isset($_POST['daily_comments_limit']) && intval($_POST['daily_comments_limit']) > 0 ) ? intval($_POST['daily_comments_limit']) : false,
               'daily_comments_limit-checkbox' => ( isset($_POST['daily_comments_limit-checkbox']) && $_POST['daily_comments_limit-checkbox'] ) ? true : false,
               'tc_replyKW' => isset( $_POST['tc_replyKW'] ) ? $_POST['tc_replyKW'] : 'comment-',
-              'user_nicename_edit' => ( isset($_POST['user_nicename_edit']) && $_POST['user_nicename_edit'] ) ? true : false,              
+              'user_nicename_edit' => ( isset($_POST['user_nicename_edit']) && $_POST['user_nicename_edit'] ) ? true : false,
               'frontend_spam' => ( isset($_POST['frontend_spam']) && $_POST['frontend_spam'] ) ? true : false,
               'comment_whitelist_link' => ( isset($_POST['comment_whitelist_link']) && $_POST['comment_whitelist_link'] ) ? true : false,
-              'comments_reporting' => ( isset($_POST['comments_reporting']) && $_POST['comments_reporting'] ) ? true : false,              
+              'comments_reporting' => ( isset($_POST['comments_reporting']) && $_POST['comments_reporting'] ) ? true : false,
           );
           if( update_option( 'thoughtful_comments', $options ) ) :
 
@@ -871,25 +871,25 @@ class fv_tc extends fv_tc_Plugin {
 
       <?php
     }
-    
+
 
     /**
     * Action for wp_print_scripts - enqueues plugin js which is dependend on jquery. Improved in 0.2.3  ////
     *
     * @global int Current user ID
     */
-    function scripts() {      
+    function scripts() {
       if( $this->loadScripts ) {
         wp_enqueue_script('fv_tc',$this->url. '/js/fv_tc.js',array('jquery'), $this->strVersion, true);
-        
+
         if( $this->can_edit ) {
           global $post;
           wp_localize_script('fv_tc', 'fv_tc_html', $this->frontend_template());
           wp_localize_script('fv_tc', 'fv_tc_nonce', wp_create_nonce('fv_tc-'.$post->ID) );
         }
-        
-        // todo: somehow consider also $this->can_ban 
-        
+
+        // todo: somehow consider also $this->can_ban
+
         wp_localize_script('fv_tc', 'fv_tc_translations', $this->get_js_translations());
         wp_localize_script('fv_tc', 'fv_tc_ajaxurl', admin_url('admin-ajax.php'));
       }
@@ -1117,6 +1117,9 @@ class fv_tc extends fv_tc_Plugin {
     function comment_links_replace_2( $link ) {
       preg_match( '~href=["\'](.*?)["\']~', $link[0], $href );
       preg_match( '~>(.*?)</a>~', $link[0], $text );
+      if( ! isset( $href[1] ) || ! isset( $text[1] ) ) {
+        return $link[0];
+      }
       if( $href[1] == $text[1] ) {
         preg_match( '!//(.+?)/!', $text[1], $domain );
         if( isset($domain[1]) && $domain[1] ) {
@@ -1163,10 +1166,10 @@ class fv_tc extends fv_tc_Plugin {
 
         return $content;
     }
-    
-    function daily_comment_limit( $approved, $commentdata ) {      
+
+    function daily_comment_limit( $approved, $commentdata ) {
       if( current_user_can( 'manage_options' ) || current_user_can( 'moderate_comments' ) ) return $approved;
-      
+
       if( intval($this->get_setting('daily_comments_limit')) < 1 || !$this->get_setting('daily_comments_limit-checkbox') ) return $approved;
 
       if( isset($commentdata['user_id']) && $commentdata['user_id'] > 0 ) {
@@ -1174,9 +1177,9 @@ class fv_tc extends fv_tc_Plugin {
       } else {
         $where = "comment_author_email = '".esc_sql($commentdata['comment_author_email'])."'";
       }
-      
+
       $day_ago = gmdate( 'Y-m-d H:i:s', time() - DAY_IN_SECONDS );
-    
+
       global $wpdb;
       $iCommentsPosted = $wpdb->get_var( $wpdb->prepare(
         "SELECT count(comment_ID) FROM $wpdb->comments WHERE `comment_post_ID` = %d AND `comment_date_gmt` >= %s AND $where",
@@ -1187,21 +1190,21 @@ class fv_tc extends fv_tc_Plugin {
       if( $iCommentsPosted >= intval($this->get_setting('daily_comments_limit')) ) {
         return 0; //  too many comments posted on this day
       }
-      
+
       return $approved;
-    }    
-    
+    }
+
     function comment_class( $classes, $class, $comment_ID, $comment, $post_id ) {
         if( $comment->comment_approved == 0 ) {
           $classes[] = 'tc-unapproved';
         } else if( $comment->comment_approved == 'spam' ) {
           $classes[] = 'tc-spam';
         }
-        
+
         if( stripos(trim(get_option('blacklist_keys')),$comment->comment_author_IP) !== false ) {
           $classes[] = 'tc-banned';
         }
-        
+
         return $classes;
     }
 
@@ -1289,7 +1292,7 @@ class fv_tc extends fv_tc_Plugin {
 
 
     function fv_tc_approve() {
-      if( isset($_POST['id']) ) {        
+      if( isset($_POST['id']) ) {
         $objComment = get_comment( $_REQUEST['id'] );
         check_ajax_referer('fv_tc-'.$objComment->comment_post_ID);
         if( !wp_set_comment_status( $_REQUEST['id'], 'approve' ) ) {
@@ -1314,7 +1317,7 @@ class fv_tc extends fv_tc_Plugin {
         if( !$objComment ) {
           die('db error');
         }
-        
+
         $objComment->comment_author_ip;
         if( stripos($_POST['action'],'_ban') !== false && stripos(trim(get_option('blacklist_keys')),$objComment->comment_author_IP)===FALSE) {
           $blacklist_keys = trim(stripslashes(get_option('blacklist_keys')));
@@ -1327,7 +1330,7 @@ class fv_tc extends fv_tc_Plugin {
 
       //check_admin_referer('fv-tc-delete_' . $_GET['id']);
         if( stripos($_POST['action'],'thread') !== false ) {
-          $this->fv_tc_delete_recursive($objComment->comment_ID);          
+          $this->fv_tc_delete_recursive($objComment->comment_ID);
         } else {
           if( !wp_delete_comment($objComment->comment_ID) ) {
             die('db error');
@@ -1364,7 +1367,7 @@ class fv_tc extends fv_tc_Plugin {
             $this->fv_tc_delete_recursive($comment['comment_ID']);
         }
     }
-    
+
 
     function get_comment_link( $link ) {
         $link = preg_replace( '~/comment-page-1[$/]~', '', $link );  //  todo: make this an option, I guess!
@@ -1379,49 +1382,49 @@ class fv_tc extends fv_tc_Plugin {
         }
         return $link;
     }
-    
-    
+
+
     function hack_html_close_comment_element( $comment_text ) {
       global $comment;
       if( !$this->can_edit ) {
         return $comment_text;
       }
-      
+
       $tag = $this->hack_comment_wrapper ? $this->hack_comment_wrapper : 'div';
-      
+
       $comment_text .= "\n".'</'.$tag.'><!-- .comment-content (fvtc) -->'."\n";
-      
+
       return $comment_text;
     }
-    
-    
+
+
     function hack_check_comment_properties( $link ) {
       if( !$this->hack_comment_wrapper ) {  //  making sure it only executed once
         ob_start();
         add_filter( 'comment_text', array( $this, 'hack_check_comment_wrapper' ) );
       }
-      
+
       return $link;
     }
-    
-    
+
+
     function hack_check_comment_wrapper( $comment_text ) {
       $sHTML = ob_get_clean();
-      
-      if( preg_match( '~<(\S+).*?>\s*?$~', $sHTML, $tag ) ) {      
+
+      if( preg_match( '~<(\S+).*?>\s*?$~', $sHTML, $tag ) ) {
         $this->hack_comment_wrapper = trim($tag[1]);
       }
-      
+
       echo $sHTML;
-      
+
       remove_filter( 'comment_text', array( $this, 'hack_check_comment_wrapper' ) ); //  making sure it only executed once
       return $comment_text;
     }
-    
-    
-    function reply_button( $comment_text, $comment, $args = false ) {			
+
+
+    function reply_button( $comment_text, $comment, $args = false ) {
       $add_below = current_theme_supports( 'html5', 'comment-list' ) ? 'div-comment' : 'comment'; //  you might also need to check wp_list_comments() args['style'] here
-      
+
       remove_filter( 'comment_reply_link', '__return_false', 999 ); //  enable the reply button for a bit!
       $reply_button = get_comment_reply_link( array(
 					'add_below' => isset($args['add_below']) ? $args['add_below'] : $add_below,
@@ -1431,9 +1434,9 @@ class fv_tc extends fv_tc_Plugin {
 					'after'     => '</div>'
 				) );
       add_filter( 'comment_reply_link', '__return_false', 999 ); //  disabling the standard reply buttons again!
-      
+
       if( $reply_button ) $comment_text .= '<div class="fv_tc_wrapper">'.$reply_button.'</div>';
-      
+
       return $comment_text;
     }
 
@@ -1441,7 +1444,7 @@ class fv_tc extends fv_tc_Plugin {
     function fv_tc_auto_approve_comment( $approved, $commentdata ){
       $options = get_option('thoughtful_comments');
       $comment_whitelist_link = ( isset($options['comment_whitelist_link']) ) ? $options['comment_whitelist_link'] : false;
-      
+
       //edit: "Comment author must have a previously approved comment" or "Comment author must have a previously approved comment if the comment contains a link" has to be on to trigger this functionality
       if( !get_option('comment_whitelist') && !$comment_whitelist_link ){
         return $approved;
@@ -1471,35 +1474,35 @@ class fv_tc extends fv_tc_Plugin {
 
       if( get_option('comment_whitelist') ) {
         $auto_approve_count = ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : false;
-  
+
         //stop if auto-approve count is not set OR is less or equal 1 (comment whitelist already handle this)
         if( !$auto_approve_count || $auto_approve_count <= 1 ){
           return $approved;
         }
-  
-        global $wpdb;        
-        $dbCount = $wpdb->get_var( $wpdb->prepare( "SELECT count(*) FROM {$wpdb->prefix}comments WHERE comment_author = %s AND comment_author_email = %s AND comment_approved = 1", $commentdata['comment_author'], $commentdata['comment_author_email'] ) );  
+
+        global $wpdb;
+        $dbCount = $wpdb->get_var( $wpdb->prepare( "SELECT count(*) FROM {$wpdb->prefix}comments WHERE comment_author = %s AND comment_author_email = %s AND comment_approved = 1", $commentdata['comment_author'], $commentdata['comment_author_email'] ) );
         if( $dbCount >= $auto_approve_count ) {
           return 1;
         } else {
           return 0;
         }
-      
+
       } else if( $comment_whitelist_link ) {
 		// if the comment has no link, just approve it
         if( stripos($commentdata['comment_content'],'http://') === false && stripos($commentdata['comment_content'],'https://') === false ) {
           return 1;
-        }        
-        
+        }
+
         global $wpdb;
         $ok_to_comment = $wpdb->get_var( $wpdb->prepare( "SELECT comment_approved FROM $wpdb->comments WHERE comment_author = %s AND comment_author_email = %s and comment_approved = '1' LIMIT 1", $commentdata['comment_author'], $commentdata['comment_author_email'] ) );
         if( 1 == $ok_to_comment ) {
           return 1;
         }
         return 0;
-        
+
       }
-      
+
     }
 
 
@@ -1512,7 +1515,7 @@ class fv_tc extends fv_tc_Plugin {
       //do not add warning if option is not set or is set to 1, or if comment_whitelist (Comment author must have a previously approved comment) is not set
       $auto_approve_count = ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : false;
       $comment_whitelist_link = ( isset($options['comment_whitelist_link']) ) ? $options['comment_whitelist_link'] : false;
-            
+
       if( !$comment_whitelist_link && ( !get_option('comment_whitelist') || !$auto_approve_count || $auto_approve_count <= 1 ) ){
         return;
       }
@@ -1535,7 +1538,7 @@ class fv_tc extends fv_tc_Plugin {
       //do not add warning if option is not set or is set to 1
       $auto_approve_count = ( isset($options['comment_autoapprove_count']) ) ? $options['comment_autoapprove_count'] : false;
       $comment_whitelist_link = ( isset($options['comment_whitelist_link']) ) ? $options['comment_whitelist_link'] : false;
-      
+
       if( get_option('comment_whitelist') && $auto_approve_count > 0 ) {
         $discussion_settings = preg_replace( '~(<input[^>]*id="comment_whitelist"[^>]*>[^<]*)~', '$1 <br/><strong>WARNING:</strong> This setting is extended by <a href="'.$fv_tc_link.'#comment_autoapprove_count">FV Thoughtful Comments</a> plugin.', $discussion_settings );
       } else if( $comment_whitelist_link ) {
@@ -1627,26 +1630,26 @@ class fv_tc extends fv_tc_Plugin {
 
       echo "<div class='fv_tc_comment_sorting'>$newest $oldest</div>";
     }
-    
-    
+
+
     function comment_order( $value ) {
 
       if( !empty($_GET['fvtc_order']) && ( $_GET['fvtc_order'] == 'desc' || $_GET['fvtc_order'] == 'asc' ) ) $value = $_GET['fvtc_order'];
 
       return $value;
     }
-    
-    
+
+
     function noscript_notice() {
       echo '<noscript>' . __('Reply link does not work in your browser because JavaScript is disabled.', 'fv_tc') . '<br /></noscript>';
     }
-    
-    
+
+
     function wptouch_disable_reply( $settings ) {
-      $settings->allow_nested_comment_replies = false;      
+      $settings->allow_nested_comment_replies = false;
       return $settings;
     }
-    
+
 
 }
 $fv_tc = new fv_tc;
