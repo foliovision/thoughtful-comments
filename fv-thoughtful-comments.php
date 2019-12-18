@@ -936,7 +936,14 @@ class fv_tc extends fv_tc_Plugin {
     function styles() {
         global $post;
         //  this is executed in the header, so we can't do the check for every post on index/archive pages, so we better load styles if there are any unapproved comments to show. it's loaded even for contributors which don't need it.
-        if( is_single() && $post->comment_count > 0 || current_user_can('moderate_comments') ) {
+        
+        $options = get_option('thoughtful_comments');
+        $is_needed_for_guest =
+          isset($options['voting_display_type']) && strcmp($options['voting_display_type'],'off') != 0 ||
+          isset($this->options['comments_reporting']) && $this->options['comments_reporting'] ||
+          isset($options['live_updates']) && strcmp($options['live_updates'],'off') != 0;
+        
+        if( $is_needed_for_guest && is_single() && $post->comment_count > 0 || is_user_logged_in() ) {
           echo '<link rel="stylesheet" href="'.$this->url.'/css/frontend.css?ver='.$this->strVersion.'" type="text/css" media="screen" />';
         }
     }
