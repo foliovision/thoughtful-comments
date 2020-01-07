@@ -119,7 +119,7 @@ class FV_TC_Walker_Comment_blank extends Walker_Comment {
 
 	}
 
-	public function walk( $elements, $max_depth) {
+	public function walk( $elements, $max_depth, ...$args) {
 
 		$args = array_slice(func_get_args(), 2);
 		$output = '';
@@ -191,7 +191,7 @@ class FV_TC_Walker_Comment_blank extends Walker_Comment {
 		 return $output;
 	}
 
-	public function paged_walk( $elements, $max_depth, $page_num, $per_page ) {
+	public function paged_walk( $elements, $max_depth, $page_num, $per_page, ...$args  ) {
 
 		/* sanity check */
 		if ( empty($elements) || $max_depth < -1 )

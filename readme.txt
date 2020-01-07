@@ -3,7 +3,7 @@
 Contributors: FolioVision
 Tags: comments,moderation,frontend,unapproved
 Requires at least: 2.7
-Tested up to: 4.9.6
+Tested up to: 5.3
 Stable tag: trunk
 
 FV Thoughtful Comments adds front end comment moderation including sophisticated banning mechanisms. Say Goodbye to Disqus!
@@ -57,6 +57,9 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 4. Admin screen settings.
 
 == Changelog ==
+
+= 0.3.3 =
+* Fix for PHP warnings in WordPress 5.3
 
 = 0.3.2 =
 * Link shortening improvements - shorten to "link to domains.com", 50 or 100 characters.

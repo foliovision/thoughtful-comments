@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.3.2
+Version: 0.3.3
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -47,7 +47,7 @@ class fv_tc extends fv_tc_Plugin {
      * Plugin version
      * @var string
      */
-    var $strVersion = '0.3.1';
+    var $strVersion = '0.3.3';
     
     /**
      * Decide if scripts will be loaded on current page
@@ -218,6 +218,11 @@ class fv_tc extends fv_tc_Plugin {
         return $args;
       }
       
+      // cache is only supported if your PHP is 5.6 or later
+      if(version_compare(phpversion(),'5.6.0','<')){
+        return $args;
+      }
+      
       require_once( dirname(__FILE__).'/walkers.php' );
       
       global $wp_query, $post, $blog_id, $wptouch_pro;
@@ -251,9 +256,11 @@ class fv_tc extends fv_tc_Plugin {
       if( function_exists('is_amp_endpoint') && is_amp_endpoint() ) {
         $sMobile = '-amp';
       }
-          
+      
+      $cpage = !empty($wp_query->query_vars['cpage']) ? $wp_query->query_vars['cpage'] : 0;
+      
       $this->cache_data = false;
-      $this->cache_filename = $post->ID.'-'.$post->post_name.$sMobile.'-cpage'.$wp_query->query_vars['cpage'].'.tmp';
+      $this->cache_filename = $post->ID.'-'.$post->post_name.$sMobile.'-cpage'.$cpage.'.tmp';
       if( !file_exists(WP_CONTENT_DIR.'/cache/') ) {
         mkdir(WP_CONTENT_DIR.'/cache/');
       }
