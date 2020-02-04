@@ -60,6 +60,7 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 
 = 0.3.3 =
 * Fix for PHP warnings in WordPress 5.3
+* Hiding cache file paths
 
 = 0.3.2 =
 * Link shortening improvements - shorten to "link to domains.com", 50 or 100 characters.

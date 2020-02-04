@@ -252,25 +252,25 @@ class fv_tc extends fv_tc_Plugin {
         echo "<!--fv comments cache - unapproved comments for $this->cache_comment_author - not serving cached data -->\n";
       }
             
-      $sMobile = ( !empty($wptouch_pro->is_mobile_device) && $wptouch_pro->is_mobile_device ) ? '-wptouch' : '';
+      $sType = ( ( empty($_COOKIE['wptouch-pro-view']) || strcmp($_COOKIE['wptouch-pro-view'],'desktop') != 0 ) && !empty($wptouch_pro->is_mobile_device) && $wptouch_pro->is_mobile_device ) ? '-wptouch' : '-desktop';
       if( function_exists('is_amp_endpoint') && is_amp_endpoint() ) {
-        $sMobile = '-amp';
+        $sType = '-amp';
       }
       
-      $cpage = !empty($wp_query->query_vars['cpage']) ? $wp_query->query_vars['cpage'] : 0;
+      $cpage = !empty($wp_query->query_vars['cpage']) ? intval($wp_query->query_vars['cpage']) : 0;
       
       $this->cache_data = false;
-      $this->cache_filename = $post->ID.'-'.$post->post_name.$sMobile.'-cpage'.$cpage.'.tmp';
+      $this->cache_filename = $post->ID.'-'.$post->post_name.$sType.'-cpage'.$cpage.'.tmp';
       if( !file_exists(WP_CONTENT_DIR.'/cache/') ) {
         mkdir(WP_CONTENT_DIR.'/cache/');
       }
       if( !file_exists(WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/') ) {
         mkdir(WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/');
       }
-      $this->cache_filename = WP_CONTENT_DIR . '/cache/thoughtful-comments-'.$blog_id.'/'.$this->cache_filename;  //  check if exists!
+      $this->cache_filename = 'cache/thoughtful-comments-'.$blog_id.'/'.$this->cache_filename;  //  check if exists!
 
-      if( file_exists( $this->cache_filename ) ) {
-        $this->cache_data = unserialize( file_get_contents( $this->cache_filename ) );
+      if( file_exists( WP_CONTENT_DIR.'/'.$this->cache_filename ) ) {
+        $this->cache_data = unserialize( file_get_contents( WP_CONTENT_DIR.'/'.$this->cache_filename ) );
       }
       
       if ( !is_array($this->cache_data) ) {

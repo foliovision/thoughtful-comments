@@ -86,7 +86,7 @@ class FV_TC_Walker_Comment_capture extends Walker_Comment {
       $aCache['comments'] = $fv_tc->cache_comment_count;
         
       if( !is_user_logged_in() && !$fv_tc->cache_comment_author && !isset( $_COOKIE['fv-debug'] ) ) {        
-        $res = file_put_contents( $fv_tc->cache_filename, serialize( $aCache ) );
+        $res = file_put_contents( WP_CONTENT_DIR.'/'.$fv_tc->cache_filename, serialize( $aCache ) );
         if( !$res ) {
           echo "<!--fv comments error writing into $fv_tc->cache_filename -->\n";
         } else {
