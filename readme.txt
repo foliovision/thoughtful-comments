@@ -2,7 +2,7 @@
 
 Contributors: FolioVision
 Tags: comments,moderation,frontend,unapproved
-Requires at least: 2.7
+Requires at least: 4.2
 Tested up to: 5.3
 Stable tag: trunk
 

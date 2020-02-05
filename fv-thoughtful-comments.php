@@ -595,7 +595,18 @@ class fv_tc extends fv_tc_Plugin {
       if( stripos($blacklist,$comment->comment_author_email) !== false ) $banned[] = $comment->comment_author_email;
       if( stripos($blacklist,$comment->comment_author_IP) !== false ) $banned[] = $comment->comment_author_IP;
       return count($banned) ? implode( ', ', $banned ) : false;
-    }      
+    }
+
+
+    function load_unapproved( $comment_args) {
+        global $user_ID, $post;
+
+        /*  Check user permissions */
+        if($user_ID && current_user_can('edit_post', $post->ID)) { 
+          $comment_args['status'] = array('approve','hold');
+        }
+        return $comment_args;
+    }
 
     
     /**
@@ -1035,52 +1046,27 @@ class fv_tc extends fv_tc_Plugin {
     
     
     /**
-     * Shows unapproved comments bellow posts if user can moderate_comments. Hooked to comments_array. In WP, all the unapproved comments are shown both to contributors and authors in wp-admin, but we don't do that in frontend.
+     * Hilights unapproved comments bellow posts. Hooked to comments_array. In WP, all the unapproved comments are shown both to contributors and authors in wp-admin, but we don't do that in frontend.
      * 
-     * @param array $comments Original array of the post comments, that means only the approved comments.
+     * @param array $comments Original array of the post comments
      * @global int Current user ID.
      * @global object Current post object.                
      * 
-     * @return array Array of both approved and unapproved comments.
+     * @return array Array of both comments with unapproved ones hilighted
      */               
-    function unapproved($comments) {
-        global  $user_ID;
-        global  $post;
+    function hilight_unapproved($comments) {
+        foreach($comments AS $k => $comment) {
+            /*  Don't display the spam comments */ 
+            if($comment->comment_approved == 'spam')
+                continue;
             
-        /*if( count($comments) > 200 ) {
-          remove_filter( 'comment_text', 'wptexturize'            );
-          remove_filter( 'comment_text', 'convert_smilies',    20 );
-          remove_filter( 'comment_text', 'wpautop',            30 );        
-          add_filter( 'comment_text', array( $this, 'wpautop_lite' ),            30 );          
-        }*/
-        
-        /*  Check user permissions */
-        if($user_ID && current_user_can('edit_post', $post->ID)) { 
-            /*  Use the standard WP function to get the comments  */
-            if(function_exists('get_comments'))
-                $comments = get_comments( array('post_id' => $post->ID, 'order' => 'ASC') );
-            /*  Use DB query for older WP versions  */
-            else {
-                global  $wpdb;
-                $comments = $wpdb->get_results("SELECT * FROM {$wpdb->comments} WHERE comment_post_ID = {$post->ID} AND comment_approved != 'spam' ORDER BY comment_date ASC");
+            /*  Highlight the comment author in case the comment isn't approved yet */    
+            if($comment->comment_approved == '0') {
+                $comments[$k]->comment_author = '<span id="comment-'.$comment->comment_ID.'-unapproved" class="tc_highlight">'.$comment->comment_author.'</span>';
             }
-            
-            /*  Target array where both approved and unapproved comments are added  */
-            $new_comments = array();
-            foreach($comments AS $comment) {
-                /*  Don't display the spam comments */ 
-                if($comment->comment_approved == 'spam')
-                    continue;
-                /*  Highlight the comment author in case the comment isn't approved yet */    
-                if($comment->comment_approved == '0') {
-                    /*  Alternative - highlight the comment content */
-                    //$comment->comment_content = '<div id="comment-'.$comment->comment_ID.'-unapproved" style="background: #ffff99;">'.$comment->comment_content.'</div>';
-                    $comment->comment_author = '<span id="comment-'.$comment->comment_ID.'-unapproved" class="tc_highlight">'.$comment->comment_author.'</span>';
-                }
-                $new_comments[] = $comment;
-            }
-            return $new_comments;
+
         }
+
         return $comments;
     }
     
@@ -1628,7 +1614,9 @@ add_filter( 'comments_number', array( $fv_tc, 'show_unapproved_count' ) );
 add_action('wp_print_styles', array( $fv_tc, 'styles' ) );
 
 /* Show unapproved comments bellow posts */
-add_filter( 'comments_array', array( $fv_tc, 'unapproved' ) ); 
+add_filter( 'comments_array', array( $fv_tc, 'hilight_unapproved' ) ); 
+
+add_filter( 'comments_template_query_args', array( $fv_tc, 'load_unapproved' ) );
 
 /* Cache users */
 if( !function_exists('apc_fetch') && !function_exists('memcache_get') ) add_filter( 'comments_array', array( $fv_tc, 'users_cache' ) );
