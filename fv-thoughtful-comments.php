@@ -590,7 +590,7 @@ class fv_tc extends fv_tc_Plugin {
     
     
     function is_commenter_banned( $comment ) {
-      $blacklist = trim(get_option('blacklist_keys'));
+      $blacklist = trim( get_option( $this->get_option_blacklist() ) );
       $banned = array();
       if( stripos($blacklist,$comment->comment_author_email) !== false ) $banned[] = $comment->comment_author_email;
       if( stripos($blacklist,$comment->comment_author_IP) !== false ) $banned[] = $comment->comment_author_IP;
@@ -767,7 +767,7 @@ class fv_tc extends fv_tc_Plugin {
               <fieldset><legend class="screen-reader-text"><span><?php _e('Comment Blacklist'); ?></span></legend>
                 <p><label for="blacklist_keys"><?php _e('When a comment contains any of these words in its content, name, URL, email, or IP, it will be put in the trash. One word or IP per line. It will match inside words, so &#8220;press&#8221; will match &#8220;WordPress&#8221;.'); ?></label></p>
                 <p>
-                  <textarea name="blacklist_keys" rows="30" cols="50" id="blacklist_keys" class="large-text code"><?php echo esc_textarea( get_option( 'blacklist_keys' ) ); ?></textarea>
+                  <textarea name="blacklist_keys" rows="30" cols="50" id="blacklist_keys" class="large-text code"><?php echo esc_textarea( get_option( $this->get_option_blacklist() ) ); ?></textarea>
                 </p>
               </fieldset>
             </td>
@@ -882,7 +882,7 @@ class fv_tc extends fv_tc_Plugin {
       if (!empty($_POST)) :
           check_admin_referer('thoughtful_comments');
 
-          if( update_option( 'blacklist_keys', trim( $_POST['blacklist_keys'] ) ) ) :
+          if( update_option( $this->get_option_blacklist(), trim( $_POST['blacklist_keys'] ) ) ) :
           ?>
           <div id="message" class="updated fade">
               <p>
@@ -1348,17 +1348,17 @@ class fv_tc extends fv_tc_Plugin {
 
     function fv_tc_delete() {
         global $wpdb;
+        $blacklist_keys = trim( get_option( $this->get_option_blacklist() ) );
 
-        if(isset($_REQUEST['ip']) && stripos(trim(get_option('blacklist_keys')),$_REQUEST['ip'])===FALSE) {
+        if(isset($_REQUEST['ip']) && stripos( $blacklist_keys, $_REQUEST['ip'] )===FALSE) {
           
           $objComment = get_comment( $_REQUEST['id'] );
           $commentStatus = $objComment->comment_approved;
-          $blacklist_keys = trim(stripslashes(get_option('blacklist_keys')));      
           $blacklist_keys_update = $blacklist_keys."\n".$_REQUEST['ip'];
           if( is_email($objComment->comment_author_email) ) {
             $blacklist_keys_update = $blacklist_keys_update."\n".$objComment->comment_author_email;
           }
-          update_option('blacklist_keys', $blacklist_keys_update);
+          update_option( $this->get_option_blacklist(), $blacklist_keys_update);
 
           $wpdb->update( 'wp_comments', array( 'comment_approved' => 'spam' ), array( 'comment_ID' => intval($_REQUEST['id']) ) );
           do_action('transition_comment_status','spam','unapproved', $objComment );
@@ -1419,6 +1419,12 @@ class fv_tc extends fv_tc_Plugin {
           $link = preg_replace( '~/comment-page-1[$/]~', '', $link );  //  todo: make this an option, I guess!
         }
         return $link;
+    }
+
+    function get_option_blacklist() {
+        global $wp_version;
+        // Use disallowed_keys on WP 5.5.0 and later
+        return version_compare( $wp_version, '5.5.0' ) != -1 ? 'disallowed_keys' : 'blacklist_keys';
     }
     
     
