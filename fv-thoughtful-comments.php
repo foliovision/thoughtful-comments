@@ -3,7 +3,7 @@
 Plugin Name: FV Thoughtful Comments
 Plugin URI: http://foliovision.com/
 Description: Manage incomming comments more effectively by using frontend comment moderation system provided by this plugin. 
-Version: 0.3.3
+Version: 0.3.4
 Author: Foliovision
 Author URI: http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/
 
@@ -30,7 +30,7 @@ The users cappable of moderate_comments are getting all of these features and ar
 /**
  * @package foliovision-tc
  * @author Foliovision <programming@foliovision.com>
- * version 0.3.1
+ * version 0.3.4
  */  
  
 include( 'fp-api.php' );
@@ -47,7 +47,7 @@ class fv_tc extends fv_tc_Plugin {
      * Plugin version
      * @var string
      */
-    var $strVersion = '0.3.3';
+    var $strVersion = '4';
     
     /**
      * Decide if scripts will be loaded on current page
@@ -979,7 +979,7 @@ class fv_tc extends fv_tc_Plugin {
             if($count!= 0) {
                 //return '<span class="tc_highlight"><abbr title="This post has '.$count.' unapproved comments">'.str_ireplace(' comm','/'.$count.'</abbr></span> comm',$content).'';
                 
-                $content = preg_replace( '~(\d+)~', '<span class="tc_highlight"><abbr title="' . sprintf( _n( 'This post has one unapproved comment.', 'This post has %d unapproved comments.', $count, 'fv_tc' ), $count ) . '">$1</abbr></span>', $content );
+                $content = preg_replace( '~(\d+|\S+ replies)~', '<span class="tc_highlight"><abbr title="' . sprintf( _n( 'This post has one unapproved comment.', 'This post has %d unapproved comments.', $count, 'fv_tc' ), $count ) . '">$1</abbr></span>', $content );
                 return $content;
                 }
         }
@@ -1046,28 +1046,21 @@ class fv_tc extends fv_tc_Plugin {
     
     
     /**
-     * Hilights unapproved comments bellow posts. Hooked to comments_array. In WP, all the unapproved comments are shown both to contributors and authors in wp-admin, but we don't do that in frontend.
+     * Hilights unapproved comments bellow posts.
      * 
-     * @param array $comments Original array of the post comments
-     * @global int Current user ID.
-     * @global object Current post object.                
+     * @param string[]    $classes    An array of comment classes.
+     * @param string      $class      A comma-separated list of additional classes added to the list.
+     * @param int         $comment_id The comment ID.
+     * @param WP_Comment  $comment    The comment object.           
      * 
      * @return array Array of both comments with unapproved ones hilighted
      */               
-    function hilight_unapproved($comments) {
-        foreach($comments AS $k => $comment) {
-            /*  Don't display the spam comments */ 
-            if($comment->comment_approved == 'spam')
-                continue;
-            
-            /*  Highlight the comment author in case the comment isn't approved yet */    
-            if($comment->comment_approved == '0') {
-                $comments[$k]->comment_author = '<span id="comment-'.$comment->comment_ID.'-unapproved" class="tc_highlight">'.$comment->comment_author.'</span>';
-            }
-
+    function hilight_unapproved( $classes, $class, $comment_ID, $comment ) {
+        if($comment->comment_approved == '0') {
+          $classes[] = 'unapproved';
         }
 
-        return $comments;
+        return $classes;
     }
     
     
@@ -1596,7 +1589,7 @@ if( function_exists( 'x_add_metadata_field' ) ) {
 }
 
 /* Add frontend moderation options */
-add_filter( 'comment_text', array( $fv_tc, 'frontend' ) );
+add_filter( 'comment_text', array( $fv_tc, 'frontend' ), PHP_INT_MAX );
 /* Shorten plain links */
 add_filter( 'comment_text', array( $fv_tc, 'comment_links' ), 100 );
 
@@ -1619,8 +1612,8 @@ add_filter( 'comments_number', array( $fv_tc, 'show_unapproved_count' ) );
 /* Styles */
 add_action('wp_print_styles', array( $fv_tc, 'styles' ) );
 
-/* Show unapproved comments bellow posts */
-add_filter( 'comments_array', array( $fv_tc, 'hilight_unapproved' ) ); 
+/* Hilight unapproved comments bellow posts */
+add_filter( 'comment_class', array( $fv_tc, 'hilight_unapproved' ), PHP_INT_MAX, 4 ); 
 
 add_filter( 'comments_template_query_args', array( $fv_tc, 'load_unapproved' ) );
 

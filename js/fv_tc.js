@@ -8,7 +8,7 @@ function fv_tc_approve(id) {
         success: function(data){
             jQuery("#comment-body-"+id).children(":first").text('');
             jQuery("#comment-"+id+"-approve").remove();
-            jQuery("#comment-"+id+"-unapproved").removeClass("tc_highlight");
+            jQuery("#comment-"+id).removeClass("unapproved");
             jQuery("#comment-"+id).find("p.comment-awaiting-moderation").remove();
         }
     });
