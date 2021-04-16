@@ -1207,6 +1207,12 @@ class fv_tc extends fv_tc_Plugin {
     
     
     function users_cache( $comments ) {
+      // Do not preload anything if the cache is on as it causes more harm than good
+      $options = get_option('thoughtful_comments');
+      if( !empty($options['comment_cache']) ) {
+        return $comments;
+      }
+      
       global $wpdb;
       
       if( $comments !== NULL && count( $comments ) > 0 ) {
