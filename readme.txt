@@ -58,6 +58,9 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 
 == Changelog ==
 
+= 0.3.5 =
+* Fix "Reply link" function to disable HTML anchors for each comment reply for WordPress 5.1 and above
+
 = 0.3.4 =
 * Fix for PHP warnings in WordPress 5.5
 * Fix for broken pending comment highlight in front-end in TwentyTwenty theme
