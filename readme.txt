@@ -3,7 +3,7 @@
 Contributors: FolioVision
 Tags: comments,moderation,frontend,unapproved
 Requires at least: 4.2
-Tested up to: 6.0
+Tested up to: 6.3
 Stable tag: trunk
 
 FV Thoughtful Comments adds front end comment moderation including sophisticated banning mechanisms. Say Goodbye to Disqus!
@@ -140,3 +140,23 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 == Frequently Asked Questions ==
 
 [Support](http://foliovision.com/seo-tools/wordpress/plugins/thoughtful-comments/)
+
+== Testing ==
+
+1. Make sure Settings -> Discussion -> Before a comment appears "Comment must be manually approved" is checked.
+
+1.2. Create new article and make.
+
+1.3. Log out and post a comments.
+
+1.4. Log in as admin got to article page and approve one of the comments and delete the other one.
+
+1.5. Go to Settings -> FV Thoughtful Comments and check "Comment cache (advanced)"
+
+1.6 Log out and go to article page.
+
+1.7. Go to Settings -> FV Thoughtful Comments and verify that you can see that cache file was created.
+
+1.8. Go to cache file location and verify that cache file was created.
+
+1.9. Edit cache file and go to article page. Verify that changes are visible.
