@@ -141,7 +141,7 @@ function fv_tc_moderated(id, frontend) {
 
 // Remove thread delete and ban buttons if there are no replies
 jQuery('.comment').each( function() {
-	if( jQuery(this).find('ul.children').length == 0 ) {
+	if( jQuery(this).find('ul.children, ol > li.comment').length == 0 ) {
 		jQuery(this).find('.fv-tc-delthread, .fc-tc-banthread').remove();
 	}
 });

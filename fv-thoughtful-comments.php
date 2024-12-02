@@ -420,12 +420,10 @@ class fv_tc extends fv_tc_Plugin {
     *        
     * @return string Comment text with added features. 
     */
-    function frontend ($content) {
+    function frontend( $content, $comment ) {
         if( is_admin() ) {
           return $content;
         }
-        
-        global  $user_ID, $comment, $post;
         
         if( !isset($this->can_edit) ) { // for performance reasons only check once!
           if( current_user_can('edit_posts') && current_user_can( 'edit_comment', $comment->comment_ID ) ) {
@@ -1628,7 +1626,7 @@ if( function_exists( 'x_add_metadata_field' ) ) {
 }
 
 /* Add frontend moderation options */
-add_filter( 'comment_text', array( $fv_tc, 'frontend' ), PHP_INT_MAX );
+add_filter( 'comment_text', array( $fv_tc, 'frontend' ), PHP_INT_MAX, 2 );
 /* Shorten plain links */
 add_filter( 'comment_text', array( $fv_tc, 'comment_links' ), 100 );
 
