@@ -32,7 +32,7 @@ The users cappable of moderate_comments are getting all of these features and ar
  * @author Foliovision <programming@foliovision.com>
  * version 0.3.5
  */  
- 
+
 include( 'fp-api.php' );
 if( class_exists('fv_tc_Plugin') ) :
 
@@ -484,7 +484,9 @@ class fv_tc extends fv_tc_Plugin {
     function get_js_translations() {
         $aStrings = Array(
             'comment_delete' => __('Do you really want to trash this comment?', 'fv_tc'),
-            'delete_error' => __('Error deleting comment', 'fv_tc'),
+            'delete_error' => __('Error deleting comment, please reload and try again.', 'fv_tc'),
+            'approval_error' => __('Error approving comment, please reload and try again.', 'fv_tc'),
+            'moderation_error' => __('Error changing moderation status, please reload and try again.', 'fv_tc'),
             'comment_delete_ban_ip' => __('Do you really want to trash this comment and ban the IP and email address?', 'fv_tc'),
             'comment_delete_replies' => __('Do you really want to trash this comment and all the replies?', 'fv_tc'),
             'comment_delete_replies_ban_ip' => __('Do you really want to trash this comment with all the replies and ban the IP?', 'fv_tc'),
@@ -621,30 +623,10 @@ class fv_tc extends fv_tc_Plugin {
     function moderate($approved) {
         global  $user_ID;
         
-        ///////////////////////////
-        
-        /*global  $wp_filter;
-        
-        var_dump($wp_filter['pre_comment_approved']);
-        
-        echo '<h3>before: </h3>';
-        
-        var_dump($approved);
-        
-        echo '<h3>fv_tc actions: </h3>';
-        
-        if(get_user_meta($user_ID,'fv_tc_moderated')) {
-            echo '<p>putting into approved</p>';
+        if ( get_user_meta($user_ID,'fv_tc_moderated') ) {
+          return  true;
         }
-        else {
-            echo '<p>putting into unapproved</p>';
-        }
-            
-        die('end');*/
-        /////////////////////////
-        
-        if(get_user_meta($user_ID,'fv_tc_moderated'))    
-            return  true;
+
         return  $approved;
     }
         
@@ -945,10 +927,17 @@ class fv_tc extends fv_tc_Plugin {
     * @global int Current user ID        
     */
     function scripts() {
-        if( $this->loadScripts ) {
+        global $current_screen;
+        if ( $this->loadScripts || is_admin() && ! empty( $current_screen ) && 'users' == $current_screen->id ) {
             wp_enqueue_script('fv_tc',$this->url. '/js/fv_tc.js',array('jquery'), $this->strVersion, true);
             wp_localize_script('fv_tc', 'fv_tc_translations', $this->get_js_translations());
-            wp_localize_script('fv_tc', 'fv_tc_ajaxurl', admin_url('admin-ajax.php'));
+            wp_localize_script('fv_tc', 'fv_tc_conf', array(
+              'ajax_url' => admin_url('admin-ajax.php'),
+              'latest_comment_post_id' => get_the_ID(),
+              'latest_comment' => $this->latest_comment,
+              'logged_in'      => is_user_logged_in(),
+              'nonce' => wp_create_nonce( 'fv_tc' )
+            ) );
         }
     }
     
@@ -1340,12 +1329,25 @@ class fv_tc extends fv_tc_Plugin {
     }
 
     function fv_tc_approve() {
-        if(!wp_set_comment_status( $_REQUEST['id'], 'approve' ))
-            die('db error');
+        if ( ! wp_verify_nonce( $_REQUEST['nonce'], 'fv_tc' ) ) {
+          wp_send_json( array( 'error' => 'Bad nonce.' ) );
+        }
+
+        if ( wp_set_comment_status( $_REQUEST['id'], 'approve' ) ) {
+          wp_send_json( array( 'success' => true ) );
+        }
+        
+        wp_send_json( array( 'error' => 'Unknown error.' ) );
     }
     
 
     function fv_tc_delete() {
+        if ( ! wp_verify_nonce( $_REQUEST['nonce'], 'fv_tc' ) ) {
+          wp_send_json( array( 'error' => 'Bad nonce.' ) );
+        }
+
+        $comment_id = intval( $_REQUEST['id'] );
+
         global $wpdb;
         $blacklist_keys = trim( get_option( $this->get_option_blacklist() ) );
 
@@ -1364,45 +1366,77 @@ class fv_tc extends fv_tc_Plugin {
           $wpdb->update( 'wp_comments', array( 'comment_approved' => $commentStatus ), array( 'comment_ID' => intval($_REQUEST['id']) ) );
         }
 
-      //check_admin_referer('fv-tc-delete_' . $_GET['id']);
-        if (isset($_REQUEST['thread'])) {
-          if($_REQUEST['thread'] == 'yes') {
-        $this->fv_tc_delete_recursive($_REQUEST['id']);
-          } 
-        }
-        else {
-      if(!wp_delete_comment($_REQUEST['id']))
-          die('db error');
-        }       
+        $deleted_comment_ids = array();
 
+        if ( isset( $_REQUEST['thread'] ) && 'yes' === $_REQUEST['thread'] ) {
+          $this->fv_tc_delete_recursive( $_REQUEST['id'], $deleted_comment_ids );
+
+        } else {
+          $comment = get_comment( $comment_id );
+          if ( $comment && 'trash' === $comment->comment_approved ) {
+            return true;
+          }
+    
+          $res = wp_trash_comment( $comment_id );
+
+          if ( ! $res || is_wp_error( $res ) ) {
+            wp_send_json( array( 'error' => 'Error removing comment ID: ' . $comment_id ) );
+          }
+
+          $deleted_comment_ids[] = $comment_id;
+        }
+
+        wp_send_json( array( 'success' => true, 'deleted_comment_ids' => $deleted_comment_ids ) );
     }
 
+    /**
+     * Adds or removes the fv_tc_moderated user meta.
+     * If the meta is set, the user's comment will not be moderated.
+     */
     function fv_tc_moderated() {
-        if(get_user_meta($_REQUEST['id'],'fv_tc_moderated')) {
-           if(!delete_user_meta($_REQUEST['id'],'fv_tc_moderated'))
-                die('meta error');
-            echo 'user moderated';
+        if ( ! wp_verify_nonce( $_REQUEST['nonce'], 'fv_tc' ) ) {
+          wp_send_json( array( 'error' => 'Bad nonce.' ) );
         }
-        else {
-            if(!update_user_meta($_REQUEST['id'],'fv_tc_moderated','no'))
-                die('meta error');
-            echo 'user non-moderated';
+
+        if ( get_user_meta( $_REQUEST['id'], 'fv_tc_moderated' ) ) {
+          if ( delete_user_meta($_REQUEST['id'],'fv_tc_moderated') ) {
+            wp_send_json( array( 'success' => true, 'user_moderated' => true ) );
+
+          } else {
+            wp_send_json( array( 'error' => 'Error removing moderation flag.' ) );
+          }
+
+        } else {
+          // Adding user meta with value 'no' to indicate that the user's comments should not be moderated. Although the value does not matter.
+          if ( update_user_meta( $_REQUEST['id'], 'fv_tc_moderated', 'no' ) ) {
+            wp_send_json( array( 'success' => true, 'user_not_moderated' => true ) );
+          } else {
+            wp_send_json( array( 'error' => 'Error adding moderation flag.' ) );
+          }
         }
     }
 
-    function fv_tc_delete_recursive($id) {
+    function fv_tc_delete_recursive( $id, &$deleted_comment_ids ) {
         global  $wpdb;  
-        echo ' '.$id.' ';
-        $comments = $wpdb->get_results("SELECT * FROM {$wpdb->comments} WHERE `comment_parent` ='{$id}'",ARRAY_A);
-        if(strlen($wpdb->last_error)>0)
-            die('db error');
-        if(!wp_delete_comment($id))
-            die('db error');             
-        /*  If there are no more children */
-        if(count($comments)==0)
-            return;
-        foreach($comments AS $comment) {
-            $this->fv_tc_delete_recursive($comment['comment_ID']);
+
+        $replies = $wpdb->get_results(
+          $wpdb->prepare(
+            "SELECT * FROM {$wpdb->comments} WHERE comment_parent = %d",
+            $id
+          ),
+          ARRAY_A
+        );
+
+        if ( wp_delete_comment( $id ) ) {
+          $deleted_comment_ids[] = $id;
+        }
+  
+        if ( count( $replies ) == 0 ) {
+          return;
+        }
+
+        foreach( $replies AS $comment ) {
+          $this->fv_tc_delete_recursive( $comment['comment_ID'], $deleted_comment_ids );
         }
     }
 
