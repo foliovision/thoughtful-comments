@@ -453,15 +453,14 @@ class fv_tc extends fv_tc_Plugin {
           //}
           $whats_banned = $this->is_commenter_banned($comment);
           if( !$whats_banned ) {
-		// Only show ban link if allowed.
-		if ( true === (bool) apply_filters( 'fv_show_trash_and_ban_link', true ) ) {
-			/*  Delete and ban  */
-			$out .= $this->get_t_delete_ban($comment);//.' | ';
+            // Only show ban link if allowed.
+            if ( true === (bool) apply_filters( 'fv_show_trash_and_ban_link', true ) ) {
+              /*  Delete and ban  */
+              $out .= $this->get_t_delete_ban($comment);//.' | ';
 
-			/*  Delete thread and ban   */
-			//if($child>0)
-			$out .= ' | '.$this->get_t_delete_thread_ban($comment);
-		}
+              /*  Delete thread and ban   */
+              $out .= $this->get_t_delete_thread_ban($comment);
+            }
           } else {
               $out .= "<a class='fv-tc-ban' href='" . admin_url( 'tools.php?page=fv_thoughtful_comments' ) . "'>" . __('Already banned', 'fv_tc' ) . "</a>: ";
               $out .= $whats_banned; 
@@ -558,7 +557,7 @@ class fv_tc extends fv_tc_Plugin {
      * @return string HTML of the anchor
      */
     function get_t_delete_thread_ban($comment) {
-        return '<a href="#" class="fc-tc-banthread" onclick="fv_tc_delete_thread_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Trash Thread & Ban','fv_tc') . '</a>';
+        return '<a href="#" class="fv-tc-banthread" onclick="fv_tc_delete_thread_ban('.$comment->comment_ID.',\''.$comment->comment_author_IP.'\'); return false">' . __('Trash Thread & Ban','fv_tc') . '</a>';
     }
     
     
