@@ -421,7 +421,7 @@ class fv_tc extends fv_tc_Plugin {
     * @return string Comment text with added features. 
     */
     function frontend( $content, $comment ) {
-        if( is_admin() ) {
+        if( is_admin() || wp_is_block_theme() ) {
           return $content;
         }
         
@@ -476,6 +476,88 @@ class fv_tc extends fv_tc_Plugin {
           return $content . $out;  
         }
         return $content;
+    }
+
+    
+    function frontend_block_themes() {
+      unregister_block_type( 'core/comment-edit-link' );
+
+      register_block_type_from_metadata(
+        ABSPATH . '/wp-includes/blocks/comment-edit-link',
+        array(
+          'render_callback' => array( $this, 'frontend_block_themes_callback' ),
+        )
+      );
+    }
+
+    /**
+     * Add comment moderation buttons next to the standard comment block edit link.
+     */
+    function frontend_block_themes_callback( $attributes, $content, $block ) {
+      global $fv_tc;
+
+      $html = render_block_core_comment_edit_link( $attributes, $content, $block );
+
+      if ( isset( $block->context['commentId'] ) ) {
+    
+        static $can_edit;
+    
+        if ( ! isset( $can_edit ) ) { // for performance reasons only check once!
+          if( current_user_can('edit_posts') && current_user_can( 'edit_comment', $block->context['commentId'] ) ) {
+            $can_edit = true;
+          } else {
+            $can_edit = false;
+          }
+        }
+
+        if( $can_edit ) {  
+          // TODO: Should be in the main object
+          $this->loadScripts = true;
+
+          $comment = get_comment( $block->context['commentId'] );
+
+          $out = '';
+
+          if($comment->comment_approved == '0') {
+            $out .= '<div class="wp-block-comment-edit-link"><span id="comment-'.$comment->comment_ID.'-approve">' . $fv_tc->get_t_approve($comment) . ' </span></div>';
+          }
+          /*  Delete comment  */
+          $out .= '<div class="wp-block-comment-edit-link">' . $fv_tc->get_t_delete($comment) . '</div>';
+          /*  Delete thread   */
+          $out .= '<div class="wp-block-comment-edit-link fv-tc-thread">' . $fv_tc->get_t_delete_thread($comment) . '</div>';
+
+          $whats_banned = $fv_tc->is_commenter_banned($comment);
+
+          if( !$whats_banned ) {
+            // Only show ban link if allowed.
+            if ( true === (bool) apply_filters( 'fv_show_trash_and_ban_link', true ) ) {
+              /*  Delete and ban  */
+              $out .= '<div class="wp-block-comment-edit-link">' .$fv_tc->get_t_delete_ban($comment) . '</div>';
+
+              /*  Delete thread and ban   */
+              $out .= '<div class="wp-block-comment-edit-link fv-tc-thread">' .$fv_tc->get_t_delete_thread_ban($comment) . '</div>';
+            }
+          } else {
+            $out .= "<a class='fv-tc-ban' href='" . admin_url( 'tools.php?page=fv_thoughtful_comments' ) . "'>" . __('Already banned', 'fv_tc' ) . "</a>: ";
+            $out .= $whats_banned; 
+          }
+
+          /*  Moderation status   */
+          $user_info = ( isset($comment->user_id) && $comment->user_id > 0 ) ? get_userdata($comment->user_id) : false;
+          if( $user_info && $user_info->user_level < 3) {
+            $out .= '<div class="wp-block-comment-edit-link">' . $fv_tc->get_t_moderated($comment->user_id) . '</div>';
+          } else if( $user_info && $user_info->user_level >= 3 ) {
+            $out .= '<div class="wp-block-comment-edit-link"><abbr title="' . __('Comments from this user level are automatically approved', 'fv_tc') . '">' . __('Power user', 'fv_tc') . '</a>' . '</div>';
+          }
+
+          $out .= '<span id="fv-tc-comment-'.$comment->comment_ID.'"></span>';   
+
+          $html .= $out;
+        }
+
+      }
+
+      return $html;
     }
 
     function get_js_translations() {
@@ -670,7 +752,7 @@ class fv_tc extends fv_tc_Plugin {
       );
     }
 
-    
+
     /**
      * Filter for pre_comment_approved. Skip moderation queue if the user is allowed to comment without moderation
      * 
@@ -1690,6 +1772,9 @@ if( function_exists( 'x_add_metadata_field' ) ) {
 
 /* Add frontend moderation options */
 add_filter( 'comment_text', array( $fv_tc, 'frontend' ), PHP_INT_MAX, 2 );
+
+add_filter( 'init', array( $fv_tc, 'frontend_block_themes' ), PHP_INT_MAX, 2 );
+
 /* Shorten plain links */
 add_filter( 'comment_text', array( $fv_tc, 'comment_links' ), 100 );
 

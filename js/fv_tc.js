@@ -1,4 +1,4 @@
-function fv_tc_approve(id) { 
+function fv_tc_approve(id) {
 	var approve_link = jQuery("#comment-"+id+"-approve");
 	approve_link.text( fv_tc_translations.wait ); 
 	jQuery.ajax({
@@ -144,6 +144,6 @@ function fv_tc_moderated(id, frontend) {
 // Remove thread delete and ban buttons if there are no replies
 jQuery('.comment').each( function() {
 	if( jQuery(this).find('ul.children, ol > li.comment').length == 0 ) {
-		jQuery(this).find('.fv-tc-delthread, .fv-tc-banthread').remove();
+		jQuery(this).find('.fv-tc-thread, .fv-tc-delthread, .fv-tc-banthread').remove();
 	}
 });
