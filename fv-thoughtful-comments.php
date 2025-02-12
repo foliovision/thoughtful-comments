@@ -607,6 +607,69 @@ class fv_tc extends fv_tc_Plugin {
         return $comment_args;
     }
 
+
+    function load_unapproved_block_themes() {
+      unregister_block_type( 'core/comment-template' );
+
+      register_block_type_from_metadata(
+        ABSPATH . '/wp-includes/blocks/comment-template',
+        array(
+          'render_callback'   => array( $this, 'load_unapproved_block_themes_callback' ),
+          'skip_inner_blocks' => true,
+        )
+      );
+    }
+
+
+    /**
+     * Copy of Core WordPress render_block_core_comment_template().
+     * If user can moderate commments we also load unapproved comments.
+     */
+    function load_unapproved_block_themes_callback( $attributes, $content, $block ) {
+      // Bail out early if the post ID is not set for some reason.
+      if ( empty( $block->context['postId'] ) ) {
+        return '';
+      }
+
+      if ( post_password_required( $block->context['postId'] ) ) {
+        return;
+      }
+
+      $args = build_comment_query_vars_from_block( $block );
+
+      // Include unapproved comments for moderators.
+      global $user_ID, $post;
+
+      /*  Check user permissions */
+      if ( $user_ID && current_user_can( 'edit_post', $post->ID ) ) { 
+        $args['status'] = array('approve','hold');
+      }
+
+      $comment_query = new WP_Comment_Query(
+        $args
+      );
+
+      // Get an array of comments for the current post.
+      $comments = $comment_query->get_comments();
+      if ( count( $comments ) === 0 ) {
+        return '';
+      }
+
+      $comment_order = get_option( 'comment_order' );
+
+      if ( 'desc' === $comment_order ) {
+        $comments = array_reverse( $comments );
+      }
+
+      $wrapper_attributes = get_block_wrapper_attributes();
+
+      return sprintf(
+        '<ol %1$s>%2$s</ol>',
+        $wrapper_attributes,
+        block_core_comment_template_render_comments( $comments, $block )
+      );
+    }
+
     
     /**
      * Filter for pre_comment_approved. Skip moderation queue if the user is allowed to comment without moderation
@@ -1653,6 +1716,8 @@ add_action('wp_print_styles', array( $fv_tc, 'styles' ) );
 add_filter( 'comment_class', array( $fv_tc, 'hilight_unapproved' ), PHP_INT_MAX, 4 ); 
 
 add_filter( 'comments_template_query_args', array( $fv_tc, 'load_unapproved' ) );
+
+add_filter( 'init', array( $fv_tc, 'load_unapproved_block_themes' ), PHP_INT_MAX, 2 );
 
 /* Cache users */
 if( !function_exists('apc_fetch') && !function_exists('memcache_get') ) add_filter( 'comments_array', array( $fv_tc, 'users_cache' ) );

@@ -1,5 +1,6 @@
 function fv_tc_approve(id) { 
-	jQuery("#comment-"+id+"-approve").text(fv_tc_translations.wait + ' | '); 
+	var approve_link = jQuery("#comment-"+id+"-approve");
+	approve_link.text( fv_tc_translations.wait ); 
 	jQuery.ajax({
 		type: 'POST',
 		url: fv_tc_conf.ajax_url,
@@ -7,7 +8,8 @@ function fv_tc_approve(id) {
 		success: function(data){
 			if( data.success ) {
 				jQuery("#comment-body-"+id).children(":first").text('');
-				jQuery("#comment-"+id+"-approve").remove();
+				approve_link.closest( '.wp-block-comment-edit-link' ).remove();
+				approve_link.remove();
 				jQuery("#comment-"+id).removeClass("unapproved");
 				jQuery("#comment-"+id).find(".comment-awaiting-moderation").remove();
 
