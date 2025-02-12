@@ -58,6 +58,11 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 
 == Changelog ==
 
+= 0.4 =
+
+* Fix block themes compatibility - show the comment moderation links next to edit link
+* Fix block themes compatibility - show the unapproved comments for moderators
+
 = 0.3.6 =
 * Fix block themes compatibility - showing the comment moderation links, although unapproved comments do not show in front-end still
 * Fix missing icon for "Trash Thread & Ban"
