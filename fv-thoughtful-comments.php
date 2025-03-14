@@ -190,22 +190,32 @@ class fv_tc extends fv_tc_Plugin {
     
     
     
-    function cache_purge() {
-      if( !isset($_POST['action']) || !isset($_POST['option_page'])  || $_POST['action'] != 'update' || $_POST['option_page'] != 'discussion' ) {
+    public static function cache_purge( $comment = false, $post_id = false, $comment_id = false ) {
+
+      // if this is not a comment update or a discussion settings update, return
+      if( !$post_id && ( !isset($_POST['action']) || !isset($_POST['option_page'])  || $_POST['action'] != 'update' || $_POST['option_page'] != 'discussion' ) ) {
         return;
       }
-      
+
       global $blog_id;
       if( !file_exists(WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/') ) {
         return;
       }
-      
-      $files = @glob(WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/*'); //
+
+      if( $post_id ) {
+        $files = @glob(WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/'.$post_id.'-*'); //
+      } else {
+        $files = @glob(WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/*'); //
+      }
+
       foreach($files as $file){ // iterate files
         if(is_file($file))
           unlink($file); // delete file
       }
 
+      file_put_contents( WP_CONTENT_DIR.'/cache/thoughtful-comments-'.$blog_id.'/count.json','{}');
+
+      return $comment;
     }
     
     
@@ -1869,7 +1879,7 @@ add_filter('paginate_links', array($fv_tc, 'get_comments_pagenum_link'));
 
 //  comments html caching
 add_filter( 'wp_list_comments_args', array($fv_tc, 'cache_start') );
-add_filter( 'admin_init', array($fv_tc, 'cache_purge') );
-
+add_filter( 'admin_init', array( 'fv_tc', 'cache_purge') );
+add_filter( 'sce_save_before', array( 'fv_tc', 'cache_purge'), 10 , 3 );
 
 endif;  //  class_exists('fv_tc_Plugin')
