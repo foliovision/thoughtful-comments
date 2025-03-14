@@ -421,7 +421,8 @@ class fv_tc extends fv_tc_Plugin {
     * @return string Comment text with added features. 
     */
     function frontend( $content, $comment ) {
-        if( is_admin() || wp_is_block_theme() ) {
+        // Fix WordPress < 5.9 compatibility
+        if( is_admin() || function_exists( 'wp_is_block_theme' ) && wp_is_block_theme() ) {
           return $content;
         }
         
@@ -480,6 +481,14 @@ class fv_tc extends fv_tc_Plugin {
 
     
     function frontend_block_themes() {
+      // Fix WordPress < 5.5 compatibility
+      if (
+        ! function_exists( 'unregister_block_type' ) ||
+        ! function_exists( 'register_block_type_from_metadata')
+      ) {
+        return;
+      }
+
       unregister_block_type( 'core/comment-edit-link' );
 
       register_block_type_from_metadata(
@@ -691,6 +700,14 @@ class fv_tc extends fv_tc_Plugin {
 
 
     function load_unapproved_block_themes() {
+      // Fix WordPress < 5.5 compatibility
+      if (
+        ! function_exists( 'unregister_block_type' ) ||
+        ! function_exists( 'register_block_type_from_metadata')
+      ) {
+        return;
+      }
+
       unregister_block_type( 'core/comment-template' );
 
       register_block_type_from_metadata(
