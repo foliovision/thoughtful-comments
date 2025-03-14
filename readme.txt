@@ -2,7 +2,7 @@
 
 Contributors: FolioVision
 Tags: comments,moderation,frontend,unapproved
-Requires at least: 4.2
+Requires at least: 4.9
 Tested up to: 6.7
 Stable tag: trunk
 
@@ -57,6 +57,10 @@ Also, commenter name should not be in cite tag, so that the HTML highlight will 
 4. Admin screen settings.
 
 == Changelog ==
+
+= 0.4.1 =
+
+* Fix for WordPress < 5.9 after "Fix block themes compatibility" in 0.4
 
 = 0.4 =
 
