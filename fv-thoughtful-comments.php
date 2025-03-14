@@ -1103,7 +1103,6 @@ class fv_tc extends fv_tc_Plugin {
             wp_localize_script('fv_tc', 'fv_tc_conf', array(
               'ajax_url' => admin_url('admin-ajax.php'),
               'latest_comment_post_id' => get_the_ID(),
-              'latest_comment' => $this->latest_comment,
               'logged_in'      => is_user_logged_in(),
               'nonce' => wp_create_nonce( 'fv_tc' )
             ) );
@@ -1303,7 +1302,7 @@ class fv_tc extends fv_tc_Plugin {
       
       if( $href[1] == $text[1] ) {
         preg_match( '!//(.+?)/!', $text[1], $domain );
-        if( $domain[1] ) {
+        if ( ! empty( $domain[1] ) ) {
           
           $options = get_option('thoughtful_comments');
           if( $options['shorten_urls'] === true ){
