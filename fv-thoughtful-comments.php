@@ -1103,6 +1103,7 @@ class fv_tc extends fv_tc_Plugin {
             wp_localize_script('fv_tc', 'fv_tc_conf', array(
               'ajax_url' => admin_url('admin-ajax.php'),
               'latest_comment_post_id' => get_the_ID(),
+              'latest_comment' => ! empty( $this->latest_comment ) ? $this->latest_comment : false,
               'logged_in'      => is_user_logged_in(),
               'nonce' => wp_create_nonce( 'fv_tc' )
             ) );
