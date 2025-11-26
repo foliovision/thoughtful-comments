@@ -79,8 +79,14 @@ class fv_tc extends fv_tc_Plugin {
      * @string
      */     
     var $cache_filename;
-     
-    
+
+    /**
+     * Used to remember if the logged in user has permissions to edit comments.
+     *
+     * Only checked once for performance reasons.
+     */
+    var $can_edit;
+
     /**
      * Class contructor. Sets all basic variables.
      */         
